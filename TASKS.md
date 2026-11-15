@@ -29,7 +29,7 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
-| T-101c | Migrations for ARC-03 §7 analysis (9 tables) with immutability triggers | P0 | M1 | T-101b | `make test-backend` green (41 tests, 14 new analysis tests; 9 mutation checks each caught by the intended test); full rollback + re-migrate of all 8 migrations clean; Pint clean. **Verified locally 2026-11-16; awaiting PR + CI.** | NEEDS REVIEW |
+| T-002 | Project Claude Code skills in `.claude/skills/` (8 skills, link-check and docs-impact scripts) + CLAUDE.md §10 index | P2 | — | — | Valid frontmatter (YAML-parsed), names match directories, every referenced file and anchor resolves (link check 0 broken), no application code changed | NEEDS REVIEW |
 
 ## Blocked
 
@@ -39,6 +39,7 @@ See T-201 (needs a Kite developer app).
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-101c | Migrations for ARC-03 §7 analysis (9 tables) with immutability triggers | M1 | 2026-11-16 (PR #15 merged) |
 | T-101b | Migrations for ARC-03 §6 market data (9 tables) + `trading_preferences.universe_id` FK | M1 | 2026-11-16 (PR #14 merged) |
 | T-101a | Migrations for ARC-03 §4–§5 (12 identity and trading-configuration tables) with constraint tests | M1 | 2026-11-16 (PR #13 merged) |
 | T-001 | Project-control documentation (CLAUDE, CURRENT, ROADMAP, DECISIONS, TASKS, CHANGELOG, CONTRIBUTING) and stale-line fixes in `docs/` | — | 2026-11-16 (PR #12 merged; link check clean) |
