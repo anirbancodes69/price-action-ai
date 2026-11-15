@@ -67,7 +67,7 @@ Next.js (App Router) · React · TypeScript (strict) · Tailwind CSS · TradingV
 ## 6. GitHub rules
 
 - GitHub Flow: short-lived branches `feature/…`, `fix/…`, `chore/…`, `docs/…`, `refactor/…` ([ENG-11](docs/engineering/11_BRANCHING_AND_RELEASE_STRATEGY.md)).
-- **Conventional Commits.** PR titles are validated by CI. Types: `feat fix docs chore refactor test ci build perf`. Scopes: `frontend backend engine contracts infra docs ruleset`. Merges are squash-only.
+- **Conventional Commits.** PR titles are validated by CI. Types: `feat fix docs chore refactor test ci build perf`. Scopes: `frontend backend engine contracts infra docs ruleset deps`. **A scope is required** (`type(scope): summary`, e.g. `docs(docs): …`); CI rejects titles without one. Merges are squash-only.
 - `main` is protected by the "Protect Main" ruleset: PR required, `ci-gate` must pass, linear history, no force-push.
 - Complete the [PR template](.github/pull_request_template.md). Review migrations and API contract changes with particular care ([ENG-12 §4](docs/engineering/12_CODE_QUALITY_AND_PULL_REQUESTS.md)).
 - Never commit secrets. `.env` is gitignored, and `.env.example` holds placeholders only.

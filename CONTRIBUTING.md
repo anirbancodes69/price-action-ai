@@ -35,7 +35,7 @@ GitHub Flow from `main`, with short-lived branches ([ENG-11](docs/engineering/11
 [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): summary`.
 
 - Types: `feat fix docs chore refactor test ci build perf`
-- Scopes: `frontend backend engine contracts infra docs ruleset`
+- Scopes: `frontend backend engine contracts infra docs ruleset deps`. **A scope is required**; CI fails the PR title without one (`ci.yml`, `requireScope: true`).
 - Breaking change: `!` after the type, or a `BREAKING CHANGE:` footer.
 
 Merges are squash-only, so the **PR title** becomes the commit message. CI validates it.
