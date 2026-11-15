@@ -67,7 +67,7 @@ The `Makefile` wraps the commands below (`make help`); the raw Compose commands 
 | Seed demo data | `docker compose run --rm backend php artisan db:seed --class=DemoSeeder` |
 | Frontend tests | `make test-frontend` |
 | Frontend lint/typecheck | `make lint-frontend` |
-| Laravel tests | `make test-backend` (`vendor/bin/phpunit`; `artisan test` warns when no `backend/.env` file exists) |
+| Laravel tests | `make test-backend` (`vendor/bin/phpunit` against a throwaway `priceaction_test` database that the target creates, migrated by the `app_migrator` role; `artisan test` warns when no `backend/.env` file exists) |
 | Python tests | `make test-engine` |
 | Trading tests only | `docker compose run --rm engine uv run pytest tests/trading` |
 | Rebuild one service | `docker compose build --no-cache engine && docker compose up -d engine` |

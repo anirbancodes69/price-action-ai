@@ -1,6 +1,6 @@
 # CURRENT — Project State
 
-Last verified: **2026-11-16** against the repository and GitHub (`main` at `6917047`).
+Last verified: **2026-11-16** against the repository and GitHub (`main` at `cc3fa5a`; M1 work on branch `feature/backend-m1-schema`).
 
 Status vocabulary: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REVIEW`.
 Update this file at the end of every substantial task, based only on verified state.
@@ -11,7 +11,7 @@ Update this file at the end of every substantial task, based only on verified st
 |---|---|
 | Phase | Foundation complete; feature development not yet started |
 | Last completed milestone | **M0** — repository, Docker and CI foundation (merged in PR #1, 2026-11-15) |
-| Current milestone | **M1** — database and contracts: `NOT STARTED` |
+| Current milestone | **M1** — database and contracts: `IN PROGRESS` |
 | Detailed plan | [ROADMAP.md](ROADMAP.md) → [ENG-01](docs/engineering/01_IMPLEMENTATION_ROADMAP.md) |
 
 ## Component status
@@ -22,7 +22,7 @@ Update this file at the end of every substantial task, based only on verified st
 | Frontend data | **Mock only** | Every page reads the `DataSource` mock adapter (`frontend/src/lib/data`). Analysis overlays come from a demo heuristic (`src/mocks/demo-analysis.ts`), **not** the specified trading rules. Login accepts any well-formed email and password. There is no mutation client yet. |
 | Frontend ↔ spec | `NEEDS REVIEW` | 24 known discrepancies (D-01..D-24) in [ENG-02 §9](docs/engineering/02_FRONTEND_ARCHITECTURE.md#9-discrepancy-register), to be resolved in M7. |
 | Documentation | `COMPLETED` (specification) | 58 spec files under `docs/` plus 12 accepted ADRs. They describe the target system, so most of it is **not implemented**. |
-| Backend (Laravel 13) | `IN PROGRESS` (skeleton only) | `GET /api/health` (shallow and `?deep=1`), log redaction processor, default Laravel migrations (users/cache/jobs), PHPUnit tests for health and redaction. **No domain modules, no ARC-03 schema, no `/api/v1` endpoints.** |
+| Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1, on branch, not yet merged):** migrations for ARC-03 §4–§5 (12 tables: tenants, users, memberships, profiles, onboarding, audit log, preferences, risk profiles, entitlements, provider connections, data sources, selections) with CHECK/EXCLUDE constraints and 8 DB-constraint tests. **Not yet:** ARC-03 §6–§8 tables, seeders, domain modules, `/api/v1` endpoints. |
 | Python engine | `IN PROGRESS` (skeleton only) | FastAPI `/health` and authenticated `/internal/v1/ping`, arq worker settings, structured logging, pytest. `app/domain/` is empty. **No trading logic, providers or ingestion.** |
 | Contracts (`contracts/`) | `NOT STARTED` | Directory does not exist (planned for M1). |
 | Infrastructure | `COMPLETED` (local dev) | Docker Compose with frontend, backend (php-fpm + nginx), queue worker, scheduler, engine, engine worker, PostgreSQL 17 and Redis 7.4, all with health checks. Dev overlay with hot reload. Makefile. `scripts/setup-env.sh`. No staging or production environments. |
@@ -39,12 +39,12 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Work in progress
 
-- No code work in progress.
-- Branch `docs/project-governance`: project-control documentation (this file, CLAUDE.md, ROADMAP/DECISIONS/TASKS/CHANGELOG/CONTRIBUTING, stale-line fixes in `docs/`). Not yet committed.
+- Branch `feature/backend-m1-schema`: **T-101a** (ARC-03 §4–§5 migrations, tests, Makefile test DB, docs sync). Verified locally; not yet committed or merged.
+- Local dev databases created before this change must be recreated (`make reset`), because the stock Laravel `users` migration was replaced (UUID ids, no `name`, no sessions table).
 
 ## Immediate next task
 
-**T-101 — M1 schema: Laravel migrations for ARC-03** (see [TASKS.md](TASKS.md)). Before that, a quick owner decision on OQ-RM-04 helps the seed data, but does not block it.
+**T-101b — ARC-03 §6 market-data migrations** (then T-101c, T-101d, T-102) — see [TASKS.md](TASKS.md). An owner decision on OQ-RM-04 helps the seed data but does not block it.
 
 ## Known blockers
 
