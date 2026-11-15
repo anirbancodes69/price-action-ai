@@ -6,6 +6,11 @@ updates:
     schedule: { interval: weekly, day: monday }
     groups:
       frontend-minor-patch: { update-types: [minor, patch] }
+    ignore:
+      # Runtime is Node 24; keep type definitions aligned with it.
+      - { dependency-name: "@types/node", update-types: ["version-update:semver-major"] }
+      # Not supported by the Next.js 16 toolchain yet; revisit deliberately, not via bot.
+      - { dependency-name: "typescript", update-types: ["version-update:semver-major"] }
     commit-message: { prefix: "chore(deps)" }
   - package-ecosystem: composer
     directory: /backend
@@ -22,6 +27,11 @@ updates:
   - package-ecosystem: docker
     directories: [/frontend, /backend, /python-engine]
     schedule: { interval: weekly, day: monday }
+    ignore:
+      # Runtime pins are architectural (ARC-02): PHP 8.4 (composer platform pin), Python 3.13 (requires-python).
+      # Bump these together with composer.json / pyproject.toml in a dedicated PR.
+      - { dependency-name: "php", update-types: ["version-update:semver-major", "version-update:semver-minor"] }
+      - { dependency-name: "python", update-types: ["version-update:semver-major", "version-update:semver-minor"] }
     commit-message: { prefix: "chore(deps)" }
   - package-ecosystem: github-actions
     directory: /
