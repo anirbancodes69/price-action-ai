@@ -11,7 +11,7 @@
 
 ## 1. Purpose
 
-Milestone plan from the current state (frontend with mock data, no commits, no backend) to a validated personal MVP and SaaS readiness. Durations are not estimated here (solo developer; OQ-RD-01).
+Milestone plan from the starting state (frontend with mock data, no commits, no backend) to a validated personal MVP and SaaS readiness. Live milestone status is tracked in the root [ROADMAP.md](../../ROADMAP.md) and [CURRENT.md](../../CURRENT.md). Durations are not estimated here (solo developer; OQ-RD-01).
 
 ## 2. Milestone overview
 
@@ -40,7 +40,7 @@ M3 can start on fixture data in parallel with M2.
 
 ### M0 — Repository, Docker and infrastructure foundation
 
-> **Status: complete (2026-11-15)** on branch `chore/m0-foundation`. Deviations: backend-ci and python-engine-ci workflows were pulled forward from M1 because the skeletons exist; Trivy and Semgrep are deferred to Phase 2 image publishing; third-party Actions are pinned by major version tag, not SHA (follow-up); branch protection, secret scanning and CodeQL default setup are GitHub settings to apply once the repository is pushed (ENG-09 §6–7).
+> **Status: complete (2026-11-15)** on branch `chore/m0-foundation`. Deviations: backend-ci and python-engine-ci workflows were pulled forward from M1 because the skeletons exist; Trivy and Semgrep are deferred to Phase 2 image publishing; third-party Actions are pinned by major version tag, not SHA (follow-up); branch protection, secret scanning and CodeQL default setup are GitHub settings to apply once the repository is pushed (ENG-09 §6–7). *Update 2026-11-16:* applied. The "Protect Main" ruleset requires `ci-gate`; secret scanning with push protection is on; CodeQL runs on `main`.
 
 | Item | Detail |
 |---|---|
@@ -186,7 +186,7 @@ M3 can start on fixture data in parallel with M2.
 
 ## 6. Recommended next milestone
 
-**M0**, beginning with the first commit and the GitHub CI foundation, then M1. No backend feature code before M1 contracts exist.
+**M1** (M0 completed 2026-11-15). No backend feature code before M1 contracts exist.
 
 ## 7. Open questions
 

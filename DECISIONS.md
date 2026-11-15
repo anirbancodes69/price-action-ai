@@ -1,0 +1,26 @@
+# DECISIONS — Decision Register
+
+Index of significant product and architecture decisions. **This is an index, not a replacement for ADRs.** The detailed context, alternatives and consequences live in [docs/adr/](docs/adr/README.md). Product constraints C-01..C-17 are in [docs/README.md §4](docs/README.md#product-constraints).
+
+Rules: accepted decisions are changed only through a superseding ADR (see [CLAUDE.md §8](CLAUDE.md#8-decision-change-protocol)). Add a row here whenever an ADR is added or its status changes. Statuses: `Accepted`, `Proposed`, `Superseded by …`, `Deprecated`.
+
+| ID | Decision | Date | Status | Summary | Rationale (short) | Source |
+|---|---|---|---|---|---|---|
+| DEC-001 | Next.js frontend | 2026-11-15 | Accepted | Next.js App Router + React + TypeScript strict + Lightweight Charts. The frontend consumes only `/api/v1`. | Data-dense SSR UI already built; clean backend boundary | [ADR-001](docs/adr/ADR-001-FRONTEND-ARCHITECTURE.md) |
+| DEC-002 | Tailwind CSS, no Bootstrap or UI library | 2026-11-15 | Accepted | Tailwind v4 with a custom token-based design system. Bootstrap and component libraries are excluded. | Existing design system; consistent dark-first trading UI | [ADR-001](docs/adr/ADR-001-FRONTEND-ARCHITECTURE.md) |
+| DEC-003 | Laravel application backend | 2026-11-15 | Accepted | Laravel owns auth, tenancy, the public API, plans, journal, notifications and the schema (migrations). | Mature app framework, fast CRUD/auth/queues | [ADR-002](docs/adr/ADR-002-LARAVEL-APPLICATION-BACKEND.md) |
+| DEC-004 | Python quantitative engine | 2026-11-15 | Accepted | FastAPI internal service + arq workers. All trading calculations live in `python-engine/app/domain`. | Numeric ecosystem; testable pure functions | [ADR-003](docs/adr/ADR-003-PYTHON-QUANTITATIVE-ENGINE.md) |
+| DEC-005 | Modular monolith + one quant service | 2026-11-15 | Accepted | One business deployable and one DB, plus the engine. No further microservices. | Solo developer; low operational cost | [ADR-004](docs/adr/ADR-004-MODULAR-MONOLITH.md) |
+| DEC-006 | PostgreSQL | 2026-11-15 | Accepted | Primary relational store, including candles and snapshots. | Integrity, numeric types, JSONB, RLS later | [ADR-005](docs/adr/ADR-005-POSTGRESQL-DATABASE.md) |
+| DEC-007 | Redis | 2026-11-15 | Accepted | Cache, queues (Laravel + arq), sessions, rate limiting. Holds no data of record (broker tokens are also kept out of it, per ARC-06). | One proven component for several needs | [ADR-006](docs/adr/ADR-006-REDIS-CACHING-AND-QUEUES.md) |
+| DEC-008 | Docker Compose for local development | 2026-11-15 | Accepted | The whole stack runs via Compose and make targets. | Reproducible environment for all three runtimes | Constraint C-15; [ENG-08](docs/engineering/08_DEVELOPMENT_ENVIRONMENT.md) (no dedicated ADR) |
+| DEC-009 | GitHub Actions for CI/CD | 2026-11-15 | Accepted | Path-filtered component workflows behind a single required `ci-gate`. Production deploy only with manual approval. | Native to the repo host; required checks | [ADR-012](docs/adr/ADR-012-GITHUB-ACTIONS-CI-CD.md) |
+| DEC-010 | Market data provider abstraction (Zerodha first) | 2026-11-15 | Accepted | `MarketDataProvider` interface; DEMO and Kite Connect adapters; licensed vendor later. | Avoid lock-in; Kite terms unverified | [ADR-007](docs/adr/ADR-007-MARKET-DATA-PROVIDER-ABSTRACTION.md) |
+| DEC-011 | Deterministic, versioned trading calculations | 2026-11-15 | Accepted | Pure functions, immutable candle snapshots, versioned `pa-core` ruleset, result hashes, no look-ahead. | Auditability and reproducible backtests | [ADR-008](docs/adr/ADR-008-DETERMINISTIC-TRADING-ENGINE.md) |
+| DEC-012 | LLM is explanation-only | 2026-11-15 | Accepted | The LLM explains and summarises deterministic output. It never computes or overrides levels, quantity or classification. | Trust; avoids hallucinated numbers | [ADR-009](docs/adr/ADR-009-LLM-EXPLANATION-ONLY.md) |
+| DEC-013 | Manual trade execution in MVP | 2026-11-15 | Accepted | Analysis, planning and paper trading only. Users execute on the broker's platform. No order placement. | Regulatory and risk exposure | [ADR-010](docs/adr/ADR-010-MANUAL-TRADE-EXECUTION-MVP.md) |
+| DEC-014 | Demo, personal and licensed data separation | 2026-11-15 | Accepted | Three data modes with tenant isolation. Personal Kite data is never redistributed, and demo is never shown as live. | Data licensing; SaaS readiness | [ADR-011](docs/adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md) |
+
+## Candidate future decisions
+
+Tracked in [docs/adr/README.md](docs/adr/README.md#candidate-future-adrs): LLM provider (OQ-AI-01), Kite app model (OQ-SEC-01), licensed data vendor, PostgreSQL RLS adoption, edge proxy and hosting. Repository visibility (ENG-09 says private, actual is public) also needs an owner decision. See [CURRENT.md](CURRENT.md#pending-decisions-and-inconsistencies).

@@ -11,7 +11,7 @@
 
 This directory is the **authoritative specification** for PriceAction AI: an AI-assisted, rule-based price-action analysis and trade-planning platform for NSE cash equities (NIFTY 500, daily timeframe). It defines what to build before backend development begins. Where code and these documents disagree, the disagreement is a defect to be resolved explicitly (see the frontend discrepancy register in [ENG-02 §9](engineering/02_FRONTEND_ARCHITECTURE.md#9-discrepancy-register)).
 
-**Current implementation state (2026-11-15):** only the Next.js frontend exists, serving sample data through a mock adapter. Backend, engine, database and CI are specified here but not built.
+**Current implementation state:** see the root [CURRENT.md](../CURRENT.md), which is kept in sync with the repository. As of 2026-11-16, M0 is complete: Docker Compose stack, Laravel and FastAPI skeletons (health endpoints only) and GitHub Actions CI. The frontend still serves sample data through a mock adapter. Domain backend, engine logic and the ARC-03 schema are specified here but not built.
 
 ## 2. Structure
 
@@ -76,6 +76,8 @@ Note: in the product folder, `PRD-03` is the Product Requirements Document itsel
 | C-17 | No secrets or credentials are committed to GitHub. |
 
 ## 5. Maintaining the documentation
+
+Documentation maintenance is **mandatory and part of the definition of done**. The change → document mapping and the end-of-task sync protocol are in the root [CLAUDE.md §7–§9](../CLAUDE.md#9-documentation-maintenance-mandatory). Project-control files at the repository root: [CURRENT.md](../CURRENT.md) (actual state), [ROADMAP.md](../ROADMAP.md) (milestone progress), [TASKS.md](../TASKS.md), [DECISIONS.md](../DECISIONS.md) (decision index → ADRs), [CHANGELOG.md](../CHANGELOG.md).
 
 - Docs live with the code; changes go through PRs like code ([ENG-12](engineering/12_CODE_QUALITY_AND_PULL_REQUESTS.md) template requires doc updates).
 - Every document starts with a metadata table (ID, version, status, owner, last updated, related). Bump the version on meaningful changes (minor for additions, major for changed meaning).

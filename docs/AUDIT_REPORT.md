@@ -74,7 +74,7 @@ These are explicit decisions or verifications that belong to the owner or to lat
 | G-09 | All trading parameters are unvalidated hypotheses; promotion criteria need sign-off | TRD-01 MP-09, OQ-TRD-03 |
 | G-10 | Zone break (2 closes) vs BOS (1 close) asymmetry is intentional but debatable | OQ-SR-01 |
 | G-11 | Paper-trades UI location undecided | OQ-PRD-01 |
-| G-12 | The repository has no commits, no root `.gitignore`, and `.DS_Store` / `tsconfig.tsbuildinfo` are present | ENG-01 M0 tasks |
+| G-12 | The repository has no commits, no root `.gitignore`, and `.DS_Store` / `tsconfig.tsbuildinfo` are present | ENG-01 M0 tasks. **Resolved in M0 (2026-11-15).** |
 
 The full list of 61 open questions is in [DOCUMENTATION_STATUS §2](DOCUMENTATION_STATUS.md#2-open-questions-register).
 

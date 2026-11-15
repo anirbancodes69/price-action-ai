@@ -34,7 +34,7 @@
 | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) | Specification ready (costs to verify; universe history source pending) | TRD-01..05 | OQ-BT-01, OQ-BT-02, OQ-BT-03, OQ-BT-04, OQ-BT-05 | 2026-11-15 |
 | [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) | Specification ready | TRD-04..06 | OQ-PT-01, OQ-PT-02, OQ-PT-03 | 2026-11-15 |
 | [Trading Engine Validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Specification ready | TRD-02..06 | — | 2026-11-15 |
-| [Implementation Roadmap](engineering/01_IMPLEMENTATION_ROADMAP.md) | Specification ready | All | OQ-RD-01, OQ-RD-02 | 2026-11-15 |
+| [Implementation Roadmap](engineering/01_IMPLEMENTATION_ROADMAP.md) | Specification ready (M0 complete; progress in root ROADMAP.md) | All | OQ-RD-01, OQ-RD-02 | 2026-11-16 |
 | [Frontend Architecture](engineering/02_FRONTEND_ARCHITECTURE.md) | Reflects implemented code + plan | PRD-07, ARC-04 | — | 2026-11-15 |
 | [Backend Architecture (Laravel)](engineering/03_BACKEND_ARCHITECTURE.md) | Specification ready | ARC-01, ARC-03, ARC-04, ARC-06 | — | 2026-11-15 |
 | [Python Engine Architecture](engineering/04_PYTHON_ENGINE_ARCHITECTURE.md) | Specification ready | TRD-*, ARC-07, ARC-08 | — | 2026-11-15 |
@@ -43,7 +43,7 @@
 | [Testing Strategy](engineering/07_TESTING_STRATEGY.md) | Specification ready | TRD-08, ENG-10 | — | 2026-11-15 |
 | [Development Environment](engineering/08_DEVELOPMENT_ENVIRONMENT.md) | Implemented (M0) | ARC-01, OPS-02 | — | 2026-11-15 |
 | [GitHub Repository Strategy](engineering/09_GITHUB_REPOSITORY_STRATEGY.md) | Specification ready | ADR-012 | — | 2026-11-15 |
-| [GitHub Actions CI/CD](engineering/10_GITHUB_ACTIONS_CI_CD.md) | Specification ready (no workflows yet) | ENG-07, ENG-09, ADR-012 | — | 2026-11-15 |
+| [GitHub Actions CI/CD](engineering/10_GITHUB_ACTIONS_CI_CD.md) | Implemented for M0 gates (later gates specified) | ENG-07, ENG-09, ADR-012 | — | 2026-11-16 |
 | [Branching and Release Strategy](engineering/11_BRANCHING_AND_RELEASE_STRATEGY.md) | Specification ready | ENG-09, ENG-10 | — | 2026-11-15 |
 | [Code Quality and Pull Requests](engineering/12_CODE_QUALITY_AND_PULL_REQUESTS.md) | Specification ready | ENG-10, ENG-11 | — | 2026-11-15 |
 | [Deployment Guide](operations/01_DEPLOYMENT_GUIDE.md) | Specification ready (no environments yet) | ENG-10, OPS-02 | OQ-OPS-01, OQ-OPS-02 | 2026-11-15 |
