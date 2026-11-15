@@ -1,5 +1,5 @@
 # Development image with hot reload. Source is bind-mounted by docker compose.
-FROM node:24-alpine
+FROM node:26-alpine
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
