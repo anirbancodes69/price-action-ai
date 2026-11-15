@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | ARC-03 |
-| Version | 0.1.0 |
-| Status | Specification ready (no migrations exist yet — created in M1) |
+| Version | 0.2.0 |
+| Status | Specification ready · **partially implemented:** §4–§5 migrated (M1, T-101a); §6–§8 pending |
 | Owner | Solution Architect / Backend Lead |
-| Last updated | 2026-11-15 |
+| Last updated | 2026-11-16 |
 | Related | [ARC-01 Data ownership](01_SYSTEM_ARCHITECTURE.md#6-data-ownership-writers) · [ARC-04 API](04_API_SPECIFICATION.md) · [ARC-06 Security](06_SECURITY_ARCHITECTURE.md) · [OPS-04 Retention](../operations/04_DATA_RETENTION_AND_BACKUP.md) · [ADR-005](../adr/ADR-005-POSTGRESQL-DATABASE.md) · [ADR-011](../adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md) |
 
 ## 1. Purpose
@@ -28,6 +28,16 @@ Implementation-ready relational schema for PostgreSQL. Each table lists purpose,
 | Extensions | `citext`, `btree_gist`, `pgcrypto`. |
 
 Legend for "Writer": **L** = Laravel, **E** = engine/engine-worker.
+
+### 2.1 Implementation notes (as migrated)
+
+Migrations are raw SQL in `backend/database/migrations` so constraints match this document exactly. Implemented so far: §4–§5 (`0001_01_01_000000_create_users_table`, `2026_11_16_000001_create_identity_tables`, `2026_11_16_000002_create_trading_configuration_tables`) plus an extensions migration. Deviations and decisions:
+
+- `users` has no `name` column (the display name is `user_profiles.display_name`) and there is no `sessions` table (Redis).
+- `trading_preferences.universe_id` is a plain `uuid` until `universes` exists (§6.4); its FK is added in T-101b.
+- `audit_logs`: `UPDATE`, `DELETE` and `TRUNCATE` are revoked from `app_backend` and `app_engine` when those roles exist (production/dev). CI has no such roles, so that grant is not exercised there.
+- `subscription_entitlements` also has `CHECK (valid_to IS NULL OR valid_to > valid_from)` (not in the original text).
+- Tests: `backend/tests/Feature/Database/` assert the constraints against a real PostgreSQL.
 
 ## 3. Entity-relationship overview
 

@@ -47,8 +47,11 @@ test: test-frontend test-backend test-engine ## Run all test suites
 test-frontend: ## Frontend unit tests
 	$(FRONTEND_DEV) npm test
 
-test-backend: ## Laravel tests
-	$(BACKEND_DEV) vendor/bin/phpunit
+test-backend: ## Laravel tests (own throwaway DB, migrated with the schema-owner role)
+	@set -a; . ./.env; set +a; \
+	$(COMPOSE) exec -T postgres psql -U postgres -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='priceaction_test'" | grep -q 1 \
+	  || $(COMPOSE) exec -T postgres psql -U postgres -d postgres -c "CREATE DATABASE priceaction_test OWNER app_migrator"; \
+	$(COMPOSE_DEV) run --rm --no-deps -e DB_DATABASE=priceaction_test -e DB_USERNAME=app_migrator -e DB_PASSWORD="$$DB_MIGRATOR_PASSWORD" backend vendor/bin/phpunit
 
 test-engine: ## Python engine tests
 	$(ENGINE_DEV) uv run pytest
