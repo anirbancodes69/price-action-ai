@@ -6,6 +6,8 @@ PriceAction AI is a decision-support tool. It does **not** place orders and does
 
 ## Status
 
+Summary below. The authoritative, regularly verified state is in **[CURRENT.md](CURRENT.md)**, and milestone progress is in **[ROADMAP.md](ROADMAP.md)**.
+
 | Component | State |
 |---|---|
 | Frontend (`frontend/`) | Phase 1 UI built (Next.js 16, React 19, Tailwind v4, Lightweight Charts). It runs entirely on **sample data** through a mock adapter. |
@@ -22,6 +24,12 @@ Start at **[docs/README.md](docs/README.md)** for the structure, reading order a
 - [Trading methodology & parameter registry](docs/trading/01_TRADING_METHODOLOGY.md)
 - [Implementation roadmap](docs/engineering/01_IMPLEMENTATION_ROADMAP.md)
 - [Architecture decision records](docs/adr/README.md)
+
+Project control (repository root):
+
+- [CLAUDE.md](CLAUDE.md): development rules and working protocol for Claude Code and contributors
+- [CURRENT.md](CURRENT.md): current state · [ROADMAP.md](ROADMAP.md): milestones · [TASKS.md](TASKS.md): task register
+- [DECISIONS.md](DECISIONS.md): decision index (links to ADRs) · [CHANGELOG.md](CHANGELOG.md)
 
 ## Run locally
 
@@ -49,3 +57,7 @@ scripts/         setup-env.sh
 .github/         CI workflows, templates, CODEOWNERS, Dependabot
 docs/            Product, architecture, trading, engineering, operations docs, ADRs
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). In short: branch from `main`, use Conventional Commits PR titles, pass `ci-gate`, and update the affected documentation in the same PR.
