@@ -1,0 +1,31 @@
+# Grouped weekly updates per ecosystem (docs/architecture/02_TECHNOLOGY_STACK.md §4).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule: { interval: weekly, day: monday }
+    groups:
+      frontend-minor-patch: { update-types: [minor, patch] }
+    commit-message: { prefix: "chore(deps)" }
+  - package-ecosystem: composer
+    directory: /backend
+    schedule: { interval: weekly, day: monday }
+    groups:
+      backend-minor-patch: { update-types: [minor, patch] }
+    commit-message: { prefix: "chore(deps)" }
+  - package-ecosystem: uv
+    directory: /python-engine
+    schedule: { interval: weekly, day: monday }
+    groups:
+      engine-minor-patch: { update-types: [minor, patch] }
+    commit-message: { prefix: "chore(deps)" }
+  - package-ecosystem: docker
+    directories: [/frontend, /backend, /python-engine]
+    schedule: { interval: weekly, day: monday }
+    commit-message: { prefix: "chore(deps)" }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    groups:
+      actions: { patterns: ["*"] }
+    commit-message: { prefix: "chore(deps)" }

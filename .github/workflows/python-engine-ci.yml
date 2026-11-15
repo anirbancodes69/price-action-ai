@@ -1,0 +1,44 @@
+# Python engine checks (docs/engineering/10_GITHUB_ACTIONS_CI_CD.md §4.3). Called by ci.yml.
+# M0 scope: lockfile, Ruff lint + format, mypy (strict), pytest.
+# trading-tests, golden, backtest-correctness and DB integration jobs are added from M1/M3.
+name: python-engine-ci
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: ruff · mypy · pytest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: python-engine
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: python-engine/uv.lock
+
+      - name: Install Python 3.13 and dependencies (fails if uv.lock is stale)
+        run: |
+          uv python install 3.13
+          uv sync --frozen
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format
+        run: uv run ruff format --check .
+
+      - name: Types
+        run: uv run mypy
+
+      - name: Tests
+        run: uv run pytest

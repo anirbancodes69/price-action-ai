@@ -15,57 +15,60 @@
 - One `docker-compose.yml` at the root; development overrides via Compose **profiles** (`dev`) and an optional `docker-compose.override.yml` (gitignored).
 - Services mirror production topology (ARC-01) so behaviour matches.
 
-## 2. Current state
+## 2. Current state (M0 complete, 2026-11-15)
 
-`docker-compose.yml` today defines:
-
-| Service | Purpose | Port |
-|---|---|---|
-| `frontend` | Production build (standalone Next.js) | 3000 |
-| `frontend-dev` (profile `dev`) | Hot reload, bind-mounted source | 3001 |
+All services below exist and pass their health checks. Quick start:
 
 ```bash
-docker compose up --build frontend            # http://localhost:3000
-docker compose --profile dev up frontend-dev  # http://localhost:3001
+./scripts/setup-env.sh      # once: root .env with random dev secrets (never committed)
+make up                     # production-like stack, waits until healthy
+make dev                    # hot reload: backend/engine source mounted, frontend-dev on :3001,
+                            # engine/postgres/redis published on 127.0.0.1 only
+make health                 # deep check through the backend (DB, Redis, engine)
+make test && make lint      # all suites inside containers
 ```
 
-## 3. Target services (M0–M2)
+Files: `docker-compose.yml` (all services), `docker-compose.dev.yml` (dev overlay: dev image targets, bind mounts, localhost ports), `Makefile`, `scripts/setup-env.sh`, `infrastructure/docker/{nginx,postgres,redis}/`.
+
+## 3. Services
 
 | Service | Image / build | Ports (host, dev only) | Depends on | Health check |
 |---|---|---|---|---|
-| `frontend` / `frontend-dev` | `frontend/Dockerfile(.dev)` | 3000 / 3001 | backend | `GET /login` (existing) → `/api/health` proxy later |
-| `backend` | `backend/Dockerfile` (php-fpm) | — | postgres, redis | `php-fpm-healthcheck` |
-| `backend-nginx` | nginx | 8000 | backend | `GET /api/health` |
-| `backend-queue` | backend image, `php artisan horizon` | — | redis | `horizon:status` |
-| `backend-scheduler` | backend image, `php artisan schedule:work` | — | redis | process |
+| `frontend` / `frontend-dev` | `frontend/Dockerfile(.dev)` | 3000 / 3001 | — (mock data until M7) | `GET /login` |
+| `backend` | `backend/Dockerfile` (php-fpm; targets `runtime`/`dev`) | — | postgres, redis | FPM `/ping` via `cgi-fcgi` |
+| `backend-nginx` | `nginx:1.27-alpine` + `infrastructure/docker/nginx/backend.conf` (Docker DNS resolver, so backend restarts need no nginx restart) | 8000 | backend | `GET /api/health` |
+| `backend-queue` | backend image, `php artisan queue:work redis` (Horizon added in M6) | — | backend | process check |
+| `backend-scheduler` | backend image, `php artisan schedule:work` | — | backend | process check |
 | `engine` | `python-engine/Dockerfile`, uvicorn | 8100 (dev only) | postgres, redis | `GET /health` |
-| `engine-worker` | engine image, `arq app.workers.WorkerSettings` | — | redis, postgres | arq health key |
-| `postgres` | `postgres:17` + init script for roles/extensions | 5432 (dev only) | — | `pg_isready` |
-| `redis` | `redis:7.4` (or valkey) | 6379 (dev only) | — | `redis-cli ping` |
-| `mailpit` (profile `dev`) | local SMTP catcher | 8025 | — | — |
+| `engine-worker` | engine image, `arq app.workers.settings.WorkerSettings` | — | engine | `arq --check` |
+| `postgres` | `postgres:17-alpine` + `infrastructure/docker/postgres/init/` (roles `app_migrator`/`app_backend`/`app_engine`, extensions) | 5432 (dev only) | — | `pg_isready` |
+| `redis` | `redis:7.4-alpine`, AOF everysec, password required | 6379 (dev only) | — | `redis-cli ping` |
+| `mailpit` (planned, M6) | local SMTP catcher | 8025 | — | — |
 
-Named volumes: `pgdata`, `redisdata`. Dev profile bind-mounts source for backend and engine with auto-reload (`uvicorn --reload`, PHP-FPM reads files directly).
+Named volumes: `pgdata`, `redisdata`. The dev overlay bind-mounts source for backend and engine with auto-reload (`uvicorn --reload`, `arq --watch`, PHP-FPM reads files directly); `vendor/` stays in an anonymous volume and the Python venv lives at `/opt/venv`.
+
+Postgres reads role passwords only when the volume is first created. After regenerating `.env`, run `make reset`.
 
 ## 4. Commands
 
-A `Makefile` (or `scripts/dev.sh`) wraps the commands below; the raw Compose commands are canonical.
+The `Makefile` wraps the commands below (`make help`); the raw Compose commands are canonical.
 
 | Task | Command |
 |---|---|
-| Initial setup | `cp .env.example .env` (and per-service `.env.example`) → `docker compose build` → `docker compose up -d postgres redis` → `docker compose run --rm backend php artisan key:generate` → `docker compose run --rm backend php artisan migrate --seed` |
-| Start all (dev) | `docker compose --profile dev up -d` |
-| Start production-like | `docker compose up -d --build` |
+| Initial setup | `./scripts/setup-env.sh` → `docker compose build` (= `make setup`) |
+| Start all (dev) | `docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev up -d --wait` (= `make dev`) |
+| Start production-like | `docker compose up -d --build --wait` (= `make up`) |
 | Stop | `docker compose down` (keep volumes) |
 | Reset everything | `docker compose down -v` (**deletes local DB**) |
 | Logs | `docker compose logs -f backend engine-worker` |
 | Shell | `docker compose exec backend sh` / `docker compose exec engine sh` |
-| Migrations | `docker compose run --rm backend php artisan migrate` |
+| Migrations (as schema owner) | `make migrate` (runs artisan with `DB_USERNAME=app_migrator`) |
 | Rollback last migration (dev only) | `docker compose run --rm backend php artisan migrate:rollback --step=1` |
 | Seed demo data | `docker compose run --rm backend php artisan db:seed --class=DemoSeeder` |
-| Frontend tests | `docker compose run --rm frontend-dev npm test` |
-| Frontend lint/typecheck | `docker compose run --rm frontend-dev npm run lint && npm run typecheck` |
-| Laravel tests | `docker compose run --rm backend php artisan test` |
-| Python tests | `docker compose run --rm engine uv run pytest` |
+| Frontend tests | `make test-frontend` |
+| Frontend lint/typecheck | `make lint-frontend` |
+| Laravel tests | `make test-backend` (`vendor/bin/phpunit`; `artisan test` warns when no `backend/.env` file exists) |
+| Python tests | `make test-engine` |
 | Trading tests only | `docker compose run --rm engine uv run pytest tests/trading` |
 | Rebuild one service | `docker compose build --no-cache engine && docker compose up -d engine` |
 | Run a worker job manually | `docker compose exec engine uv run python -m app.workers.cli ingest-daily --source demo --date 2026-11-13` |

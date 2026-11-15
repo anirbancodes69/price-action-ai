@@ -1,0 +1,51 @@
+[project]
+name = "priceaction-engine"
+version = "0.1.0"
+description = "PriceAction AI deterministic quantitative engine (internal API + workers)"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "arq>=0.26",
+    "redis>=5.2",
+    "psycopg[binary]>=3.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "httpx>=0.28",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "S", "C4", "SIM", "RUF"]
+ignore = ["S101"] # assert is fine in tests
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106"] # fake tokens in tests
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["app"]
+
+[[tool.mypy.overrides]]
+module = ["arq.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

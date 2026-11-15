@@ -1,0 +1,48 @@
+# Development overlay: hot reload + host access to internal services (bound to 127.0.0.1 only).
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev up -d   (or: make dev)
+services:
+  backend:
+    build:
+      target: dev
+    image: priceaction-ai/backend-dev:local
+    environment:
+      APP_DEBUG: "true"
+      LOG_LEVEL: debug
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+
+  backend-queue:
+    image: priceaction-ai/backend-dev:local
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+
+  backend-scheduler:
+    image: priceaction-ai/backend-dev:local
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+
+  engine:
+    build:
+      target: dev
+    image: priceaction-ai/engine-dev:local
+    ports:
+      - "127.0.0.1:8100:8100"
+    volumes:
+      - ./python-engine:/app
+
+  engine-worker:
+    image: priceaction-ai/engine-dev:local
+    command: ["arq", "app.workers.settings.WorkerSettings", "--watch", "app"]
+    volumes:
+      - ./python-engine:/app
+
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"

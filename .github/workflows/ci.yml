@@ -1,0 +1,134 @@
+# Coordinator: detects changed areas, runs only the relevant component workflows, and ends with a
+# single required status check `ci-gate` (docs/engineering/10_GITHUB_ACTIONS_CI_CD.md §2.1).
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: detect changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      engine: ${{ steps.filter.outputs.engine }}
+      docker: ${{ steps.filter.outputs.docker }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          # Pushes to main and manual runs execute every component regardless of these filters.
+          filters: |
+            shared: &shared
+              - 'contracts/**'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - *shared
+              - 'frontend/**'
+              - '.github/workflows/frontend-ci.yml'
+            backend:
+              - *shared
+              - 'backend/**'
+              - '.github/workflows/backend-ci.yml'
+            engine:
+              - *shared
+              - 'python-engine/**'
+              - 'docs/trading/**'
+              - '.github/workflows/python-engine-ci.yml'
+            docker:
+              - *shared
+              - 'frontend/**'
+              - 'backend/**'
+              - 'python-engine/**'
+              - 'infrastructure/**'
+              - 'docker-compose*.yml'
+              - '.env.example'
+              - 'scripts/setup-env.sh'
+              - '.github/workflows/docker-build.yml'
+
+  semantic-title:
+    name: PR title (Conventional Commits)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            chore
+            refactor
+            test
+            ci
+            build
+            perf
+          scopes: |
+            frontend
+            backend
+            engine
+            contracts
+            infra
+            docs
+            ruleset
+            deps
+          requireScope: true
+
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name != 'pull_request'
+    uses: ./.github/workflows/frontend-ci.yml
+
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name != 'pull_request'
+    uses: ./.github/workflows/backend-ci.yml
+
+  engine:
+    needs: changes
+    if: needs.changes.outputs.engine == 'true' || github.event_name != 'pull_request'
+    uses: ./.github/workflows/python-engine-ci.yml
+
+  docker:
+    needs: changes
+    if: needs.changes.outputs.docker == 'true' || github.event_name != 'pull_request'
+    uses: ./.github/workflows/docker-build.yml
+
+  security:
+    uses: ./.github/workflows/security-scan.yml
+
+  ci-gate:
+    name: ci-gate
+    if: always()
+    needs: [changes, semantic-title, frontend, backend, engine, docker, security]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All required jobs succeeded or were skipped
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if echo "$RESULTS" | jq -e 'to_entries | map(.value.result) | any(. == "failure" or . == "cancelled")' >/dev/null; then
+            echo "::error::One or more required jobs failed or were cancelled."
+            exit 1
+          fi

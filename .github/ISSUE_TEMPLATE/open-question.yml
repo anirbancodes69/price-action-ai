@@ -1,0 +1,11 @@
+name: Open question / spec change
+description: Resolve an OQ-* item or propose a change to the specification
+labels: ["type:spec"]
+body:
+  - type: input
+    id: oq
+    attributes: { label: Open question ID, description: "e.g. OQ-RM-04 (see docs/DOCUMENTATION_STATUS.md)" }
+  - type: textarea
+    id: proposal
+    attributes: { label: Decision or proposal, description: "Which documents/ADRs change?" }
+    validations: { required: true }

@@ -1,0 +1,55 @@
+# Secret scanning and dependency audits (docs/engineering/10_GITHUB_ACTIONS_CI_CD.md §4.6).
+# M0 scope: gitleaks + npm/composer/pip-audit (fail on high/critical).
+# CodeQL is enabled as a repository setting (default setup); Semgrep (PHP) and Trivy image scans
+# are added with image publishing (Phase 2).
+name: security-scan
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1" # weekly, Monday 03:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-audit:
+    name: dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: npm audit (frontend, high+)
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+          coverage: none
+      - name: composer audit (backend)
+        working-directory: backend
+        run: composer audit --locked --no-interaction
+
+      - uses: astral-sh/setup-uv@v6
+      - name: pip-audit (engine runtime dependencies)
+        working-directory: python-engine
+        run: |
+          uv export --frozen --no-dev --no-hashes --no-emit-project -o /tmp/engine-requirements.txt
+          uvx pip-audit --requirement /tmp/engine-requirements.txt --disable-pip --no-deps --strict

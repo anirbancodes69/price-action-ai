@@ -40,6 +40,8 @@ M3 can start on fixture data in parallel with M2.
 
 ### M0 — Repository, Docker and infrastructure foundation
 
+> **Status: complete (2026-11-15)** on branch `chore/m0-foundation`. Deviations: backend-ci and python-engine-ci workflows were pulled forward from M1 because the skeletons exist; Trivy and Semgrep are deferred to Phase 2 image publishing; third-party Actions are pinned by major version tag, not SHA (follow-up); branch protection, secret scanning and CodeQL default setup are GitHub settings to apply once the repository is pushed (ENG-09 §6–7).
+
 | Item | Detail |
 |---|---|
 | Objective | A clean monorepo with a working Compose stack skeleton and required CI checks. |
