@@ -1,0 +1,43 @@
+# Architecture Decision Records
+
+| Field | Value |
+|---|---|
+| Version | 1.0 |
+| Status | Current |
+| Owner | Solution Architect |
+| Last updated | 2026-11-15 |
+
+## Purpose
+
+ADRs record significant, hard-to-reverse decisions with their context and trade-offs. Specifications elsewhere in `docs/` must not contradict an accepted ADR; if they need to, write a new ADR that supersedes the old one.
+
+## Format
+
+Each ADR has: Status, Date, Context, Decision, Alternatives considered, Consequences, Related documents. File name `ADR-NNN-SHORT-TITLE.md`. Statuses: `Proposed`, `Accepted`, `Superseded by ADR-NNN`, `Deprecated`.
+
+## Index
+
+| ADR | Title | Status | Date |
+|---|---|---|---|
+| [ADR-001](ADR-001-FRONTEND-ARCHITECTURE.md) | Next.js App Router Frontend | Accepted | 2026-11-15 |
+| [ADR-002](ADR-002-LARAVEL-APPLICATION-BACKEND.md) | Laravel as Application Backend | Accepted | 2026-11-15 |
+| [ADR-003](ADR-003-PYTHON-QUANTITATIVE-ENGINE.md) | Python as Quantitative Engine | Accepted | 2026-11-15 |
+| [ADR-004](ADR-004-MODULAR-MONOLITH.md) | Modular Monolith with One Separate Quant Service | Accepted | 2026-11-15 |
+| [ADR-005](ADR-005-POSTGRESQL-DATABASE.md) | PostgreSQL as Primary Database | Accepted | 2026-11-15 |
+| [ADR-006](ADR-006-REDIS-CACHING-AND-QUEUES.md) | Redis for Caching, Queues, Sessions and Rate Limiting | Accepted | 2026-11-15 |
+| [ADR-007](ADR-007-MARKET-DATA-PROVIDER-ABSTRACTION.md) | Market Data Provider Abstraction | Accepted | 2026-11-15 |
+| [ADR-008](ADR-008-DETERMINISTIC-TRADING-ENGINE.md) | Deterministic, Versioned Trading Calculations | Accepted | 2026-11-15 |
+| [ADR-009](ADR-009-LLM-EXPLANATION-ONLY.md) | LLM Restricted to Explanation | Accepted | 2026-11-15 |
+| [ADR-010](ADR-010-MANUAL-TRADE-EXECUTION-MVP.md) | Manual Trade Execution in MVP | Accepted | 2026-11-15 |
+| [ADR-011](ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md) | Demo, Personal and Licensed Data Modes with Tenant Isolation | Accepted | 2026-11-15 |
+| [ADR-012](ADR-012-GITHUB-ACTIONS-CI-CD.md) | GitHub Actions for CI/CD | Accepted | 2026-11-15 |
+
+## Candidate future ADRs
+
+| Topic | Trigger |
+|---|---|
+| LLM provider selection | OQ-AI-01 resolved |
+| Licensed market-data vendor | Before G3 |
+| PostgreSQL RLS adoption | M10 |
+| Edge proxy and hosting provider | M10 (OQ-OPS-01) |
+| Kite app model (platform app vs bring-your-own key) | OQ-SEC-01 resolved |

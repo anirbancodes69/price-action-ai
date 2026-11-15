@@ -1,0 +1,48 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Environment & secrets (templates are committed as .env.example)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local compose overrides
+docker-compose.override.yml
+
+# Node / Next.js
+**/node_modules/
+**/.next/
+**/out/
+**/coverage/
+**/*.tsbuildinfo
+
+# PHP / Laravel
+backend/vendor/
+backend/storage/*.key
+backend/public/hot
+backend/public/storage
+backend/.phpunit.result.cache
+backend/.phpunit.cache/
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.hypothesis/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Backup of the create-next-app nested repo (moved during M0)
+.git-backups/

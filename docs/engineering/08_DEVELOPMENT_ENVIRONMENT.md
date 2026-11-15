@@ -1,0 +1,85 @@
+# Development Environment
+
+| Field | Value |
+|---|---|
+| Document ID | ENG-08 |
+| Version | 0.1.0 |
+| Status | Partially implemented (frontend services exist; others specified) |
+| Owner | Technical Lead |
+| Last updated | 2026-11-15 |
+| Related | [OPS-02 Environment configuration](../operations/02_ENVIRONMENT_CONFIGURATION.md) · [ENG-09 Repository](09_GITHUB_REPOSITORY_STRATEGY.md) · [ARC-01 §11](../architecture/01_SYSTEM_ARCHITECTURE.md#11-deployment-topology) |
+
+## 1. Principles
+
+- Docker Compose is the only required local tool (plus Git). No local PHP, Python or PostgreSQL installation is needed; Node is optional for editor tooling.
+- One `docker-compose.yml` at the root; development overrides via Compose **profiles** (`dev`) and an optional `docker-compose.override.yml` (gitignored).
+- Services mirror production topology (ARC-01) so behaviour matches.
+
+## 2. Current state
+
+`docker-compose.yml` today defines:
+
+| Service | Purpose | Port |
+|---|---|---|
+| `frontend` | Production build (standalone Next.js) | 3000 |
+| `frontend-dev` (profile `dev`) | Hot reload, bind-mounted source | 3001 |
+
+```bash
+docker compose up --build frontend            # http://localhost:3000
+docker compose --profile dev up frontend-dev  # http://localhost:3001
+```
+
+## 3. Target services (M0–M2)
+
+| Service | Image / build | Ports (host, dev only) | Depends on | Health check |
+|---|---|---|---|---|
+| `frontend` / `frontend-dev` | `frontend/Dockerfile(.dev)` | 3000 / 3001 | backend | `GET /login` (existing) → `/api/health` proxy later |
+| `backend` | `backend/Dockerfile` (php-fpm) | — | postgres, redis | `php-fpm-healthcheck` |
+| `backend-nginx` | nginx | 8000 | backend | `GET /api/health` |
+| `backend-queue` | backend image, `php artisan horizon` | — | redis | `horizon:status` |
+| `backend-scheduler` | backend image, `php artisan schedule:work` | — | redis | process |
+| `engine` | `python-engine/Dockerfile`, uvicorn | 8100 (dev only) | postgres, redis | `GET /health` |
+| `engine-worker` | engine image, `arq app.workers.WorkerSettings` | — | redis, postgres | arq health key |
+| `postgres` | `postgres:17` + init script for roles/extensions | 5432 (dev only) | — | `pg_isready` |
+| `redis` | `redis:7.4` (or valkey) | 6379 (dev only) | — | `redis-cli ping` |
+| `mailpit` (profile `dev`) | local SMTP catcher | 8025 | — | — |
+
+Named volumes: `pgdata`, `redisdata`. Dev profile bind-mounts source for backend and engine with auto-reload (`uvicorn --reload`, PHP-FPM reads files directly).
+
+## 4. Commands
+
+A `Makefile` (or `scripts/dev.sh`) wraps the commands below; the raw Compose commands are canonical.
+
+| Task | Command |
+|---|---|
+| Initial setup | `cp .env.example .env` (and per-service `.env.example`) → `docker compose build` → `docker compose up -d postgres redis` → `docker compose run --rm backend php artisan key:generate` → `docker compose run --rm backend php artisan migrate --seed` |
+| Start all (dev) | `docker compose --profile dev up -d` |
+| Start production-like | `docker compose up -d --build` |
+| Stop | `docker compose down` (keep volumes) |
+| Reset everything | `docker compose down -v` (**deletes local DB**) |
+| Logs | `docker compose logs -f backend engine-worker` |
+| Shell | `docker compose exec backend sh` / `docker compose exec engine sh` |
+| Migrations | `docker compose run --rm backend php artisan migrate` |
+| Rollback last migration (dev only) | `docker compose run --rm backend php artisan migrate:rollback --step=1` |
+| Seed demo data | `docker compose run --rm backend php artisan db:seed --class=DemoSeeder` |
+| Frontend tests | `docker compose run --rm frontend-dev npm test` |
+| Frontend lint/typecheck | `docker compose run --rm frontend-dev npm run lint && npm run typecheck` |
+| Laravel tests | `docker compose run --rm backend php artisan test` |
+| Python tests | `docker compose run --rm engine uv run pytest` |
+| Trading tests only | `docker compose run --rm engine uv run pytest tests/trading` |
+| Rebuild one service | `docker compose build --no-cache engine && docker compose up -d engine` |
+| Run a worker job manually | `docker compose exec engine uv run python -m app.workers.cli ingest-daily --source demo --date 2026-11-13` |
+
+## 5. Environment files
+
+Templates committed: `/.env.example` (Compose-level), `backend/.env.example`, `python-engine/.env.example`, `frontend/.env.example`. Real `.env` files are gitignored. Variables are listed in [OPS-02](../operations/02_ENVIRONMENT_CONFIGURATION.md). Local development never needs real Kite credentials: DEMO provider works offline; Kite can be enabled with a personal developer app.
+
+## 6. Editor support (optional)
+
+Dev containers (`.devcontainer/`) may be added later; not required. Lint/format run inside containers via pre-commit hooks (`scripts/pre-commit`) that call `docker compose run`.
+
+## 7. Known local quirks
+
+- macOS file watching in containers: `WATCHPACK_POLLING=true` is already set in `frontend/Dockerfile.dev`.
+- `frontend/AGENTS.md` is regenerated by `next dev`; commit it to keep the tree clean (as the file itself notes).
+- Remove `.DS_Store` and `frontend/tsconfig.tsbuildinfo` from version control via root `.gitignore` (M0).

@@ -1,0 +1,24 @@
+# PriceAction AI — local stack. Phase 1 contains the frontend only;
+# the Laravel API and Python analysis engine will be added as services later.
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: priceaction-ai/frontend:latest
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  # Hot-reload development server: `docker compose --profile dev up frontend-dev`
+  frontend-dev:
+    profiles: ["dev"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
