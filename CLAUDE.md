@@ -17,13 +17,14 @@ Current state: **[CURRENT.md](CURRENT.md)**. Milestones: **[ROADMAP.md](ROADMAP.
 
 ```
 frontend/        Next.js 16 app (Phase 1 UI, mock data only). Read frontend/AGENTS.md before framework-level changes.
-backend/         Laravel 13 application backend (M0 skeleton: health endpoint only)
+backend/         Laravel 13 application backend (health endpoint + ARC-03 §4–§7 schema migrations; no /api/v1 yet)
 python-engine/   FastAPI quant engine + arq workers (M0 skeleton: health/ping only)
 contracts/       OpenAPI + engine JSON Schemas (planned, M1; directory does not exist yet)
 infrastructure/  Docker configs (nginx, postgres init, redis)
 scripts/         setup-env.sh
 docs/            Authoritative specification. Start at docs/README.md
 .github/         CI workflows (ci-gate), templates, CODEOWNERS, Dependabot
+.claude/skills/  Project Claude Code skills (task workflows that point into docs/; see §10)
 ```
 
 ## 2. Mandatory technology decisions
@@ -80,7 +81,7 @@ Next.js (App Router) · React · TypeScript (strict) · Tailwind CSS · TradingV
 1. Read this file and [CURRENT.md](CURRENT.md).
 2. Read the relevant milestone in [ROADMAP.md](ROADMAP.md) → [ENG-01](docs/engineering/01_IMPLEMENTATION_ROADMAP.md), plus the relevant tasks in [TASKS.md](TASKS.md).
 3. Read the relevant [DECISIONS.md](DECISIONS.md) entries and their ADRs.
-4. Read only the specs that matter for the task (reading order in [docs/README.md §3](docs/README.md#3-reading-order)). Follow cross-references. Do not load all docs.
+4. Load the matching project skill(s) (§10), then read only the specs that matter for the task (reading order in [docs/README.md §3](docs/README.md#3-reading-order)). Follow cross-references. Do not load all docs.
 5. Inspect the existing code you will touch. Identify dependencies and regression risk.
 6. For substantial changes, write an implementation plan first.
 
@@ -120,5 +121,21 @@ Docs evolve with the code, in the same PR. Review the docs below for each kind o
 | Trading logic | TRD-01..08, ENG-04; bump the ruleset version if outputs change |
 | CI, Docker, GitHub, deploy | ENG-08, ENG-09, ENG-10, ENG-11, OPS-01/02, ARC-06 |
 | Architecture | New/updated ADR, DECISIONS.md, ARC-*, ENG-01; CLAUDE.md only if instructions change |
+| Spec renamed or renumbered | References in `.claude/skills/**` (the `docs-sync` link check covers them) |
 
 Do not touch unrelated documents just to show activity.
+
+## 10. Project skills
+
+Skills in [.claude/skills/](.claude/skills/) are short workflows and checklists. They hold no project decisions: they point to the authoritative docs above, and the docs win if the two disagree. Claude loads a skill automatically when a task matches its description, or you can invoke it by name (e.g. `/quant-engine`).
+
+| Skill | Use for |
+|---|---|
+| `price-action-domain` | Any trading concept in any layer (swings, BOS/CHoCH, zones, setups, signals, risk rules); rejecting indicators |
+| `quant-engine` | Code in `python-engine/app/domain`, rulesets, TRD-08 tests, backtest and paper simulation |
+| `market-data` | Providers, ingestion, candles, calendar, data modes, demo data |
+| `schema-and-contracts` | Migrations, grants, seeders, ARC-04 / `contracts/` changes |
+| `frontend-ui` | Anything in `frontend/` |
+| `security-guardrails` | Tokens, secrets, auth, tenancy, grants, logging, dependencies |
+| `quality-gate` | Verifying a change, CI failures, PR readiness |
+| `docs-sync` | End-of-task documentation sync, discrepancies, ADR changes, link check |
