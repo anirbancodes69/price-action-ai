@@ -1,6 +1,6 @@
 # CURRENT — Project State
 
-Last verified: **2026-11-16** against the repository and GitHub (`main` at `094824f`; M1 work on branch `feature/backend-m1-market-data`).
+Last verified: **2026-11-16** against the repository and GitHub (`main` at `54de162`; M1 work on branch `feature/backend-m1-analysis`).
 
 Status vocabulary: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REVIEW`.
 Update this file at the end of every substantial task, based only on verified state.
@@ -22,7 +22,7 @@ Update this file at the end of every substantial task, based only on verified st
 | Frontend data | **Mock only** | Every page reads the `DataSource` mock adapter (`frontend/src/lib/data`). Analysis overlays come from a demo heuristic (`src/mocks/demo-analysis.ts`), **not** the specified trading rules. Login accepts any well-formed email and password. There is no mutation client yet. |
 | Frontend ↔ spec | `NEEDS REVIEW` | 24 known discrepancies (D-01..D-24) in [ENG-02 §9](docs/engineering/02_FRONTEND_ARCHITECTURE.md#9-discrepancy-register), to be resolved in M7. |
 | Documentation | `COMPLETED` (specification) | 58 spec files under `docs/` plus 12 accepted ADRs. They describe the target system, so most of it is **not implemented**. |
-| Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1):** merged: ARC-03 §4–§5 (12 identity and trading-configuration tables, PR #13). On branch, not yet merged: §6 market data (instruments, provider refs, snapshots, universes + memberships, candles, corporate actions, ingestion runs, quality issues, market calendar) and the `trading_preferences.universe_id` FK. All with CHECK/EXCLUDE constraints and DB-constraint tests (22 total). **Not yet:** ARC-03 §7–§8 tables, seeders, domain modules, `/api/v1` endpoints. |
+| Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1), merged:** ARC-03 §4–§5 (12 identity and trading-configuration tables, PR #13) and §6 market data (9 tables + `trading_preferences.universe_id` FK, PR #14). **On branch, not yet merged:** §7 analysis (ruleset versions, candle snapshots, analysis batches/runs, swing points, structure events, price zones, liquidity events, detected setups, AI explanations) with immutability triggers. 41 backend tests incl. 36 database-constraint tests. **Not yet:** ARC-03 §8 trading tables, per-table role grants, seeders, domain modules, `/api/v1` endpoints. |
 | Python engine | `IN PROGRESS` (skeleton only) | FastAPI `/health` and authenticated `/internal/v1/ping`, arq worker settings, structured logging, pytest. `app/domain/` is empty. **No trading logic, providers or ingestion.** |
 | Contracts (`contracts/`) | `NOT STARTED` | Directory does not exist (planned for M1). |
 | Infrastructure | `COMPLETED` (local dev) | Docker Compose with frontend, backend (php-fpm + nginx), queue worker, scheduler, engine, engine worker, PostgreSQL 17 and Redis 7.4, all with health checks. Dev overlay with hot reload. Makefile. `scripts/setup-env.sh`. No staging or production environments. |
@@ -39,12 +39,12 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Work in progress
 
-- Branch `feature/backend-m1-market-data`: **T-101b** (ARC-03 §6 migrations + tests). Verified locally; not yet committed or merged.
+- Branch `feature/backend-m1-analysis`: **T-101c** (ARC-03 §7 migration + tests). Verified locally; not yet committed or merged.
 - Local dev databases created before PR #13 must be recreated (`make reset`), because the stock Laravel `users` migration was replaced (UUID ids, no `name`, no sessions table).
 
 ## Immediate next task
 
-**T-101c — ARC-03 §7 analysis-table migrations** (then T-101d, T-102) — see [TASKS.md](TASKS.md). An owner decision on OQ-RM-04 helps the seed data but does not block it.
+**T-101d — ARC-03 §8 trading-table migrations and per-table writer grants** (then T-102, T-103, T-104, T-105) — see [TASKS.md](TASKS.md). An owner decision on OQ-RM-04 helps the seed data but does not block it.
 
 ## Known blockers
 
