@@ -7,7 +7,7 @@ updates:
     groups:
       frontend-minor-patch: { update-types: [minor, patch] }
     ignore:
-      # Runtime is Node 24; keep type definitions aligned with it.
+      # Runtime is Node 26; keep type definitions aligned with it.
       - { dependency-name: "@types/node", update-types: ["version-update:semver-major"] }
       # Not supported by the Next.js 16 toolchain yet; revisit deliberately, not via bot.
       - { dependency-name: "typescript", update-types: ["version-update:semver-major"] }

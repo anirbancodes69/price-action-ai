@@ -84,7 +84,7 @@ Concurrency: `concurrency: ci-${{ github.ref }}` with `cancel-in-progress: true`
 
 | Job | Steps | Fails when |
 |---|---|---|
-| `install` | `actions/setup-node` (Node 24, cache npm via `package-lock.json`), `npm ci` | lockfile out of sync (npm ci fails) |
+| `install` | `actions/setup-node` (Node 26, cache npm via `package-lock.json`), `npm ci` | lockfile out of sync (npm ci fails) |
 | `lint` | `npm run lint` | ESLint errors |
 | `typecheck` | `npm run typecheck` (`tsc --noEmit`; script added in M0) | type errors |
 | `test` | `npm test -- --run` (Vitest) | test failure |
