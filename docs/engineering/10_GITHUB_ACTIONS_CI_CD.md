@@ -15,6 +15,8 @@ Defines the CI/CD architecture on GitHub Actions (mandatory, constraint C-14) us
 
 ## 2. Workflow organisation
 
+> **Implemented in M0:** `ci.yml`, `frontend-ci.yml`, `backend-ci.yml`, `python-engine-ci.yml`, `docker-build.yml`, `security-scan.yml` (gitleaks + npm/composer/pip-audit). Not yet: `nightly.yml`, `release.yml`, deploy workflows, Trivy, Semgrep, Playwright E2E. Actions are pinned to major tags; switch to commit SHAs (Dependabot keeps them current) before Phase 2.
+
 ```
 .github/workflows/
   ci.yml                 # coordinator: detects changes, calls component workflows, single required gate

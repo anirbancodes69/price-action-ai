@@ -1,16 +1,55 @@
-# PriceAction AI — local stack. Phase 1 contains the frontend only;
-# the Laravel API and Python analysis engine will be added as services later.
+# PriceAction AI — full local/CI stack (docs/engineering/08_DEVELOPMENT_ENVIRONMENT.md).
+#
+#   ./scripts/setup-env.sh                  # once: creates .env with random dev secrets
+#   docker compose up -d --build --wait     # production-like stack
+#   make dev                                # + hot reload (adds docker-compose.dev.yml)
+#
+# Only the frontend (3000) and backend API (8000) are published on the host.
+# engine, postgres and redis stay on the private network (ARC-01 §8); the dev overlay exposes them on 127.0.0.1.
+
+x-backend-env: &backend-env
+  APP_NAME: "PriceAction AI"
+  APP_ENV: ${APP_ENV:-local}
+  APP_KEY: ${APP_KEY:?run ./scripts/setup-env.sh}
+  APP_DEBUG: ${APP_DEBUG:-false}
+  APP_URL: ${APP_URL:-http://localhost:8000}
+  LOG_CHANNEL: stderr
+  LOG_STDERR_FORMATTER: Monolog\Formatter\JsonFormatter
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  DB_CONNECTION: pgsql
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_DATABASE: ${POSTGRES_DB:-priceaction}
+  DB_USERNAME: app_backend
+  DB_PASSWORD: ${DB_BACKEND_PASSWORD:?run ./scripts/setup-env.sh}
+  REDIS_CLIENT: phpredis
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: ${REDIS_PASSWORD:?run ./scripts/setup-env.sh}
+  SESSION_DRIVER: redis
+  CACHE_STORE: redis
+  QUEUE_CONNECTION: redis
+  ENGINE_URL: http://engine:8100
+  ENGINE_SERVICE_TOKEN: ${ENGINE_SERVICE_TOKEN:?run ./scripts/setup-env.sh}
+
+x-engine-env: &engine-env
+  APP_ENV: ${APP_ENV:-local}
+  DATABASE_URL: postgresql://app_engine:${DB_ENGINE_PASSWORD:?run ./scripts/setup-env.sh}@postgres:5432/${POSTGRES_DB:-priceaction}
+  REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/2
+  ENGINE_SERVICE_TOKEN: ${ENGINE_SERVICE_TOKEN}
+  ACTIVE_RULESET: pa-core@0.1.0
+
 services:
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: priceaction-ai/frontend:latest
+    image: priceaction-ai/frontend:${IMAGE_TAG:-local}
     ports:
       - "3000:3000"
     restart: unless-stopped
 
-  # Hot-reload development server: `docker compose --profile dev up frontend-dev`
+  # Hot-reload frontend: `docker compose --profile dev up frontend-dev` (http://localhost:3001)
   frontend-dev:
     profiles: ["dev"]
     build:
@@ -22,3 +61,121 @@ services:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
+
+  backend:
+    build:
+      context: ./backend
+      target: runtime
+    image: priceaction-ai/backend:${IMAGE_TAG:-local}
+    environment: *backend-env
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+
+  backend-nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./infrastructure/docker/nginx/backend.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./backend/public:/var/www/html/public:ro
+    depends_on:
+      backend: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/api/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  backend-queue:
+    image: priceaction-ai/backend:${IMAGE_TAG:-local}
+    command: ["php", "artisan", "queue:work", "redis", "--sleep=3", "--tries=3", "--max-time=3600"]
+    environment: *backend-env
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'artisan queue:work' >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      backend: { condition: service_healthy }
+    restart: unless-stopped
+
+  backend-scheduler:
+    image: priceaction-ai/backend:${IMAGE_TAG:-local}
+    command: ["php", "artisan", "schedule:work"]
+    environment: *backend-env
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'artisan schedule:work' >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      backend: { condition: service_healthy }
+    restart: unless-stopped
+
+  engine:
+    build:
+      context: ./python-engine
+      target: runtime
+    image: priceaction-ai/engine:${IMAGE_TAG:-local}
+    environment: *engine-env
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+
+  engine-worker:
+    image: priceaction-ai/engine:${IMAGE_TAG:-local}
+    command: ["arq", "app.workers.settings.WorkerSettings"]
+    environment: *engine-env
+    healthcheck:
+      test: ["CMD", "arq", "--check", "app.workers.settings.WorkerSettings"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      engine: { condition: service_healthy }
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-priceaction}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run ./scripts/setup-env.sh}
+      DB_MIGRATOR_PASSWORD: ${DB_MIGRATOR_PASSWORD:?run ./scripts/setup-env.sh}
+      DB_BACKEND_PASSWORD: ${DB_BACKEND_PASSWORD}
+      DB_ENGINE_PASSWORD: ${DB_ENGINE_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["sh", "-c", "exec redis-server /usr/local/etc/redis/redis.conf --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    volumes:
+      - redisdata:/data
+      - ./infrastructure/docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:

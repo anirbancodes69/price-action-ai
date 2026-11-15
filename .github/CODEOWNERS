@@ -1,0 +1,12 @@
+# Path-based ownership (docs/engineering/09_GITHUB_REPOSITORY_STRATEGY.md §3).
+# Single maintainer for now; add owners per path as the team grows.
+*                                   @anirbancodes69
+/frontend/                          @anirbancodes69
+/backend/                           @anirbancodes69
+/backend/database/migrations/       @anirbancodes69
+/python-engine/                     @anirbancodes69
+/python-engine/app/domain/          @anirbancodes69
+/contracts/                         @anirbancodes69
+/docs/                              @anirbancodes69
+/.github/                           @anirbancodes69
+/infrastructure/                    @anirbancodes69

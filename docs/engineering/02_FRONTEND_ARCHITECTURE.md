@@ -141,7 +141,7 @@ Differences between the current frontend and the specified product. None is fixe
 | D-18 | Levels for NO TRADE | `levels` always present | `levels` null when not applicable | Make optional in types; UI hides | M7 |
 | D-19 | Chart events | `breakout`/`retest`/`breakdown` | `BOS`/`CHOCH`/`WICK_BREACH` + setup stage markers | Adapter + new marker types | M7 |
 | D-20 | Error handling | No `error.tsx` | Route error boundaries | Add | M7 |
-| D-21 | Tooling | No tests, no `typecheck` script | Vitest, `tsc --noEmit` in CI | Add scripts | M0 |
+| D-21 | Tooling | ~~No tests, no `typecheck` script~~ **Resolved in M0:** Vitest 5 (`npm test`), `npm run typecheck` | Vitest, `tsc --noEmit` in CI | Done | M0 |
 | D-22 | Scanner exchange filter | NSE/BSE filter | Remove (NSE only) | Remove | M7 |
 | D-23 | Plan sizing input | Risk budget ₹5,000 default in dialog | Risk % from profile (₹ shown as derived) | See D-06 | M7 |
 | D-24 | Prices | `number` in types | Strings in API | Adapter parses | M7 |

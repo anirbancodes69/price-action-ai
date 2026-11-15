@@ -41,7 +41,7 @@
 | [Data Ingestion Specification](engineering/05_DATA_INGESTION_SPECIFICATION.md) | Specification ready | ARC-03, ARC-08 | OQ-ING-01, OQ-ING-02 | 2026-11-15 |
 | [Error Handling and Logging](engineering/06_ERROR_HANDLING_AND_LOGGING.md) | Specification ready | ARC-01, ARC-04 | — | 2026-11-15 |
 | [Testing Strategy](engineering/07_TESTING_STRATEGY.md) | Specification ready | TRD-08, ENG-10 | — | 2026-11-15 |
-| [Development Environment](engineering/08_DEVELOPMENT_ENVIRONMENT.md) | Partially implemented | ARC-01, OPS-02 | — | 2026-11-15 |
+| [Development Environment](engineering/08_DEVELOPMENT_ENVIRONMENT.md) | Implemented (M0) | ARC-01, OPS-02 | — | 2026-11-15 |
 | [GitHub Repository Strategy](engineering/09_GITHUB_REPOSITORY_STRATEGY.md) | Specification ready | ADR-012 | — | 2026-11-15 |
 | [GitHub Actions CI/CD](engineering/10_GITHUB_ACTIONS_CI_CD.md) | Specification ready (no workflows yet) | ENG-07, ENG-09, ADR-012 | — | 2026-11-15 |
 | [Branching and Release Strategy](engineering/11_BRANCHING_AND_RELEASE_STRATEGY.md) | Specification ready | ENG-09, ENG-10 | — | 2026-11-15 |

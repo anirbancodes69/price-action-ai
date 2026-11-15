@@ -1,0 +1,12 @@
+name: Feature / task
+description: Work item from the roadmap or feature catalog
+labels: ["type:feature"]
+body:
+  - type: input
+    id: ref
+    attributes: { label: Spec reference, description: "Feature ID / FR / milestone, e.g. F-21, FR-060, M6" }
+    validations: { required: true }
+  - type: textarea
+    id: scope
+    attributes: { label: Scope and acceptance criteria }
+    validations: { required: true }

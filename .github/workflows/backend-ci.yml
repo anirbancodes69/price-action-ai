@@ -1,0 +1,84 @@
+# Laravel checks (docs/engineering/10_GITHUB_ACTIONS_CI_CD.md §4.2). Called by ci.yml.
+# M0 scope: composer validation, Pint, PHPUnit, migrations on PostgreSQL.
+# Larastan, OpenAPI contract tests and the previous-release migration check arrive in M1.
+name: backend-ci
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: composer · pint · tests · migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: priceaction_test
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-ephemeral
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d priceaction_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      DB_DATABASE: priceaction_test
+      DB_USERNAME: ci
+      DB_PASSWORD: ci-ephemeral
+      REDIS_HOST: 127.0.0.1
+      REDIS_PASSWORD: ""
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo_pgsql, redis, intl, zip, bcmath, pcntl
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate composer.json / lock
+        run: composer validate --strict
+
+      - name: Composer cache dir
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Ephemeral application key
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+
+      - name: Code style (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Migrations on empty PostgreSQL
+        run: php artisan migrate --force --no-interaction
+
+      - name: Tests
+        run: vendor/bin/phpunit --colors=never
