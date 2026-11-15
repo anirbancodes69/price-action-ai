@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | ARC-03 |
-| Version | 0.2.0 |
-| Status | Specification ready · **partially implemented:** §4–§5 migrated (M1, T-101a); §6–§8 pending |
+| Version | 0.3.0 |
+| Status | Specification ready · **partially implemented:** §4–§6 migrated (M1, T-101a/b); §7–§8 pending |
 | Owner | Solution Architect / Backend Lead |
 | Last updated | 2026-11-16 |
 | Related | [ARC-01 Data ownership](01_SYSTEM_ARCHITECTURE.md#6-data-ownership-writers) · [ARC-04 API](04_API_SPECIFICATION.md) · [ARC-06 Security](06_SECURITY_ARCHITECTURE.md) · [OPS-04 Retention](../operations/04_DATA_RETENTION_AND_BACKUP.md) · [ADR-005](../adr/ADR-005-POSTGRESQL-DATABASE.md) · [ADR-011](../adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md) |
@@ -37,6 +37,12 @@ Migrations are raw SQL in `backend/database/migrations` so constraints match thi
 - `trading_preferences.universe_id` is a plain `uuid` until `universes` exists (§6.4); its FK is added in T-101b.
 - `audit_logs`: `UPDATE`, `DELETE` and `TRUNCATE` are revoked from `app_backend` and `app_engine` when those roles exist (production/dev). CI has no such roles, so that grant is not exercised there.
 - `subscription_entitlements` also has `CHECK (valid_to IS NULL OR valid_to > valid_from)` (not in the original text).
+- §6 (`2026_11_16_000003_create_market_data_tables`) deviations and clarifications:
+  - `candles.ingestion_run_id` is `NOT NULL` (every candle has provenance), so seeders and demo data create an ingestion run first.
+  - `instrument_provider_refs.provider` is restricted to `DEMO`, `ZERODHA_KITE`, `LICENSED_VENDOR` (the spec says "ZERODHA_KITE, ..."), matching `data_sources.provider`.
+  - Added integrity checks not spelled out above: positive `tick_size`/`lot_size`, `effective_to/valid_to > effective_from/valid_from`, ratios both null or both positive, `ingestion_runs` counters and range, `market_calendar` holidays have no session times and `session_close > session_open`.
+  - The duplicate-run guard on `ingestion_runs` only covers runs with a `trade_date`; runs without one (e.g. `BACKFILL`) are not constrained, because NULLs are distinct in a unique index.
+  - Extra indexes: `candles (instrument_id, trade_date)`, `universe_memberships (instrument_id)`, `data_quality_issues (ingestion_run_id)`.
 - Tests: `backend/tests/Feature/Database/` assert the constraints against a real PostgreSQL.
 
 ## 3. Entity-relationship overview

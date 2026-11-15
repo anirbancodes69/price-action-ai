@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Database;
 
-use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -11,6 +10,7 @@ use Tests\TestCase;
 /** ARC-03 §4–§5: constraints that must hold even if application code has a bug. */
 class IdentitySchemaTest extends TestCase
 {
+    use AssertsDatabaseRejects;
     use RefreshDatabase;
 
     private function tenant(string $slug = 'acme'): string
@@ -27,18 +27,6 @@ class IdentitySchemaTest extends TestCase
         DB::table('users')->insert(['id' => $id, 'email' => $email, 'password' => 'x']);
 
         return $id;
-    }
-
-    private function assertRejected(callable $statement): void
-    {
-        try {
-            DB::transaction($statement);
-        } catch (QueryException) {
-            $this->addToAssertionCount(1);
-
-            return;
-        }
-        $this->fail('Expected the database to reject the statement.');
     }
 
     public function test_emails_and_slugs_are_case_insensitive_unique(): void

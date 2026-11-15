@@ -9,7 +9,6 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
-| T-101b | Migrations for ARC-03 §6 market data (instruments, provider refs, snapshots, universes + memberships, candles with OHLC checks, corporate actions, ingestion runs, quality issues, market calendar); add FK `trading_preferences.universe_id → universes` | P0 | M1 | T-101a | Migrate/rollback clean; constraint tests (OHLC validity, effective-date exclusion, duplicate-run guard) pass | NOT STARTED |
 | T-101c | Migrations for ARC-03 §7 analysis (ruleset_versions, candle_snapshots, analysis_batches/runs, swing/structure/zone/liquidity children, detected_setups, ai_explanations) | P0 | M1 | T-101b | Same as T-101b, incl. immutability and unique-run constraints | NOT STARTED |
 | T-101d | Migrations for ARC-03 §8 trading (watchlists, trade_plans with long-only and stop < entry < target checks, paper/actual trades, journal, backtests, notifications) + per-table writer grants (ARC-01 §6) | P0 | M1 | T-101c | Same as T-101b; role-grant test for single-writer tables | NOT STARTED |
 | T-102 | Seeders: ruleset `pa-core 0.1.0`, universes, DEMO data source, demo instruments and candles ported from `frontend/src/mocks` | P0 | M1 | T-101d | Fresh DB migrates and seeds; demo data flagged DEMO | NOT STARTED |
@@ -31,7 +30,7 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
-| T-101a | Migrations for ARC-03 §4–§5 (tenants, users, memberships, profiles, onboarding, audit log, preferences, risk profiles, entitlements, provider connections, data sources, selections) | P0 | M1 | M0 | `make test-backend` green (13 tests incl. 8 schema-constraint tests); rollback + re-migrate clean; Pint clean; `audit_logs` is insert-only for runtime roles. **Verified locally 2026-11-16; awaiting PR + CI.** | NEEDS REVIEW |
+| T-101b | Migrations for ARC-03 §6 market data (9 tables) + FK `trading_preferences.universe_id → universes` | P0 | M1 | T-101a | `make test-backend` green (27 tests, 14 new market-data constraint tests, mutation-checked for OHLC, duplicate-run and membership-overlap); rollback + re-migrate clean; Pint clean. **Verified locally 2026-11-16; awaiting PR + CI.** | NEEDS REVIEW |
 
 ## Blocked
 
@@ -41,5 +40,6 @@ See T-201 (needs a Kite developer app).
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-101a | Migrations for ARC-03 §4–§5 (12 identity and trading-configuration tables) with constraint tests | M1 | 2026-11-16 (PR #13 merged) |
 | T-001 | Project-control documentation (CLAUDE, CURRENT, ROADMAP, DECISIONS, TASKS, CHANGELOG, CONTRIBUTING) and stale-line fixes in `docs/` | — | 2026-11-16 (PR #12 merged; link check clean) |
 | T-000 | M0 foundation: Compose stack with health checks, Laravel/FastAPI skeletons, CI workflows + `ci-gate`, PR/issue templates, CODEOWNERS, Dependabot, "Protect Main" ruleset | M0 | 2026-11-15 (PR #1; ruleset and settings checked via GitHub API 2026-11-16) |
