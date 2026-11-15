@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- Database migrations for ARC-03 §6 market data (instruments, instrument provider refs, effective-dated instrument snapshots, universes and point-in-time memberships, raw daily candles with OHLC checks, corporate actions, ingestion runs with a duplicate-run guard, data-quality issues, market calendar) and the `trading_preferences.universe_id` foreign key, with database-level constraint tests (M1, in progress).
 - Database migrations for ARC-03 §4–§5 (tenants, users, tenant memberships, user profiles, onboarding progress, audit log, trading preferences, risk profiles, subscription entitlements, provider connections, data sources, data source selections) with CHECK and EXCLUDE constraints, insert-only `audit_logs` for runtime roles, and database-level constraint tests (M1, in progress).
 - Project-control documents: `CLAUDE.md`, `CURRENT.md`, `ROADMAP.md`, `DECISIONS.md`, `TASKS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`.
 - M0 foundation (PR #1): Docker Compose stack (Next.js frontend, Laravel 13 php-fpm + nginx, queue worker, scheduler, FastAPI engine, arq worker, PostgreSQL 17 with per-service roles, Redis 7.4) with health checks and a hot-reload dev overlay; Makefile and `scripts/setup-env.sh`.
