@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | ARC-03 |
-| Version | 0.3.0 |
-| Status | Specification ready · **partially implemented:** §4–§6 migrated (M1, T-101a/b); §7–§8 pending |
+| Version | 0.4.0 |
+| Status | Specification ready · **partially implemented:** §4–§7 migrated (M1, T-101a..c); §8 pending |
 | Owner | Solution Architect / Backend Lead |
 | Last updated | 2026-11-16 |
 | Related | [ARC-01 Data ownership](01_SYSTEM_ARCHITECTURE.md#6-data-ownership-writers) · [ARC-04 API](04_API_SPECIFICATION.md) · [ARC-06 Security](06_SECURITY_ARCHITECTURE.md) · [OPS-04 Retention](../operations/04_DATA_RETENTION_AND_BACKUP.md) · [ADR-005](../adr/ADR-005-POSTGRESQL-DATABASE.md) · [ADR-011](../adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md) |
@@ -43,6 +43,15 @@ Migrations are raw SQL in `backend/database/migrations` so constraints match thi
   - Added integrity checks not spelled out above: positive `tick_size`/`lot_size`, `effective_to/valid_to > effective_from/valid_from`, ratios both null or both positive, `ingestion_runs` counters and range, `market_calendar` holidays have no session times and `session_close > session_open`.
   - The duplicate-run guard on `ingestion_runs` only covers runs with a `trade_date`; runs without one (e.g. `BACKFILL`) are not constrained, because NULLs are distinct in a unique index.
   - Extra indexes: `candles (instrument_id, trade_date)`, `universe_memberships (instrument_id)`, `data_quality_issues (ingestion_run_id)`.
+- §7 (`2026_11_16_000004_create_analysis_tables`) deviations and clarifications:
+  - **Immutability is enforced by triggers**, which also bind the table owner, rather than only by revoking `UPDATE`: `candle_snapshots`, `analysis_runs`, `swing_points`, `structure_events`, `price_zones`, `liquidity_events` and `detected_setups` reject every `UPDATE` (ARC-03 §11, C-08). `DELETE` stays possible for the retention job and cascades. `ruleset_versions` rejects changes to `ruleset_code`, `version`, `parameters`, `parameters_hash` and `score_version`, and reverting to `DRAFT`, once the row has left `DRAFT` (the spec named only `parameters`). The role grants for these tables (e.g. no `DELETE` on `candle_snapshots` for application roles) are still to be added in T-101d.
+  - `analysis_runs.primary_setup_id` is `DEFERRABLE INITIALLY DEFERRED`, so the engine pre-generates the setup id and inserts the run and its setups in one transaction without any `UPDATE`.
+  - `analysis_runs.signal_state` is `NOT NULL` (failed or insufficient-history runs use `NO_TRADE`). `result_hash` is nullable, but required when `status = 'COMPLETED'`. `as_of_date` and `duration_ms` are `NOT NULL` (the latter defaults to 0).
+  - `analysis_runs.tenant_id = data_sources.tenant_id` for PERSONAL sources is a cross-table rule; it is not expressible as a `CHECK` and is left to the engine and tests.
+  - Added integrity checks: SemVer-shaped `version`; 64-hex hashes; `activated_at` required unless `DRAFT`; `swing_points` labels must match `kind` and a pivot is confirmed no earlier than its bar (no look-ahead, C-09); zone `low <= high`; setup `status_changed_date >= detected_at_date`; for `LONG` setups `stop < entry < target` when those are present (§13), in addition to `SHORT ⇒ informational` (C-12); `analysis_batches` completed + failed ≤ total.
+  - `ai_explanations`: a `question` exists exactly for `CHART_QA`; `tenant_id` and `user_id` are both set or both null, and `CHART_QA` needs an owner; model fields are required unless `status = 'FALLBACK'`; the foreign key to `analysis_runs` is `RESTRICT`, so a referenced run cannot be deleted (retention rule in §7.4).
+  - Child tables referencing each other (`structure_events.level_swing_point_id`, `detected_setups.anchor_*`) use `ON DELETE CASCADE`, so deleting a run removes all of its rows regardless of constraint ordering.
+  - `analysis_batches` also has `created_at`. Extra indexes: `candle_snapshots (instrument_id, to_date)`, `analysis_runs (analysis_batch_id)`, `ai_explanations (analysis_run_id)`.
 - Tests: `backend/tests/Feature/Database/` assert the constraints against a real PostgreSQL.
 
 ## 3. Entity-relationship overview
