@@ -1,0 +1,36 @@
+{
+  "$defs": {
+    "JobKind": {
+      "enum": [
+        "INGEST_DAILY",
+        "BACKFILL",
+        "INSTRUMENT_SYNC",
+        "ANALYSE_BATCH",
+        "BACKTEST",
+        "PAPER_EOD",
+        "EXPLAIN"
+      ],
+      "title": "JobKind",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Enqueue a job. The payload shape depends on ``kind`` and is validated by the job handler.",
+  "properties": {
+    "kind": {
+      "$ref": "#/$defs/JobKind"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    }
+  },
+  "required": [
+    "kind",
+    "payload"
+  ],
+  "title": "JobCreate",
+  "type": "object"
+}

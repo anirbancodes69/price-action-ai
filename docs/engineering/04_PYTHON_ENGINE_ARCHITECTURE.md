@@ -40,7 +40,7 @@ python-engine/
     explain/                # LLM context builder, prompts/, provider adapters, validator, fallback
     providers/              # MarketDataProvider interface; demo/, kite/
     ingestion/              # jobs: instrument sync, daily, backfill; quality checks
-    db/                     # SQLAlchemy Core tables (read model of Laravel schema), repositories (tenant_id mandatory)
+    db/                     # SQLAlchemy Core tables (read model of Laravel schema; tables.py, T-104), repositories (tenant_id mandatory)
     api/                    # FastAPI app: routers for /internal/v1/*, auth dependency (service token)
     workers/                # arq WorkerSettings, job functions, queues: ingest, analysis, backtest, paper, ai
     schemas/                # Pydantic request/response models → exported to contracts/engine/
@@ -81,7 +81,7 @@ def simulate_exit(bar: Bar, position: OpenPosition, ...) -> ExitResult | None: .
 
 ## 5. Ruleset versioning
 
-- Rulesets are seeded rows in `ruleset_versions` (ARC-03 §7.1) **and** a JSON file in `python-engine/rulesets/pa-core/0.1.0.json`; CI checks they are identical (hash). *Status:* the seeded row exists (T-102, from `backend/database/seeders/data/pa-core-0.1.0.json`); the engine-side JSON file and the CI hash check do not yet (see [ARC-03 §2.1](../architecture/03_DATABASE_DESIGN.md#21-implementation-notes-as-migrated)).
+- Rulesets are seeded rows in `ruleset_versions` (ARC-03 §7.1) **and** a JSON file in `python-engine/rulesets/pa-core/0.1.0.json`; CI checks they are identical (hash). *Status (T-105):* `python-engine/rulesets/pa-core/0.1.0.json` exists, the seeded row comes from the byte-identical `backend/database/seeders/data/pa-core-0.1.0.json`, and `contracts/scripts/check_ruleset_hash.py` (in `contracts-ci.yml`) checks both against each other and against TRD-01 §6. `RulesetParams` (`app/domain/params.py`) is not built yet (M3). History: `python-engine/rulesets/CHANGELOG.md`.
 - The engine loads the active ruleset at startup and caches by id; requests may pin a version (backtests, reproductions).
 - Any change to rule code that alters golden outputs requires a new ruleset version (or patch version when fixing a bug with an explicit changelog entry in `rulesets/CHANGELOG.md`).
 - `engine_version` (package version) is recorded separately.
@@ -106,7 +106,9 @@ Jobs are idempotent (keys: run ids, `(data_source, trade_date)`), retried with b
 
 ## 8. Input/output schemas
 
-Pydantic models in `app/schemas/` are the source of the engine contract; `scripts/export_engine_schemas.py` writes JSON Schema to `contracts/engine/`. CI fails if the exported files are stale.
+Pydantic models in `app/schemas/` are the source of the engine contract (implemented in M1, T-104: 13 models in `EXPORTED_MODELS`: analyse, risk sizing and level validation, jobs, explanations, engine events, the JIT provider token); `scripts/export_engine_schemas.py` writes JSON Schema to `contracts/engine/`. CI fails if the exported files are stale (`python-engine-ci` runs `--check`; `make export-schemas` regenerates them). The contract is validation-mode JSON Schema, one file per model, `additionalProperties: false`; money and prices are decimal strings.
+
+`app/db/tables.py` lists the 32 tables the engine reads or writes (the `app_engine` grants) with column names, types, nullability and primary keys, and no constraints, defaults or foreign keys (the database enforces those). `tests/integration/test_schema_diff.py` compares it with a database migrated by Laravel and fails on any difference; CI sets `REQUIRE_SCHEMA_DIFF=1` so the test cannot silently skip. When a migration changes one of these tables, update `tables.py` in the same PR.
 
 ## 9. Testing boundaries
 

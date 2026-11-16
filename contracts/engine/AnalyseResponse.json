@@ -1,0 +1,34 @@
+{
+  "$defs": {
+    "AnalysisStatus": {
+      "description": "``analysis_runs.status`` (TRD-01 §7).",
+      "enum": [
+        "COMPLETED",
+        "INSUFFICIENT_HISTORY",
+        "INVALID_INPUT",
+        "FAILED"
+      ],
+      "title": "AnalysisStatus",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Synchronous result (within the 2 s budget).",
+  "properties": {
+    "analysis_run_id": {
+      "format": "uuid",
+      "title": "Analysis Run Id",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/AnalysisStatus"
+    }
+  },
+  "required": [
+    "analysis_run_id",
+    "status"
+  ],
+  "title": "AnalyseResponse",
+  "type": "object"
+}

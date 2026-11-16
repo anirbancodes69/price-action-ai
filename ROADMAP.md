@@ -7,7 +7,7 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 | M | Milestone | Objective | Depends on | Status | Completed |
 |---|---|---|---|---|---|
 | M0 | Repository and infrastructure foundation | Monorepo, Compose stack skeleton, GitHub repo config and CI gates | — | `COMPLETED` | 2026-11-15 |
-| M1 | Database and API contracts | ARC-03 schema, seeders, OpenAPI and engine JSON Schemas | M0 | `IN PROGRESS` (ARC-03 §4–§8, role grants, seeders and OpenAPI contract done; engine JSON Schemas and CI checks pending) | — |
+| M1 | Database and API contracts | ARC-03 schema, seeders, OpenAPI and engine JSON Schemas | M0 | `NEEDS REVIEW` (all M1 tasks T-101..T-105 verified locally on a branch; awaiting PR and CI. Fresh DB migrates and seeds, OpenAPI validates, engine schema matches the migrations) | — |
 | M2 | Zerodha integration and market data ingestion | Provider abstraction, DEMO + Kite providers, daily/backfill ingestion | M1 | `NOT STARTED` (verification blocked: OQ-INT-01/02) | — |
 | M3 | Swing points and market structure | TRD-02 pivots and structure state | M1 (can run parallel to M2 on fixtures) | `NOT STARTED` | — |
 | M4 | BOS, CHoCH, support/resistance and liquidity | TRD-02 breaks, TRD-03 zones, liquidity | M2, M3 | `NOT STARTED` | — |
@@ -38,7 +38,7 @@ Full acceptance and exit criteria are in ENG-01 §3.
 
 ## M0 notes
 
-M0 included the GitHub repository configuration (ruleset, squash-only merges, secret scanning, Dependabot, CODEOWNERS, templates) and the GitHub Actions CI implementation. Deviations recorded in ENG-01 M0: backend and engine CI were pulled forward from M1; Trivy and Semgrep were deferred to image publishing; Actions are pinned by tag, not SHA.
+M0 included the GitHub repository configuration (ruleset, squash-only merges, secret scanning, Dependabot, CODEOWNERS, templates) and the GitHub Actions CI implementation. Deviations recorded in ENG-01 M0: backend and engine CI were pulled forward from M1; Trivy and Semgrep were deferred to image publishing; third-party Actions were pinned by tag at first and are now pinned by commit SHA (T-901, 2026-11-17).
 
 ## Open roadmap questions
 

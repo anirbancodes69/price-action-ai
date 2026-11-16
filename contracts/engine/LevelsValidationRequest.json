@@ -1,0 +1,69 @@
+{
+  "$defs": {
+    "Direction": {
+      "description": "SHORT is accepted by the contract and rejected by the rules (``SHORT_NOT_SUPPORTED``, TRD-05).",
+      "enum": [
+        "LONG",
+        "SHORT"
+      ],
+      "title": "Direction",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Validate user-edited levels against the ruleset and the tick size.",
+  "properties": {
+    "direction": {
+      "$ref": "#/$defs/Direction"
+    },
+    "entry": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Entry",
+      "type": "string"
+    },
+    "min_rr": {
+      "anyOf": [
+        {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Min Rr"
+    },
+    "ruleset_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Ruleset Version",
+      "type": "string"
+    },
+    "stop": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Stop",
+      "type": "string"
+    },
+    "target": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Target",
+      "type": "string"
+    },
+    "tick_size": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Tick Size",
+      "type": "string"
+    }
+  },
+  "required": [
+    "direction",
+    "entry",
+    "stop",
+    "target",
+    "tick_size",
+    "ruleset_version"
+  ],
+  "title": "LevelsValidationRequest",
+  "type": "object"
+}

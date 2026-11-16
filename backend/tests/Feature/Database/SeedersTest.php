@@ -34,6 +34,8 @@ class SeedersTest extends TestCase
         $this->assertSame('paqs-0.1.0', $row->score_version);
         $this->assertNotNull($row->activated_at);
         $this->assertSame(hash('sha256', RulesetSeeder::canonicalJson($parameters)), $row->parameters_hash);
+        // Cross-language canonical form: contracts/scripts/check_ruleset_hash.py (Python) computes the same hash for the engine's copy.
+        $this->assertSame('6807859f97e9b52b7b3cc02312efacccc4b03660fe2c6cea498379667ff66deb', $row->parameters_hash);
         $this->assertEqualsCanonicalizing($parameters, json_decode($row->parameters, true));
         $this->assertCount(29, $parameters, 'TRD-01 §6 registry has 29 keys');
         $this->assertSame(5, $parameters['risk.default_max_open_positions']);

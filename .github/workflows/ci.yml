@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - id: filter
-        uses: dorny/paths-filter@v4
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
           # Pushes to main and manual runs execute every component regardless of these filters.
           filters: |
@@ -44,6 +44,9 @@ jobs:
             contracts:
               - *shared
               - 'docs/architecture/04_API_SPECIFICATION.md'
+              - 'docs/trading/01_TRADING_METHODOLOGY.md'
+              - 'python-engine/rulesets/**'
+              - 'backend/database/seeders/data/**'
               - '.github/workflows/contracts-ci.yml'
             frontend:
               - *shared
@@ -57,6 +60,7 @@ jobs:
               - *shared
               - 'python-engine/**'
               - 'docs/trading/**'
+              - 'backend/database/migrations/**'
               - '.github/workflows/python-engine-ci.yml'
             docker:
               - *shared
@@ -140,12 +144,26 @@ jobs:
     needs: [changes, semantic-title, frontend, backend, engine, docker, contracts, security]
     runs-on: ubuntu-latest
     steps:
-      - name: All required jobs succeeded or were skipped
+      # The only required status check (branch ruleset "Protect Main"). A component job may be `skipped` only because its
+      # path filter said the area did not change; anything else that is not `success` blocks the merge. `changes` itself
+      # must succeed (if it were skipped or failed, every other job would be skipped and the gate would pass vacuously),
+      # and the PR title check must succeed on pull requests.
+      - name: Every required job succeeded or was skipped by its path filter
         env:
           RESULTS: ${{ toJSON(needs) }}
+          EVENT: ${{ github.event_name }}
         run: |
           echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
-          if echo "$RESULTS" | jq -e 'to_entries | map(.value.result) | any(. == "failure" or . == "cancelled")' >/dev/null; then
-            echo "::error::One or more required jobs failed or were cancelled."
+          bad="$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success" and .value.result != "skipped") | "\(.key)=\(.value.result)"')"
+          if [ -n "$bad" ]; then
+            echo "::error::Required jobs did not succeed: $bad"
+            exit 1
+          fi
+          if [ "$(echo "$RESULTS" | jq -r '.changes.result')" != "success" ]; then
+            echo "::error::The change-detection job did not succeed, so no component job was evaluated."
+            exit 1
+          fi
+          if [ "$EVENT" = "pull_request" ] && [ "$(echo "$RESULTS" | jq -r '.["semantic-title"].result')" != "success" ]; then
+            echo "::error::The PR title check did not run or did not succeed."
             exit 1
           fi

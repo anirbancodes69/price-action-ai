@@ -1,6 +1,7 @@
 # Python engine checks (docs/engineering/10_GITHUB_ACTIONS_CI_CD.md §4.3). Called by ci.yml.
-# M0 scope: lockfile, Ruff lint + format, mypy (strict), pytest.
-# trading-tests, golden, backtest-correctness and DB integration jobs are added from M1/M3.
+# Lockfile, Ruff lint + format, mypy (strict), pytest, engine JSON Schema export check, and a schema-diff job that
+# compares the SQLAlchemy read model with the schema the Laravel migrations produce (T-104).
+# trading-tests, golden and backtest-correctness jobs are added from M3.
 name: python-engine-ci
 
 on:
@@ -21,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
           cache-dependency-glob: python-engine/uv.lock
@@ -40,5 +41,69 @@ jobs:
       - name: Types
         run: uv run mypy
 
+      - name: Engine JSON Schemas are up to date (contracts/engine)
+        run: uv run python scripts/export_engine_schemas.py --check
+
       - name: Tests
         run: uv run pytest
+
+  schema-diff:
+    name: schema-diff (read model vs Laravel migrations)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: priceaction_test
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-ephemeral
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d priceaction_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0
+        with:
+          php-version: "8.4"
+          extensions: pdo_pgsql, intl, zip, bcmath, pcntl
+          coverage: none
+          tools: composer:v2
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Apply the Laravel migrations to PostgreSQL
+        working-directory: backend
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          DB_DATABASE: priceaction_test
+          DB_USERNAME: ci
+          DB_PASSWORD: ci-ephemeral
+        run: |
+          export APP_KEY="base64:$(openssl rand -base64 32)"
+          php artisan migrate --force --no-interaction
+
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: python-engine/uv.lock
+
+      - name: Install Python 3.13 and dependencies
+        working-directory: python-engine
+        run: |
+          uv python install 3.13
+          uv sync --frozen
+
+      - name: Schema diff (fails instead of skipping when the database is missing)
+        working-directory: python-engine
+        env:
+          REQUIRE_SCHEMA_DIFF: "1"
+          SCHEMA_DIFF_DATABASE_URL: postgresql+psycopg://ci:ci-ephemeral@127.0.0.1:5432/priceaction_test
+        run: uv run pytest tests/integration -rs

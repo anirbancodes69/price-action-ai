@@ -124,6 +124,8 @@ Services: `postgres:17`, `redis:7.4` (integration job only).
 | `integration` | migrate DB with Laravel migration container image (or SQL dump artifact from backend-ci), run `tests/integration` and schema-diff | failure / schema mismatch |
 | `contracts` | `scripts/export_engine_schemas.py --check`; ruleset JSON hash equals seeded ruleset | stale schemas |
 
+*Implemented in M1 (T-104), as built:* `python-engine-ci.yml` has two jobs. `checks` runs ruff, format, mypy, the `export_engine_schemas.py --check` step and pytest. `schema-diff` starts PostgreSQL 17, installs PHP and Composer, applies the Laravel migrations, then runs `tests/integration` with `REQUIRE_SCHEMA_DIFF=1` (the read model must equal the migrated schema). The engine filter in `ci.yml` also includes `backend/database/migrations/**`, so a migration PR runs it. The ruleset-hash check and the other jobs in the table above are not built yet.
+
 ### 4.3a Contracts CI (`contracts-ci.yml`, implemented in M1, T-103)
 
 | Job | Steps | Fails when |
@@ -202,7 +204,22 @@ Required check: **`ci-gate`**, which requires the following component jobs when 
 | Critical vulnerabilities addressed or excepted | `security-scan / dependency-audit`, `trivy` |
 | PR title convention | `ci / semantic-title` |
 
-Gates are introduced progressively per roadmap (M0: frontend, docker, secrets; M1: backend, python, migrations; M3: trading tests; M7: e2e).
+Gates are introduced progressively per roadmap (M0: frontend, docker, secrets; M1: backend, python, migrations, contracts; M3: trading tests; M7: e2e).
+
+**As built after M1 (T-105).** `ci-gate` is the only status check the "Protect Main" ruleset requires (strict). It `needs` every component job, so each gate below is enforced through it. Check names as they appear on a PR:
+
+| Gate | Job (check name) | Runs when |
+|---|---|---|
+| Frontend lint, types, tests, build | `frontend / lint · typecheck · test · build` | `frontend/**` or contracts changed |
+| Laravel style, tests, migrations on empty PostgreSQL | `backend / composer · pint · tests · migrations` | `backend/**` or contracts changed |
+| Python lint, format, types, tests, engine schema export is current | `engine / ruff · mypy · pytest` | `python-engine/**`, `docs/trading/**`, `backend/database/migrations/**` or contracts changed |
+| Engine read model equals the migrated schema | `engine / schema-diff (read model vs Laravel migrations)` | same as above |
+| OpenAPI lint, ARC-04 coverage, rulesets identical | `contracts / openapi lint · ARC-04 coverage · rulesets` | `contracts/**`, ARC-04, TRD-01, `python-engine/rulesets/**` or the seeder data changed |
+| Docker build and Compose smoke | `docker / compose validate · build · smoke` | app, infra or Compose files changed |
+| Secrets and dependencies | `security / gitleaks`, `security / dependency audit` | always |
+| PR title | `PR title (Conventional Commits)` | pull requests (it first repairs a branch-name default title) |
+
+Path filters apply to pull requests only; pushes to `main` and manual runs run everything. `ci-gate` fails unless every needed job is `success` or `skipped`, `changes` is `success` (otherwise a failed change-detection would skip every job and pass vacuously), and, on pull requests, the title check is `success`. The names in the planning table above (`backend-ci / tests`, `python-engine-ci / unit`, …) are the target shape; several jobs are currently merged into one (for example Pint, tests and migrations in one backend job).
 
 ## 11. Environments and deployment evolution
 
