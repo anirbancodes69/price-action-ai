@@ -1,0 +1,61 @@
+{
+  "$defs": {
+    "JobState": {
+      "enum": [
+        "QUEUED",
+        "RUNNING",
+        "COMPLETED",
+        "FAILED"
+      ],
+      "title": "JobState",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Job state; the durable result is the referenced resource (``result_ref``).",
+  "properties": {
+    "error_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error Code"
+    },
+    "progress_pct": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Progress Pct",
+      "type": "integer"
+    },
+    "result_ref": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Result Ref"
+    },
+    "status": {
+      "$ref": "#/$defs/JobState"
+    }
+  },
+  "required": [
+    "status",
+    "progress_pct"
+  ],
+  "title": "JobStatusResponse",
+  "type": "object"
+}

@@ -9,8 +9,7 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
-| T-104 | Engine Pydantic models + exported `contracts/engine/*.json` schemas; SQLAlchemy table definitions (`python-engine/app/db/tables.py`) | P0 | M1 | T-101d | Pydantic models and JSON Schemas exported; engine read model matches the migrated schema (schema-diff test) | NOT STARTED |
-| T-105 | Add M1 required checks: `backend / migrations`, `backend / tests`, `python-engine / tests` covered by `ci-gate` | P1 | M1 | T-101d, T-104 | Checks run on PRs touching backend/engine; documented in ENG-10 §10 | NOT STARTED |
+| T-105 | Add M1 required checks: `backend / migrations`, `backend / tests`, `python-engine / tests` covered by `ci-gate` | P1 | M1 | T-101d | Checks run on PRs touching backend/engine; documented in ENG-10 §10 | NOT STARTED |
 
 ## Backlog
 
@@ -36,6 +35,7 @@ See T-201 (needs a Kite developer app).
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-104 | Engine Pydantic contract models (13, `app/schemas`) exported to `contracts/engine/*.json`; SQLAlchemy read model `app/db/tables.py` (32 tables); schema-diff test; `export_engine_schemas.py --check` and a `schema-diff` job in `python-engine-ci.yml` | M1 | 2026-11-17 (23 engine tests, ruff/format/mypy clean; schema-diff 4/4 against a freshly migrated DB and caught an injected type and nullability drift; CI pending) |
 | T-103 | `contracts/api/openapi.yaml` derived from ARC-04 (88 operations, `x-arc04-id`), Redocly lint + ARC-04 coverage check in `contracts-ci.yml` (wired into `ci-gate`) | M1 | 2026-11-17 (lint clean, coverage 88/88, checker tests 6/6 locally; PR pending) |
 | T-102 | Seeders: ruleset `pa-core 0.1.0` (ACTIVE, HYPOTHESIS), six universes, DEMO data source, 36 demo equities + 3 NSE indices, DEMO universe membership, one backfill ingestion run and 8,640 generated demo candles (PHP port of `frontend/src/mocks`, parity-tested); `make seed` | M1 | 2026-11-17 (verified locally: 67 backend tests; seeded twice on a fresh DB; PR #19 merged) |
 | T-003 | Adopt `docs/design-standards.md` across the frontend (ADR-013) | — | 2026-11-16 (PR #18 merged) |

@@ -57,6 +57,7 @@ jobs:
               - *shared
               - 'python-engine/**'
               - 'docs/trading/**'
+              - 'backend/database/migrations/**'
               - '.github/workflows/python-engine-ci.yml'
             docker:
               - *shared

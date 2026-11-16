@@ -1,0 +1,148 @@
+{
+  "$defs": {
+    "BookKind": {
+      "description": "The paper and actual books are never mixed (constraint C-11).",
+      "enum": [
+        "PAPER",
+        "ACTUAL"
+      ],
+      "title": "BookKind",
+      "type": "string"
+    },
+    "Direction": {
+      "description": "SHORT is accepted by the contract and rejected by the rules (``SHORT_NOT_SUPPORTED``, TRD-05).",
+      "enum": [
+        "LONG",
+        "SHORT"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "OpenPosition": {
+      "additionalProperties": false,
+      "description": "One open position in the same book as the plan (TRD-05 §2).",
+      "properties": {
+        "cost_basis": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Cost Basis",
+          "type": "string"
+        },
+        "open_risk": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Open Risk",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cost_basis",
+        "open_risk"
+      ],
+      "title": "OpenPosition",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Inputs of TRD-05 §2. Laravel supplies capital, the risk profile and the open positions of one book.",
+  "properties": {
+    "book": {
+      "$ref": "#/$defs/BookKind"
+    },
+    "capital": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Capital",
+      "type": "string"
+    },
+    "direction": {
+      "$ref": "#/$defs/Direction"
+    },
+    "entry": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Entry",
+      "type": "string"
+    },
+    "lot_size": {
+      "default": 1,
+      "minimum": 1,
+      "title": "Lot Size",
+      "type": "integer"
+    },
+    "max_heat_pct": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Max Heat Pct",
+      "type": "string"
+    },
+    "max_open_positions": {
+      "minimum": 1,
+      "title": "Max Open Positions",
+      "type": "integer"
+    },
+    "max_position_pct": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Max Position Pct",
+      "type": "string"
+    },
+    "min_rr": {
+      "anyOf": [
+        {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "User override; only accepted when stricter than the ruleset value.",
+      "title": "Min Rr"
+    },
+    "open_positions": {
+      "items": {
+        "$ref": "#/$defs/OpenPosition"
+      },
+      "title": "Open Positions",
+      "type": "array"
+    },
+    "risk_pct": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Risk Pct",
+      "type": "string"
+    },
+    "ruleset_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Ruleset Version",
+      "type": "string"
+    },
+    "stop": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Stop",
+      "type": "string"
+    },
+    "target": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Target",
+      "type": "string"
+    },
+    "tick_size": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Tick Size",
+      "type": "string"
+    }
+  },
+  "required": [
+    "book",
+    "direction",
+    "capital",
+    "risk_pct",
+    "entry",
+    "stop",
+    "target",
+    "tick_size",
+    "max_open_positions",
+    "max_heat_pct",
+    "max_position_pct",
+    "ruleset_version"
+  ],
+  "title": "PositionSizeRequest",
+  "type": "object"
+}

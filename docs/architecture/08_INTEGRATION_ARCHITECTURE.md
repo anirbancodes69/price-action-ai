@@ -106,7 +106,7 @@ Defined in [ENG-05 §6–8](../engineering/05_DATA_INGESTION_SPECIFICATION.md). 
 
 ## 5. Internal engine API (Laravel → engine)
 
-Base: `http://engine:8100/internal/v1`, header `Authorization: Bearer ${ENGINE_SERVICE_TOKEN}`, `X-Request-Id`, `X-Tenant-Id`/`X-User-Id` (asserted context). Schemas are Pydantic models exported as JSON Schema to `contracts/engine/` and verified by Laravel contract tests.
+Base: `http://engine:8100/internal/v1`, header `Authorization: Bearer ${ENGINE_SERVICE_TOKEN}`, `X-Request-Id`, `X-Tenant-Id`/`X-User-Id` (asserted context). Schemas are Pydantic models exported as JSON Schema to `contracts/engine/` (13 files, T-104; `ProviderAccessToken` uses `SecretStr`) and verified by Laravel contract tests (M6).
 
 | Endpoint | Purpose | Sync budget | Response |
 |---|---|---|---|

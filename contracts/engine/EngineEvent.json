@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "``POST /internal/v1/events``. Idempotent by ``event_id``.\n\nLaravel turns events into notifications and audit rows.",
+  "properties": {
+    "event_id": {
+      "format": "uuid",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "type": {
+      "description": "Upper-snake event type, e.g. PLAN_TRIGGERED, PAPER_EXIT, INGESTION_COMPLETED, BACKTEST_COMPLETED.",
+      "examples": [
+        "PLAN_TRIGGERED"
+      ],
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_id",
+    "type",
+    "occurred_at",
+    "payload"
+  ],
+  "title": "EngineEvent",
+  "type": "object"
+}

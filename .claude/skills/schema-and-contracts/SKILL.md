@@ -7,7 +7,7 @@ description: Workflow for PriceAction AI database schema and API contract change
 
 Schema and contract changes are the highest-regression-risk changes in this repo: three runtimes share one database and one API. ARC-03 is the schema authority, ARC-04 is the API authority, and from M1 `contracts/` is the machine-readable source (ENG-12 §4 asks reviewers to take particular care).
 
-> Current state: ARC-03 §4–§7 are migrated (4 domain migrations plus the extensions migration), with PHPUnit constraint tests in `backend/tests/Feature/Database/`. Still to come: §8 trading tables and per-table grants (T-101d), seeders (T-102), `contracts/api/openapi.yaml` (T-103), and engine Pydantic models, JSON Schemas and SQLAlchemy tables (T-104). `contracts/api/openapi.yaml` exists (T-103: 88 operations, Redocly lint plus an ARC-04 coverage check in `contracts-ci.yml`); `contracts/engine/` does not yet, and there are no `/api/v1` endpoints.
+> Current state: ARC-03 §4–§8 are migrated with role grants and PHPUnit constraint tests in `backend/tests/Feature/Database/`; seeders exist (T-102). `contracts/api/openapi.yaml` (T-103: 88 operations, Redocly lint plus an ARC-04 coverage check in `contracts-ci.yml`) and `contracts/engine/*.json` (T-104: 13 JSON Schemas exported from `python-engine/app/schemas`, stale-export check in `python-engine-ci.yml`) exist. The engine's SQLAlchemy read model is `python-engine/app/db/tables.py`, guarded by a schema-diff test against the migrated database. There are no `/api/v1` endpoints yet.
 
 ## Required context
 

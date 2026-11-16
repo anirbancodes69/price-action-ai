@@ -40,7 +40,7 @@ python-engine/
     explain/                # LLM context builder, prompts/, provider adapters, validator, fallback
     providers/              # MarketDataProvider interface; demo/, kite/
     ingestion/              # jobs: instrument sync, daily, backfill; quality checks
-    db/                     # SQLAlchemy Core tables (read model of Laravel schema), repositories (tenant_id mandatory)
+    db/                     # SQLAlchemy Core tables (read model of Laravel schema; tables.py, T-104), repositories (tenant_id mandatory)
     api/                    # FastAPI app: routers for /internal/v1/*, auth dependency (service token)
     workers/                # arq WorkerSettings, job functions, queues: ingest, analysis, backtest, paper, ai
     schemas/                # Pydantic request/response models → exported to contracts/engine/
@@ -106,7 +106,9 @@ Jobs are idempotent (keys: run ids, `(data_source, trade_date)`), retried with b
 
 ## 8. Input/output schemas
 
-Pydantic models in `app/schemas/` are the source of the engine contract; `scripts/export_engine_schemas.py` writes JSON Schema to `contracts/engine/`. CI fails if the exported files are stale.
+Pydantic models in `app/schemas/` are the source of the engine contract (implemented in M1, T-104: 13 models in `EXPORTED_MODELS`: analyse, risk sizing and level validation, jobs, explanations, engine events, the JIT provider token); `scripts/export_engine_schemas.py` writes JSON Schema to `contracts/engine/`. CI fails if the exported files are stale (`python-engine-ci` runs `--check`; `make export-schemas` regenerates them). The contract is validation-mode JSON Schema, one file per model, `additionalProperties: false`; money and prices are decimal strings.
+
+`app/db/tables.py` lists the 32 tables the engine reads or writes (the `app_engine` grants) with column names, types, nullability and primary keys, and no constraints, defaults or foreign keys (the database enforces those). `tests/integration/test_schema_diff.py` compares it with a database migrated by Laravel and fails on any difference; CI sets `REQUIRE_SCHEMA_DIFF=1` so the test cannot silently skip. When a migration changes one of these tables, update `tables.py` in the same PR.
 
 ## 9. Testing boundaries
 

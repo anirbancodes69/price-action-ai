@@ -1,0 +1,60 @@
+{
+  "$defs": {
+    "RoundedLevels": {
+      "additionalProperties": false,
+      "description": "Entry, stop and target after tick-size rounding (TRD-01 §5).",
+      "properties": {
+        "entry": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Entry",
+          "type": "string"
+        },
+        "stop": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Stop",
+          "type": "string"
+        },
+        "target": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entry",
+        "stop",
+        "target"
+      ],
+      "title": "RoundedLevels",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "errors": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Errors",
+      "type": "array"
+    },
+    "rounding": {
+      "$ref": "#/$defs/RoundedLevels"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "errors",
+    "warnings",
+    "rounding"
+  ],
+  "title": "LevelsValidationResponse",
+  "type": "object"
+}

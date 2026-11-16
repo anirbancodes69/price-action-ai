@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Build a candle snapshot and analyse one instrument. ``as_of`` defaults to the latest ingested date.",
+  "properties": {
+    "as_of": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "As Of"
+    },
+    "data_source_id": {
+      "format": "uuid",
+      "title": "Data Source Id",
+      "type": "string"
+    },
+    "instrument_id": {
+      "format": "uuid",
+      "title": "Instrument Id",
+      "type": "string"
+    },
+    "ruleset_version": {
+      "examples": [
+        "0.1.0"
+      ],
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Ruleset Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "data_source_id",
+    "instrument_id",
+    "ruleset_version"
+  ],
+  "title": "AnalyseRequest",
+  "type": "object"
+}

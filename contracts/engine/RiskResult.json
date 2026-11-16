@@ -1,0 +1,150 @@
+{
+  "$defs": {
+    "RoundedLevels": {
+      "additionalProperties": false,
+      "description": "Entry, stop and target after tick-size rounding (TRD-01 §5).",
+      "properties": {
+        "entry": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Entry",
+          "type": "string"
+        },
+        "stop": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Stop",
+          "type": "string"
+        },
+        "target": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entry",
+        "stop",
+        "target"
+      ],
+      "title": "RoundedLevels",
+      "type": "object"
+    },
+    "SizingConstraints": {
+      "additionalProperties": false,
+      "description": "Quantity allowed by each constraint (TRD-05 §3).",
+      "properties": {
+        "qty_capital": {
+          "title": "Qty Capital",
+          "type": "integer"
+        },
+        "qty_heat": {
+          "title": "Qty Heat",
+          "type": "integer"
+        },
+        "qty_position_cap": {
+          "title": "Qty Position Cap",
+          "type": "integer"
+        },
+        "qty_risk": {
+          "title": "Qty Risk",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "qty_risk",
+        "qty_capital",
+        "qty_position_cap",
+        "qty_heat"
+      ],
+      "title": "SizingConstraints",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Outcome of a sizing calculation. Rule violations are ``errors`` codes from TRD-05, not exceptions.",
+  "properties": {
+    "actual_risk": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Actual Risk",
+      "type": "string"
+    },
+    "actual_risk_pct": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Actual Risk Pct",
+      "type": "string"
+    },
+    "binding_constraint": {
+      "title": "Binding Constraint",
+      "type": "string"
+    },
+    "constraints": {
+      "$ref": "#/$defs/SizingConstraints"
+    },
+    "errors": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Errors",
+      "type": "array"
+    },
+    "position_value": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Position Value",
+      "type": "string"
+    },
+    "quantity": {
+      "minimum": 0,
+      "title": "Quantity",
+      "type": "integer"
+    },
+    "risk_budget": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Risk Budget",
+      "type": "string"
+    },
+    "risk_per_share": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Risk Per Share",
+      "type": "string"
+    },
+    "rounding": {
+      "$ref": "#/$defs/RoundedLevels"
+    },
+    "rr": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Rr",
+      "type": "string"
+    },
+    "ruleset_version": {
+      "examples": [
+        "pa-core 0.1.0"
+      ],
+      "title": "Ruleset Version",
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "quantity",
+    "risk_budget",
+    "risk_per_share",
+    "actual_risk",
+    "actual_risk_pct",
+    "position_value",
+    "rr",
+    "binding_constraint",
+    "constraints",
+    "rounding",
+    "warnings",
+    "errors",
+    "ruleset_version"
+  ],
+  "title": "RiskResult",
+  "type": "object"
+}

@@ -1,0 +1,58 @@
+{
+  "$defs": {
+    "ExplanationKind": {
+      "enum": [
+        "SETUP_SUMMARY",
+        "CHART_QA"
+      ],
+      "title": "ExplanationKind",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Enqueue an explanation. A question exists exactly for ``CHART_QA`` (ARC-03 §7).",
+  "properties": {
+    "analysis_run_id": {
+      "format": "uuid",
+      "title": "Analysis Run Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/ExplanationKind"
+    },
+    "question": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "minLength": 3,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Question"
+    },
+    "setup_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Setup Id"
+    }
+  },
+  "required": [
+    "analysis_run_id",
+    "kind"
+  ],
+  "title": "ExplanationRequest",
+  "type": "object"
+}

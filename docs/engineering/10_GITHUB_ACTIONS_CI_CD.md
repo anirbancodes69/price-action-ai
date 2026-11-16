@@ -124,6 +124,8 @@ Services: `postgres:17`, `redis:7.4` (integration job only).
 | `integration` | migrate DB with Laravel migration container image (or SQL dump artifact from backend-ci), run `tests/integration` and schema-diff | failure / schema mismatch |
 | `contracts` | `scripts/export_engine_schemas.py --check`; ruleset JSON hash equals seeded ruleset | stale schemas |
 
+*Implemented in M1 (T-104), as built:* `python-engine-ci.yml` has two jobs. `checks` runs ruff, format, mypy, the `export_engine_schemas.py --check` step and pytest. `schema-diff` starts PostgreSQL 17, installs PHP and Composer, applies the Laravel migrations, then runs `tests/integration` with `REQUIRE_SCHEMA_DIFF=1` (the read model must equal the migrated schema). The engine filter in `ci.yml` also includes `backend/database/migrations/**`, so a migration PR runs it. The ruleset-hash check and the other jobs in the table above are not built yet.
+
 ### 4.3a Contracts CI (`contracts-ci.yml`, implemented in M1, T-103)
 
 | Job | Steps | Fails when |
