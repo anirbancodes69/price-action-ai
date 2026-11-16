@@ -2,8 +2,9 @@
 
 Laravel migrations in backend/database/migrations own the schema (ARC-03, ADR-005); the engine never migrates.
 This module lists only the tables the engine reads or writes (the app_engine grants in
-2026_11_16_000006_apply_role_grants), with column names, types, nullability and primary keys. It carries no
-constraints, defaults or foreign keys: the database enforces them.
+apply_role_grants(), last redefined by 2026_11_17_000001_adopt_intraday_time_model), with column names,
+types, nullability and primary keys. It carries no constraints, defaults or foreign keys: the database
+enforces them.
 tests/integration/test_schema_diff.py compares this module with the migrated PostgreSQL schema and
 fails when they drift (ENG-04 §2, ENG-10).
 
@@ -18,7 +19,6 @@ from sqlalchemy import (
     Date,
     DateTime,
     Integer,
-    LargeBinary,
     MetaData,
     Numeric,
     SmallInteger,
@@ -71,6 +71,15 @@ analysis_batches = Table(
     Column("started_at", DateTime(timezone=True), nullable=True),
     Column("finished_at", DateTime(timezone=True), nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("as_of_ts", DateTime(timezone=True), nullable=False),
+)
+
+analysis_run_inputs = Table(
+    "analysis_run_inputs",
+    metadata,
+    Column("analysis_run_id", Uuid(), primary_key=True, nullable=False),
+    Column("role", Text(), primary_key=True, nullable=False),
+    Column("candle_snapshot_id", Uuid(), nullable=False),
 )
 
 analysis_runs = Table(
@@ -81,7 +90,6 @@ analysis_runs = Table(
     Column("data_source_id", Uuid(), nullable=False),
     Column("analysis_batch_id", Uuid(), nullable=True),
     Column("instrument_id", Uuid(), nullable=False),
-    Column("candle_snapshot_id", Uuid(), nullable=False),
     Column("ruleset_version_id", Uuid(), nullable=False),
     Column("engine_version", Text(), nullable=False),
     Column("as_of_date", Date(), nullable=False),
@@ -95,6 +103,7 @@ analysis_runs = Table(
     Column("error_code", Text(), nullable=True),
     Column("duration_ms", Integer(), nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("as_of_ts", DateTime(timezone=True), nullable=False),
 )
 
 audit_logs = Table(
@@ -172,6 +181,25 @@ backtest_trades = Table(
     Column("r_multiple", Numeric(8, 4), nullable=True),
     Column("paqs_score", SmallInteger(), nullable=True),
     Column("structure_state_at_entry", Text(), nullable=True),
+    Column("signal_at", DateTime(timezone=True), nullable=False),
+    Column("entry_at", DateTime(timezone=True), nullable=True),
+    Column("exit_at", DateTime(timezone=True), nullable=True),
+)
+
+candle_revisions = Table(
+    "candle_revisions",
+    metadata,
+    Column("data_source_id", Uuid(), primary_key=True, nullable=False),
+    Column("instrument_id", Uuid(), primary_key=True, nullable=False),
+    Column("timeframe", Text(), primary_key=True, nullable=False),
+    Column("bar_start", DateTime(timezone=True), primary_key=True, nullable=False),
+    Column("revision", SmallInteger(), primary_key=True, nullable=False),
+    Column("open", Numeric(12, 2), nullable=False),
+    Column("high", Numeric(12, 2), nullable=False),
+    Column("low", Numeric(12, 2), nullable=False),
+    Column("close", Numeric(12, 2), nullable=False),
+    Column("volume", BigInteger(), nullable=False),
+    Column("replaced_at", DateTime(timezone=True), nullable=False),
 )
 
 candle_snapshots = Table(
@@ -186,8 +214,10 @@ candle_snapshots = Table(
     Column("bar_count", Integer(), nullable=False),
     Column("price_basis", Text(), nullable=False),
     Column("content_hash", Text(), nullable=False),
-    Column("payload", LargeBinary(), nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("from_bar_start", DateTime(timezone=True), nullable=False),
+    Column("to_bar_start", DateTime(timezone=True), nullable=False),
+    Column("max_revision", SmallInteger(), nullable=False),
 )
 
 candles = Table(
@@ -196,7 +226,7 @@ candles = Table(
     Column("data_source_id", Uuid(), primary_key=True, nullable=False),
     Column("instrument_id", Uuid(), primary_key=True, nullable=False),
     Column("timeframe", Text(), primary_key=True, nullable=False),
-    Column("trade_date", Date(), primary_key=True, nullable=False),
+    Column("trade_date", Date(), nullable=False),
     Column("open", Numeric(12, 2), nullable=False),
     Column("high", Numeric(12, 2), nullable=False),
     Column("low", Numeric(12, 2), nullable=False),
@@ -205,6 +235,7 @@ candles = Table(
     Column("ingestion_run_id", Uuid(), nullable=False),
     Column("revision", SmallInteger(), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
+    Column("bar_start", DateTime(timezone=True), primary_key=True, nullable=False),
 )
 
 corporate_actions = Table(
@@ -283,6 +314,9 @@ detected_setups = Table(
     Column("anchor_swing_point_id", Uuid(), nullable=True),
     Column("evidence", JSONB(), nullable=False),
     Column("reason_codes", ARRAY(Text()), nullable=False),
+    Column("detected_at_bar_start", DateTime(timezone=True), nullable=False),
+    Column("signal_at", DateTime(timezone=True), nullable=True),
+    Column("valid_until", DateTime(timezone=True), nullable=True),
 )
 
 ingestion_runs = Table(
@@ -306,6 +340,8 @@ ingestion_runs = Table(
     Column("started_at", DateTime(timezone=True), nullable=True),
     Column("finished_at", DateTime(timezone=True), nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("timeframe", Text(), nullable=True),
+    Column("bar_start", DateTime(timezone=True), nullable=True),
 )
 
 instrument_provider_refs = Table(
@@ -381,6 +417,8 @@ liquidity_events = Table(
     Column("first_date", Date(), nullable=False),
     Column("last_date", Date(), nullable=False),
     Column("refs", JSONB(), nullable=False),
+    Column("first_bar_start", DateTime(timezone=True), nullable=False),
+    Column("last_bar_start", DateTime(timezone=True), nullable=False),
 )
 
 market_calendar = Table(
@@ -444,6 +482,8 @@ paper_trades = Table(
     Column("cost_schedule_version", Text(), nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
+    Column("entry_at", DateTime(timezone=True), nullable=False),
+    Column("exit_at", DateTime(timezone=True), nullable=True),
 )
 
 price_zones = Table(
@@ -463,6 +503,8 @@ price_zones = Table(
     Column("broken_at_date", Date(), nullable=True),
     Column("member_swing_point_ids", ARRAY(Uuid()), nullable=False),
     Column("distance_pct", Numeric(6, 3), nullable=True),
+    Column("formed_at_bar_start", DateTime(timezone=True), nullable=False),
+    Column("broken_at_bar_start", DateTime(timezone=True), nullable=True),
 )
 
 risk_profiles = Table(
@@ -476,11 +518,15 @@ risk_profiles = Table(
     Column("trading_capital", Numeric(14, 2), nullable=False),
     Column("risk_per_trade_pct", Numeric(6, 3), nullable=False),
     Column("max_open_positions", SmallInteger(), nullable=False),
-    Column("max_portfolio_heat_pct", Numeric(6, 3), nullable=False),
-    Column("max_position_pct", Numeric(6, 3), nullable=False),
+    Column("max_portfolio_heat_pct", Numeric(6, 3), nullable=True),
+    Column("max_position_pct", Numeric(6, 3), nullable=True),
     Column("min_rr", Numeric(8, 4), nullable=True),
     Column("max_entry_gap_pct", Numeric(6, 3), nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("max_position_value", Numeric(14, 2), nullable=True),
+    Column("daily_loss_limit_pct", Numeric(6, 3), nullable=True),
+    Column("max_consecutive_losses", SmallInteger(), nullable=True),
+    Column("max_open_risk_pct", Numeric(6, 3), nullable=True),
 )
 
 ruleset_versions = Table(
@@ -511,6 +557,8 @@ structure_events = Table(
     Column("break_date", Date(), nullable=False),
     Column("break_close", Numeric(12, 2), nullable=False),
     Column("close_inside_buffer", Boolean(), nullable=False),
+    Column("timeframe", Text(), nullable=False),
+    Column("break_bar_start", DateTime(timezone=True), nullable=False),
 )
 
 swing_points = Table(
@@ -526,6 +574,9 @@ swing_points = Table(
     Column("confirmed_at_index", Integer(), nullable=False),
     Column("confirmed_at_date", Date(), nullable=False),
     Column("broken_at_date", Date(), nullable=True),
+    Column("timeframe", Text(), nullable=False),
+    Column("bar_start", DateTime(timezone=True), nullable=False),
+    Column("confirmed_at_bar_start", DateTime(timezone=True), nullable=False),
 )
 
 trade_plans = Table(
@@ -564,6 +615,8 @@ trade_plans = Table(
     Column("lock_version", Integer(), nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
+    Column("triggered_at", DateTime(timezone=True), nullable=True),
+    Column("valid_until", DateTime(timezone=True), nullable=True),
 )
 
 trading_preferences = Table(

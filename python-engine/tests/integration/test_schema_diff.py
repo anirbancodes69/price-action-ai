@@ -75,7 +75,8 @@ def test_compare_reports_every_kind_of_drift() -> None:
 
 
 def test_read_model_covers_the_tables_the_engine_touches() -> None:
-    # The app_engine grants in backend/database/migrations/2026_11_16_000006_apply_role_grants.php.
+    # The app_engine grants of apply_role_grants() (backend/database/migrations,
+    # last redefined in 2026_11_17_000001).
     expected = {
         "data_sources",
         "data_source_selections",
@@ -90,6 +91,7 @@ def test_read_model_covers_the_tables_the_engine_touches() -> None:
         "instrument_snapshots",
         "universe_memberships",
         "candles",
+        "candle_revisions",
         "corporate_actions",
         "ingestion_runs",
         "data_quality_issues",
@@ -97,6 +99,7 @@ def test_read_model_covers_the_tables_the_engine_touches() -> None:
         "ai_explanations",
         "backtest_trades",
         "analysis_runs",
+        "analysis_run_inputs",
         "swing_points",
         "structure_events",
         "price_zones",

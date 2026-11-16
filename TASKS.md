@@ -9,7 +9,7 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
-| T-I09 | I1 expand migrations per ADR-015 (bar timestamps, timeframes, timestamp columns, snapshot by reference, risk state, NSE calendar seed); contracts and `tables.py` | P0 | I1 | T-I02, T-I04..T-I06 | Fresh DB migrates and seeds; all contract and schema checks green | NOT STARTED |
+| T-I09 | I1 expand migrations per ADR-015 (bar timestamps, timeframes, timestamp columns, snapshot by reference, risk state, NSE calendar seed); contracts and `tables.py` | P0 | I1 | T-I02, T-I04..T-I06 | Fresh DB migrates and seeds; all contract and schema checks green | IN PROGRESS (migration, seeders, engine contracts and read model done; OpenAPI next) |
 
 ## Backlog
 

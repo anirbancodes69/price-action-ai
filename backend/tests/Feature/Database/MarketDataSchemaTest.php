@@ -57,11 +57,15 @@ class MarketDataSchemaTest extends TestCase
 
     private function candle(string $source, string $instrument, string $run, array $override = []): array
     {
-        return array_merge([
+        $row = array_merge([
             'data_source_id' => $source, 'instrument_id' => $instrument, 'timeframe' => '1D',
             'trade_date' => '2026-01-05', 'open' => 100, 'high' => 105, 'low' => 99, 'close' => 104,
             'volume' => 1000, 'ingestion_run_id' => $run,
         ], $override);
+        // Daily bars start at the 09:15 IST session open of their trade_date (ADR-015) unless the test sets bar_start.
+        $row['bar_start'] ??= $row['trade_date'].'T09:15:00+05:30';
+
+        return $row;
     }
 
     public function test_valid_candle_is_stored_and_primary_key_prevents_duplicates(): void
