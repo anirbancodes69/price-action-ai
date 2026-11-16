@@ -11,7 +11,7 @@ Update this file at the end of every substantial task, based only on verified st
 |---|---|
 | Phase | Foundation complete; feature development not yet started |
 | Last completed milestone | **M0** — repository, Docker and CI foundation (merged in PR #1, 2026-11-15) |
-| Current milestone | **M1** — database and contracts: `IN PROGRESS` |
+| Current milestone | **M1** — database and contracts: `NEEDS REVIEW` (all tasks done; PR pending). Next: M2 (blocked on owner access, OQ-INT-01/02/04) or M3 (swing points and structure, can start on fixtures) |
 | Detailed plan | [ROADMAP.md](ROADMAP.md) → [ENG-01](docs/engineering/01_IMPLEMENTATION_ROADMAP.md) |
 
 ## Component status
@@ -41,12 +41,12 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Work in progress
 
-- Branch `feature/contracts-openapi-spec`: **T-103** (OpenAPI contract from ARC-04) — done, awaiting PR. Groww decision deferred (OQ-INT-04, T-203) and T-102 seeders are merged (PR #19).
+- Branch `feature/m1-engine-contracts-and-ci-hardening`: **T-104** (engine contract and read model), **T-105** (CI gates, ruleset check) and **T-901** (Action pinning) — committed locally, PR pending. Groww decision deferred (OQ-INT-04, T-203) and T-102 seeders are merged (PR #19).
 - Local dev databases created before PR #13 must be recreated (`make reset`), because the stock Laravel `users` migration was replaced (UUID ids, no `name`, no sessions table). After that, `make migrate` then `make seed`. Note: `make migrate` runs the prebuilt image, so run `make build` (or use the dev overlay) after pulling new migrations.
 
 ## Immediate next task
 
-**T-104 — engine Pydantic models, JSON Schemas and SQLAlchemy read model** (then T-105) — see [TASKS.md](TASKS.md).
+**Open the PR for the M1 batch** (T-104, T-105, T-901), then choose the next milestone: M3 can start now (TRD-02 pivots on fixtures); M2 needs the Kite/Groww decisions (T-201/T-203) — see [TASKS.md](TASKS.md).
 
 ## Known blockers
 

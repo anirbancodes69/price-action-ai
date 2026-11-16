@@ -1,6 +1,7 @@
 # Contract checks (docs/engineering/10_GITHUB_ACTIONS_CI_CD.md §4). Called by ci.yml.
-# Lints contracts/api/openapi.yaml and verifies it matches ARC-04 endpoint for endpoint.
-# Engine JSON Schema export checks (T-104) are added here when contracts/engine exists.
+# Lints contracts/api/openapi.yaml and verifies it matches ARC-04 endpoint for endpoint, and verifies that each
+# ruleset file is identical in the engine, the backend seeder and TRD-01 §6. (The engine JSON Schema export check
+# lives in python-engine-ci.yml because it needs the engine's Python environment.)
 name: contracts-ci
 
 on:
@@ -12,7 +13,7 @@ permissions:
 
 jobs:
   openapi:
-    name: openapi lint · ARC-04 coverage
+    name: openapi lint · ARC-04 coverage · rulesets
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -34,5 +35,8 @@ jobs:
       - name: Every ARC-04 endpoint is in the spec (and nothing extra)
         run: python3 -I contracts/scripts/check_arc04_coverage.py "$RUNNER_TEMP/openapi.json"
 
-      - name: Coverage checker tests
+      - name: Rulesets are identical in the engine, the seeder and TRD-01 §6
+        run: python3 -I contracts/scripts/check_ruleset_hash.py
+
+      - name: Checker tests
         run: python3 -I -m unittest discover -s contracts/scripts -p "test_*.py"
