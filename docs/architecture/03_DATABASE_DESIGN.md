@@ -31,7 +31,7 @@ Legend for "Writer": **L** = Laravel, **E** = engine/engine-worker.
 
 ### 2.1 Implementation notes (as migrated)
 
-Migrations are raw SQL in `backend/database/migrations` so constraints match this document exactly. Implemented so far: §4–§5 (`0001_01_01_000000_create_users_table`, `2026_11_16_000001_create_identity_tables`, `2026_11_16_000002_create_trading_configuration_tables`) plus an extensions migration. Deviations and decisions:
+Migrations are raw SQL in `backend/database/migrations` so constraints match this document exactly. Implemented: §4–§8 (`0001_01_01_000000_create_users_table`, `2026_11_16_000001`–`000005`) plus an extensions migration and the role grants (`000006`). Deviations and decisions:
 
 - `users` has no `name` column (the display name is `user_profiles.display_name`) and there is no `sessions` table (Redis).
 - `trading_preferences.universe_id` is a plain `uuid` until `universes` exists (§6.4); its FK is added in T-101b.
@@ -52,7 +52,21 @@ Migrations are raw SQL in `backend/database/migrations` so constraints match thi
   - `ai_explanations`: a `question` exists exactly for `CHART_QA`; `tenant_id` and `user_id` are both set or both null, and `CHART_QA` needs an owner; model fields are required unless `status = 'FALLBACK'`; the foreign key to `analysis_runs` is `RESTRICT`, so a referenced run cannot be deleted (retention rule in §7.4).
   - Child tables referencing each other (`structure_events.level_swing_point_id`, `detected_setups.anchor_*`) use `ON DELETE CASCADE`, so deleting a run removes all of its rows regardless of constraint ordering.
   - `analysis_batches` also has `created_at`. Extra indexes: `candle_snapshots (instrument_id, to_date)`, `analysis_runs (analysis_batch_id)`, `ai_explanations (analysis_run_id)`.
-- Tests: `backend/tests/Feature/Database/` assert the constraints against a real PostgreSQL.
+- §8 (`2026_11_16_000005_create_trading_tables`) deviations and clarifications:
+  - `plan_number` is a plain `NOT NULL integer > 0` with the per-tenant unique; the counter mechanism stays open (OQ-DB-03) and is the application's job.
+  - Integrity checks beyond the spec: engine levels, when present, also satisfy `stop < entry < target`; a `MANUAL` plan has no engine levels; `trade_plans` amounts and `rr` are positive; `setup_key` is 64-hex.
+  - `paper_trades`: `OPEN` has no exit facts, `CLOSED` requires `exit_date`, `exit_price`, `exit_reason`, `gross_pnl` and `net_pnl`; exit and close-request dates are not before `entry_date`. `paper_trade_events` has no uniqueness rule yet (the EOD idempotency key lives in the engine, TRD/ARC-03 §10).
+  - `actual_trades`: `CLOSED` implies `quantity_open = 0` and `closed_at`; `OPEN` has no `closed_at`. The cumulative SELL ≤ BUY rule is not expressible as a `CHECK` and stays an application rule with a test (ARC-03 §10 locking).
+  - `backtest_runs` needs a `universe_id` or `instrument_ids`. `backtest_trades.entry_date` must be after `signal_date` (signal at close *t* fills at *t+1*, C-09); `FILLED` needs entry facts with `stop < entry < target`; `SKIPPED` needs a `skip_reason` and no entry or exit.
+  - `notifications.type` is constrained to an upper-snake shape rather than a closed list, because the spec gives examples only. Extra indexes: `watchlist_items (instrument_id)`, `trade_plans (instrument_id)`, `trade_plans (analysis_run_id)`, `paper_trades (paper_account_id)`, `actual_trades (instrument_id)`, `actual_trades (trade_plan_id)`, `backtest_trades (instrument_id)`.
+- Role grants (`2026_11_16_000006_apply_role_grants`, function `apply_role_grants()`), when `app_backend` and `app_engine` exist (they do not in CI's plain Postgres, where it is a no-op):
+  - Each table has one runtime writer (ARC-01 §6). Laravel owns identity, configuration, `data_sources`, `universes`, `market_calendar`, `ruleset_versions`, watchlists, plans, paper accounts, actual trades, journal edits, notifications. The engine owns market data, candle snapshots, analysis tables, `ai_explanations`, `backtest_trades`. `universes` and `market_calendar` are marked "E/L" in this document; Laravel is the runtime writer because they are seeded, while `universe_memberships` is the engine's.
+  - Shared writes are column-level `UPDATE` grants: the engine updates `trade_plans (status, status_reason, triggered_on, lock_version, updated_at)` and the `backtest_runs` result columns; Laravel updates `paper_trades (current_stop, exit_requested_on, updated_at)` and `backtest_runs (status)`. The engine can `INSERT` journal drafts but not edit them.
+  - `candle_snapshots` has `INSERT`/`SELECT` only for both roles (no `UPDATE`, no `DELETE`); retention deletes run as the schema owner. Analysis runs and children have no `UPDATE` (a trigger enforces this regardless). `audit_logs` is `INSERT`/`SELECT` only.
+  - `provider_connections` is not readable by the engine (tokens reach it through the just-in-time endpoint only).
+  - Default privileges for both roles are removed, so a new table is **closed** until its migration lists it in `apply_role_grants()` and re-runs it. Laravel's `migrations` table is no longer accessible to the runtime roles; migrations run as `app_migrator`.
+  - Engine `notifications` writes are not granted: the spec lists it as Laravel-written, so engine events reach users through Laravel.
+- Tests: `backend/tests/Feature/Database/` assert the constraints against a real PostgreSQL; the grant tests use `has_table_privilege`/`has_column_privilege` and skip when the roles do not exist.
 
 ## 3. Entity-relationship overview
 

@@ -1,6 +1,6 @@
 # CURRENT — Project State
 
-Last verified: **2026-11-16** against the repository and GitHub (`main` at `e6f8a0e`; Claude Code skills on branch `chore/claude-code-skills`).
+Last verified: **2026-11-16** against the repository and GitHub (`main` at `ab4c79d`; M1 work on branch `feature/backend-m1-trading`).
 
 Status vocabulary: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REVIEW`.
 Update this file at the end of every substantial task, based only on verified state.
@@ -23,7 +23,7 @@ Update this file at the end of every substantial task, based only on verified st
 | Frontend ↔ spec | `NEEDS REVIEW` | 24 known discrepancies (D-01..D-24) in [ENG-02 §9](docs/engineering/02_FRONTEND_ARCHITECTURE.md#9-discrepancy-register), to be resolved in M7. |
 | Claude Code skills | `NEEDS REVIEW` | 8 project skills in `.claude/skills/` (price-action-domain, quant-engine, market-data, schema-and-contracts, frontend-ui, security-guardrails, quality-gate, docs-sync). They are workflows that link to the specs, plus two stdlib scripts (docs impact mapping, relative link and anchor check). Indexed in CLAUDE.md §10. No agents and no `.claude/settings.json`. |
 | Documentation | `COMPLETED` (specification) | 58 spec files under `docs/` plus 12 accepted ADRs. They describe the target system, so most of it is **not implemented**. |
-| Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1), merged:** ARC-03 §4–§5 (12 identity and trading-configuration tables, PR #13), §6 market data (9 tables + `trading_preferences.universe_id` FK, PR #14) and §7 analysis (ruleset versions, candle snapshots, analysis batches/runs, swing points, structure events, price zones, liquidity events, detected setups, AI explanations) with immutability triggers (PR #15). 41 backend tests incl. 36 database-constraint tests. **Not yet:** ARC-03 §8 trading tables, per-table role grants, seeders, domain modules, `/api/v1` endpoints. |
+| Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1), merged:** ARC-03 §4–§5 (12 identity and trading-configuration tables, PR #13), §6 market data (9 tables + `trading_preferences.universe_id` FK, PR #14) and §7 analysis (ruleset versions, candle snapshots, analysis batches/runs, swing points, structure events, price zones, liquidity events, detected setups, AI explanations) with immutability triggers (PR #15). **On branch, not yet merged:** §8 trading (watchlists, trade plans, paper and actual trades, journal, backtests, notifications) and single-writer role grants (`apply_role_grants()`; new tables stay closed to the runtime roles until listed). 60 backend tests incl. 55 database tests. **Not yet:** seeders, domain modules, `/api/v1` endpoints. |
 | Python engine | `IN PROGRESS` (skeleton only) | FastAPI `/health` and authenticated `/internal/v1/ping`, arq worker settings, structured logging, pytest. `app/domain/` is empty. **No trading logic, providers or ingestion.** |
 | Contracts (`contracts/`) | `NOT STARTED` | Directory does not exist (planned for M1). |
 | Infrastructure | `COMPLETED` (local dev) | Docker Compose with frontend, backend (php-fpm + nginx), queue worker, scheduler, engine, engine worker, PostgreSQL 17 and Redis 7.4, all with health checks. Dev overlay with hot reload. Makefile. `scripts/setup-env.sh`. No staging or production environments. |
@@ -40,12 +40,12 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Work in progress
 
-- Branch `chore/claude-code-skills`: **T-002** (project Claude Code skills). Structure, frontmatter and link checks verified locally; not yet committed or merged.
+- Branch `feature/backend-m1-trading`: **T-101d** (ARC-03 §8 migration, role grants, tests). Verified locally; not yet committed or merged.
 - Local dev databases created before PR #13 must be recreated (`make reset`), because the stock Laravel `users` migration was replaced (UUID ids, no `name`, no sessions table).
 
 ## Immediate next task
 
-**T-101d — ARC-03 §8 trading-table migrations and per-table writer grants** (then T-102, T-103, T-104, T-105) — see [TASKS.md](TASKS.md). An owner decision on OQ-RM-04 helps the seed data but does not block it.
+**T-102 — seeders** (then T-103, T-104, T-105) — see [TASKS.md](TASKS.md). T-101d awaits PR and CI. An owner decision on OQ-RM-04 helps the seed data but does not block it.
 
 ## Known blockers
 
