@@ -19,7 +19,7 @@ Current state: **[CURRENT.md](CURRENT.md)**. Milestones: **[ROADMAP.md](ROADMAP.
 frontend/        Next.js 16 app (Phase 1 UI, mock data only). Read frontend/AGENTS.md before framework-level changes.
 backend/         Laravel 13 application backend (health endpoint + ARC-03 §4–§7 schema migrations; no /api/v1 yet)
 python-engine/   FastAPI quant engine + arq workers (M0 skeleton: health/ping only)
-contracts/       OpenAPI + engine JSON Schemas (planned, M1; directory does not exist yet)
+contracts/       OpenAPI (api/openapi.yaml, from ARC-04) + checks; engine JSON Schemas planned (M1, T-104)
 infrastructure/  Docker configs (nginx, postgres init, redis)
 scripts/         setup-env.sh
 docs/            Authoritative specification. Start at docs/README.md

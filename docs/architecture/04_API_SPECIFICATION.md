@@ -4,7 +4,7 @@
 |---|---|
 | Document ID | ARC-04 |
 | Version | 0.1.0 |
-| Status | Specification ready (OpenAPI file to be generated from this in M1) |
+| Status | Specification ready; machine-readable contract in `contracts/api/openapi.yaml` (M1, T-103) |
 | Owner | Backend Lead |
 | Last updated | 2026-11-15 |
 | Related | [ARC-03 Database](03_DATABASE_DESIGN.md) · [ARC-06 Security](06_SECURITY_ARCHITECTURE.md) · [ARC-08 Internal engine API](08_INTEGRATION_ARCHITECTURE.md) · [ENG-02 Frontend mapping](../engineering/02_FRONTEND_ARCHITECTURE.md#8-route--feature--api--entity-mapping) |
@@ -12,6 +12,8 @@
 ## 1. Purpose and scope
 
 Defines the public HTTP API served by Laravel under `/api/v1` and consumed by the Next.js frontend (and, later, other clients). Contracts are **resource-oriented and independent of frontend components**; the frontend adapter maps them to its view models. Internal engine endpoints are in [ARC-08](08_INTEGRATION_ARCHITECTURE.md).
+
+**Machine-readable contract.** [`contracts/api/openapi.yaml`](../../contracts/api/openapi.yaml) (OpenAPI 3.1) carries every endpoint below, tagged with its id in `x-arc04-id`. Change this document and the file together. CI lints the file and fails when an endpoint id or its method and path differ between the two (`contracts/scripts/check_arc04_coverage.py`). Where this document leaves a payload open (for example `exposure`, backtest `metrics`, `entity`), the OpenAPI schema is deliberately loose (`additionalProperties: true`) and is tightened when the M6 contract tests are written.
 
 ## 2. Conventions
 
@@ -218,7 +220,7 @@ Step payloads (`{step}` lower-case id):
 
 ### 8.1 Risk
 
-`POST /api/v1/risk/calculate` — Auth: session. Pure calculation, persists nothing.
+**R1** `POST /api/v1/risk/calculate` — Auth: session. Pure calculation, persists nothing.
 
 Request:
 

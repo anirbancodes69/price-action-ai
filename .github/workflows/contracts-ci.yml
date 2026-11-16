@@ -1,0 +1,38 @@
+# Contract checks (docs/engineering/10_GITHUB_ACTIONS_CI_CD.md §4). Called by ci.yml.
+# Lints contracts/api/openapi.yaml and verifies it matches ARC-04 endpoint for endpoint.
+# Engine JSON Schema export checks (T-104) are added here when contracts/engine exists.
+name: contracts-ci
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  openapi:
+    name: openapi lint · ARC-04 coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Pinned exact version (never "latest"); bump deliberately.
+      REDOCLY_CLI_VERSION: "2.72.1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+
+      - name: Lint OpenAPI
+        run: npx --yes "@redocly/cli@${REDOCLY_CLI_VERSION}" lint contracts/api/openapi.yaml --config contracts/redocly.yaml
+
+      - name: Bundle to JSON
+        run: npx --yes "@redocly/cli@${REDOCLY_CLI_VERSION}" bundle contracts/api/openapi.yaml --config contracts/redocly.yaml --ext json -o "$RUNNER_TEMP/openapi.json"
+
+      - name: Every ARC-04 endpoint is in the spec (and nothing extra)
+        run: python3 -I contracts/scripts/check_arc04_coverage.py "$RUNNER_TEMP/openapi.json"
+
+      - name: Coverage checker tests
+        run: python3 -I -m unittest discover -s contracts/scripts -p "test_*.py"

@@ -28,6 +28,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       engine: ${{ steps.filter.outputs.engine }}
       docker: ${{ steps.filter.outputs.docker }}
+      contracts: ${{ steps.filter.outputs.contracts }}
     steps:
       - uses: actions/checkout@v7
       - id: filter
@@ -38,6 +39,10 @@ jobs:
             shared: &shared
               - 'contracts/**'
               - '.github/workflows/ci.yml'
+            contracts:
+              - *shared
+              - 'docs/architecture/04_API_SPECIFICATION.md'
+              - '.github/workflows/contracts-ci.yml'
             frontend:
               - *shared
               - 'frontend/**'
@@ -114,13 +119,18 @@ jobs:
     if: needs.changes.outputs.docker == 'true' || github.event_name != 'pull_request'
     uses: ./.github/workflows/docker-build.yml
 
+  contracts:
+    needs: changes
+    if: needs.changes.outputs.contracts == 'true' || github.event_name != 'pull_request'
+    uses: ./.github/workflows/contracts-ci.yml
+
   security:
     uses: ./.github/workflows/security-scan.yml
 
   ci-gate:
     name: ci-gate
     if: always()
-    needs: [changes, semantic-title, frontend, backend, engine, docker, security]
+    needs: [changes, semantic-title, frontend, backend, engine, docker, contracts, security]
     runs-on: ubuntu-latest
     steps:
       - name: All required jobs succeeded or were skipped

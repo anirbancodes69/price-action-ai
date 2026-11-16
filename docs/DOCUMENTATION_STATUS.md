@@ -21,7 +21,7 @@
 | [System Architecture](architecture/01_SYSTEM_ARCHITECTURE.md) | Specification ready | ADR-001..006 | OQ-ARC-01, OQ-ARC-02, OQ-ARC-03 | 2026-11-15 |
 | [Technology Stack](architecture/02_TECHNOLOGY_STACK.md) | Specification ready (versions pinned in M0) | ARC-01 | — | 2026-11-15 |
 | [Database Design](architecture/03_DATABASE_DESIGN.md) | Specification ready; §4–§8 implemented as migrations and §12 seeders (M1) | ARC-01, TRD-01..07, ADR-005, ADR-011 | OQ-DB-01, OQ-DB-02, OQ-DB-03 | 2026-11-17 |
-| [API Specification (Public REST API v1)](architecture/04_API_SPECIFICATION.md) | Specification ready | ARC-03, ARC-06, TRD-05 | OQ-API-01, OQ-API-02, OQ-API-03 | 2026-11-15 |
+| [API Specification (Public REST API v1)](architecture/04_API_SPECIFICATION.md) | Specification ready; OpenAPI 3.1 file in `contracts/api/openapi.yaml` (M1) | ARC-03, ARC-06, TRD-05 | OQ-API-01, OQ-API-02, OQ-API-03 | 2026-11-17 |
 | [Data Flow](architecture/05_DATA_FLOW.md) | Specification ready | ARC-01, ARC-08, TRD-07 | — | 2026-11-15 |
 | [Security Architecture](architecture/06_SECURITY_ARCHITECTURE.md) | Specification ready | ARC-01, ARC-03, ARC-08 | OQ-SEC-01, OQ-SEC-02, OQ-SEC-03 | 2026-11-15 |
 | [AI and LLM Architecture](architecture/07_AI_AND_LLM_ARCHITECTURE.md) | Specification ready (provider pending) | TRD-04, ADR-009 | OQ-AI-01, OQ-AI-02, OQ-AI-03 | 2026-11-15 |

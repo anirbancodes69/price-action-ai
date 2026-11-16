@@ -26,7 +26,7 @@ Update this file at the end of every substantial task, based only on verified st
 | Documentation | `COMPLETED` (specification) | 58 spec files under `docs/`, the design standards and 13 accepted ADRs. They describe the target system, so most of it is **not implemented**. |
 | Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1), merged:** ARC-03 §4–§5 (12 identity and trading-configuration tables, PR #13), §6 market data (9 tables + `trading_preferences.universe_id` FK, PR #14) and §7 analysis (ruleset versions, candle snapshots, analysis batches/runs, swing points, structure events, price zones, liquidity events, detected setups, AI explanations) with immutability triggers (PR #15). **Merged (PR #17):** §8 trading (watchlists, trade plans, paper and actual trades, journal, backtests, notifications) and single-writer role grants (`apply_role_grants()`; new tables stay closed to the runtime roles until listed). 60 backend tests incl. 55 database tests. **Seeders (T-102, merged, PR #19):** `pa-core 0.1.0` ruleset, six universes, DEMO data source, 36 demo equities + 3 NSE index instruments, DEMO universe, one backfill run and 8,640 generated demo candles (PHP port of `frontend/src/mocks`, bar-for-bar parity test). Run with `make seed` (schema-owner role, idempotent). 67 backend tests. **Not yet:** domain modules, `/api/v1` endpoints. |
 | Python engine | `IN PROGRESS` (skeleton only) | FastAPI `/health` and authenticated `/internal/v1/ping`, arq worker settings, structured logging, pytest. `app/domain/` is empty. **No trading logic, providers or ingestion.** |
-| Contracts (`contracts/`) | `NOT STARTED` | Directory does not exist (planned for M1). |
+| Contracts (`contracts/`) | `IN PROGRESS` | **T-103 (branch):** `contracts/api/openapi.yaml`, OpenAPI 3.1, all 88 ARC-04 operations tagged `x-arc04-id`, 110 schemas (enums taken from the migrated schema), shared error responses. Redocly lint is clean. `contracts/scripts/check_arc04_coverage.py` (with unit tests) fails CI if ARC-04 and the spec differ; `contracts-ci.yml` is wired into `ci-gate`. Payloads ARC-04 leaves open (backtest metrics, exposure, entity, …) are deliberately loose until the M6 contract tests. **Not yet:** `contracts/engine/` JSON Schemas (T-104). |
 | Infrastructure | `COMPLETED` (local dev) | Docker Compose with frontend, backend (php-fpm + nginx), queue worker, scheduler, engine, engine worker, PostgreSQL 17 and Redis 7.4, all with health checks. Dev overlay with hot reload. Makefile. `scripts/setup-env.sh`. No staging or production environments. |
 | GitHub CI | `COMPLETED` (M0 gates) | `ci.yml` coordinator with path filters, semantic PR titles and the `ci-gate` job. Component workflows: frontend (lint, typecheck, test, build), backend (pint, migrate, phpunit), python-engine (ruff, mypy, pytest), docker-build (build + Compose smoke), security-scan (gitleaks, dependency audits). |
 | GitHub settings | `COMPLETED` | "Protect Main" ruleset (PR required, `ci-gate` required and strict, linear history, no force-push or deletion, threads resolved); squash-only merges; auto-delete branches; secret scanning + push protection; Dependabot security updates; CodeQL runs on `main`. |
@@ -41,12 +41,12 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Work in progress
 
-- Branch `feature/contracts-openapi-spec`: **T-103** (OpenAPI contract from ARC-04). Groww decision deferred (OQ-INT-04, T-203) and T-102 seeders are merged (PR #19).
+- Branch `feature/contracts-openapi-spec`: **T-103** (OpenAPI contract from ARC-04) — done, awaiting PR. Groww decision deferred (OQ-INT-04, T-203) and T-102 seeders are merged (PR #19).
 - Local dev databases created before PR #13 must be recreated (`make reset`), because the stock Laravel `users` migration was replaced (UUID ids, no `name`, no sessions table). After that, `make migrate` then `make seed`. Note: `make migrate` runs the prebuilt image, so run `make build` (or use the dev overlay) after pulling new migrations.
 
 ## Immediate next task
 
-**T-103 — `contracts/api/openapi.yaml`** (then T-104, T-105) — see [TASKS.md](TASKS.md).
+**T-104 — engine Pydantic models, JSON Schemas and SQLAlchemy read model** (then T-105) — see [TASKS.md](TASKS.md).
 
 ## Known blockers
 
