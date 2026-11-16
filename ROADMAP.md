@@ -7,7 +7,7 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 | M | Milestone | Objective | Depends on | Status | Completed |
 |---|---|---|---|---|---|
 | M0 | Repository and infrastructure foundation | Monorepo, Compose stack skeleton, GitHub repo config and CI gates | — | `COMPLETED` | 2026-11-15 |
-| M1 | Database and API contracts | ARC-03 schema, seeders, OpenAPI and engine JSON Schemas | M0 | `IN PROGRESS` (ARC-03 §4–§8 and role grants migrated; seeders, contracts pending) | — |
+| M1 | Database and API contracts | ARC-03 schema, seeders, OpenAPI and engine JSON Schemas | M0 | `IN PROGRESS` (ARC-03 §4–§8, role grants and seeders done; OpenAPI and engine contracts pending) | — |
 | M2 | Zerodha integration and market data ingestion | Provider abstraction, DEMO + Kite providers, daily/backfill ingestion | M1 | `NOT STARTED` (verification blocked: OQ-INT-01/02) | — |
 | M3 | Swing points and market structure | TRD-02 pivots and structure state | M1 (can run parallel to M2 on fixtures) | `NOT STARTED` | — |
 | M4 | BOS, CHoCH, support/resistance and liquidity | TRD-02 breaks, TRD-03 zones, liquidity | M2, M3 | `NOT STARTED` | — |

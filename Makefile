@@ -8,7 +8,7 @@ ENGINE_DEV   := $(COMPOSE_DEV) run --rm --no-deps engine
 FRONTEND_DEV := $(COMPOSE_DEV) run --rm --no-deps frontend-dev
 
 .DEFAULT_GOAL := help
-.PHONY: help setup up dev down reset ps logs health migrate test test-frontend test-backend test-engine lint lint-frontend lint-backend lint-engine build rebuild
+.PHONY: help setup up dev down reset ps logs health migrate seed test test-frontend test-backend test-engine lint lint-frontend lint-backend lint-engine build rebuild
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -41,6 +41,10 @@ health: ## Deep health check through the backend
 migrate: ## Run Laravel migrations as the schema-owner role
 	@set -a; . ./.env; set +a; \
 	$(COMPOSE) run --rm -e DB_USERNAME=app_migrator -e DB_PASSWORD="$$DB_MIGRATOR_PASSWORD" backend php artisan migrate --force
+
+seed: ## Seed reference + demo data as the schema-owner role (idempotent)
+	@set -a; . ./.env; set +a; \
+	$(COMPOSE_DEV) run --rm -e DB_USERNAME=app_migrator -e DB_PASSWORD="$$DB_MIGRATOR_PASSWORD" backend php artisan db:seed --force
 
 test: test-frontend test-backend test-engine ## Run all test suites
 
