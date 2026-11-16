@@ -57,7 +57,7 @@ flowchart LR
 | frontend | `frontend/**` | frontend-ci, docker-build |
 | backend | `backend/**` | backend-ci, docker-build |
 | engine | `python-engine/**` | python-engine-ci, docker-build |
-| contracts | `contracts/**` | frontend-ci, backend-ci, python-engine-ci (all consumers) |
+| contracts | `contracts/**`, ARC-04 | contracts-ci; also frontend-ci, backend-ci, python-engine-ci (all consumers) |
 | schema | `backend/database/**` | backend-ci (migrations), python-engine-ci (schema-diff, DB integration) |
 | trading-docs | `docs/trading/**` | python-engine-ci trading-tests + catalogue completeness |
 | infra | `docker-compose.yml`, `infrastructure/**`, `**/Dockerfile*` | docker-build (all images), compose smoke |
@@ -104,7 +104,7 @@ Services: `postgres:17` (health-checked), `redis:7.4`.
 | `static` | `vendor/bin/phpstan analyse` (Larastan, level per `phpstan.neon`) | errors above baseline |
 | `migrations` | `php artisan migrate --force` on empty DB; `migrate:fresh --seed`; previous-release schema → migrate (from M2, using schema dump artifact of last release) | migration error |
 | `tests` | `php artisan test --parallel` (unit + feature + architecture) | failures |
-| `contract` | Validate OpenAPI (`spectral lint`); run response-contract tests | contract drift |
+| `contract` | Response-contract tests against `contracts/api/openapi.yaml` (M6). *OpenAPI lint moved to `contracts-ci.yml` (below)* | contract drift |
 
 Artifacts: JUnit XML, coverage report (informational).
 
@@ -123,6 +123,14 @@ Services: `postgres:17`, `redis:7.4` (integration job only).
 | `backtest-correctness` | TV-GAP, TV-COL, TV-UNI, TV-NLA-03 suites | failure |
 | `integration` | migrate DB with Laravel migration container image (or SQL dump artifact from backend-ci), run `tests/integration` and schema-diff | failure / schema mismatch |
 | `contracts` | `scripts/export_engine_schemas.py --check`; ruleset JSON hash equals seeded ruleset | stale schemas |
+
+### 4.3a Contracts CI (`contracts-ci.yml`, implemented in M1, T-103)
+
+| Job | Steps | Fails when |
+|---|---|---|
+| `openapi` | `redocly lint contracts/api/openapi.yaml --config contracts/redocly.yaml`; `redocly bundle --ext json`; `contracts/scripts/check_arc04_coverage.py` (every ARC-04 endpoint id present with the same method and path, nothing extra, unique `operationId`s); unit tests of the checker | invalid OpenAPI; unused shared components; ARC-04 and the spec disagree |
+
+*Deviation from the original plan:* lint uses **Redocly CLI** (pinned `@redocly/cli@2.72.1`), not Spectral, and runs in its own workflow so it is not tied to the Laravel job. The engine JSON Schema export check (`export_engine_schemas.py --check`, T-104) joins this workflow when `contracts/engine/` exists.
 
 ### 4.4 Database CI
 
@@ -175,7 +183,7 @@ Any lint/type/test failure; lockfile drift; stale contracts/schemas; missing TV-
 
 ## 9. Pull request checks
 
-Every PR to `main` must pass `ci-gate` and satisfy the PR template (ENG-12): title in Conventional Commits format (checked by `amannn/action-semantic-pull-request` in ci.yml), linked issue (or `no-issue` label with justification), description, testing evidence, docs updated, migration review, API compatibility review, security review where applicable.
+Every PR to `main` must pass `ci-gate` and satisfy the PR template (ENG-12): title in Conventional Commits format (checked by the `semantic-title` job in ci.yml, which first replaces a branch-name default title with the newest conforming commit subject; the workflow also runs on the `edited` event), linked issue (or `no-issue` label with justification), description, testing evidence, docs updated, migration review, API compatibility review, security review where applicable.
 
 ## 10. CI quality gates
 

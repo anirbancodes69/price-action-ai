@@ -27,7 +27,7 @@
 
 ## 3. Commits: Conventional Commits
 
-Format `type(scope): summary` — types `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `build`, `perf`; scopes `frontend`, `backend`, `engine`, `contracts`, `infra`, `docs`, `ruleset`. Breaking changes: `!` after type or `BREAKING CHANGE:` footer. Because merges are squash-only, the **PR title** becomes the commit message and is validated in CI.
+Format `type(scope): summary` — types `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `build`, `perf`; scopes `frontend`, `backend`, `engine`, `contracts`, `infra`, `docs`, `ruleset`. Breaking changes: `!` after type or `BREAKING CHANGE:` footer. Because merges are squash-only, the **PR title** becomes the commit message and is validated in CI. A title that GitHub defaulted from the branch name is auto-corrected from the PR's commit subjects ([ENG-10](10_GITHUB_ACTIONS_CI_CD.md)), so write conventional commit subjects.
 
 Examples: `feat(engine): detect confirmed swing pivots (TRD-02 §3)`, `fix(backend): reject client-supplied plan quantity`, `docs(trading): clarify zone break buffer ownership`.
 

@@ -1,0 +1,8 @@
+# Lint configuration for contracts/api/openapi.yaml (run by .github/workflows/contracts-ci.yml).
+extends:
+  - recommended
+rules:
+  # Shared error responses must be used, otherwise they are dead documentation.
+  no-unused-components: error
+  # A8 (email verification) and I2 (Kite callback) are browser redirects and answer with 302 by design.
+  operation-2xx-response: off

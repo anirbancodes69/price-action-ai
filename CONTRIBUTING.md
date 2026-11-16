@@ -35,10 +35,12 @@ GitHub Flow from `main`, with short-lived branches ([ENG-11](docs/engineering/11
 [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): summary`.
 
 - Types: `feat fix docs chore refactor test ci build perf`
-- Scopes: `frontend backend engine contracts infra docs ruleset deps`. **A scope is required**; CI fails the PR title without one (`ci.yml`, `requireScope: true`).
+- Scopes: `frontend backend engine contracts infra docs ruleset deps`. **A scope is required**; CI fails the PR title without one (`ci.yml`, job `semantic-title`).
 - Breaking change: `!` after the type, or a `BREAKING CHANGE:` footer.
 
 Merges are squash-only, so the **PR title** becomes the commit message. CI validates it.
+
+GitHub fills the title of a PR with more than one commit from the **branch name** (for example `Feature/contracts openapi spec`), which never passes. The `semantic-title` job therefore rewrites such a title to the newest conforming commit subject (preferring `feat`/`fix`) and then validates it; it only fails when no commit subject conforms either. Editing a title re-runs CI automatically (`edited` trigger), so no close/reopen is needed. Still review the title: it is the squash commit message.
 
 ## Pull requests
 
