@@ -140,3 +140,4 @@ Engine → Laravel internal endpoints (header `Authorization: Bearer ${BACKEND_I
 | OQ-INT-01 | Verify Kite Connect historical limits, rate limits, token expiry, subscription requirements, and terms of use for personal vs multi-user apps. |
 | OQ-INT-02 | Are Kite daily candles adjusted for splits/bonuses? Determines whether the adjustment step is applied or skipped for this provider. |
 | OQ-INT-03 | Licensed vendor selection for SaaS mode (coverage of delisted symbols, corporate actions, historical index constituents). |
+| OQ-INT-04 | Should Groww (the owner's broker) be the first real market-data adapter instead of, or alongside, Kite? Deferred to M2: compare Groww API historical daily candles, instrument master, rate limits, cost and terms against Kite in T-203. Needs no change to ADR-007 (a new adapter behind `MarketDataProvider`); choosing it as first provider changes the "Kite first" plan and goes through CLAUDE.md §8. |

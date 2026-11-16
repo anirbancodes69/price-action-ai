@@ -20,12 +20,12 @@
 | [UI/UX Specification](product/07_UI_UX_SPECIFICATION.md) | Reflects implemented frontend + additions | ENG-02, design-standards | — | 2026-11-16 |
 | [System Architecture](architecture/01_SYSTEM_ARCHITECTURE.md) | Specification ready | ADR-001..006 | OQ-ARC-01, OQ-ARC-02, OQ-ARC-03 | 2026-11-15 |
 | [Technology Stack](architecture/02_TECHNOLOGY_STACK.md) | Specification ready (versions pinned in M0) | ARC-01 | — | 2026-11-15 |
-| [Database Design](architecture/03_DATABASE_DESIGN.md) | Specification ready; §4–§7 implemented as migrations (M1), §8 pending | ARC-01, TRD-01..07, ADR-005, ADR-011 | OQ-DB-01, OQ-DB-02, OQ-DB-03 | 2026-11-16 |
+| [Database Design](architecture/03_DATABASE_DESIGN.md) | Specification ready; §4–§8 implemented as migrations and §12 seeders (M1) | ARC-01, TRD-01..07, ADR-005, ADR-011 | OQ-DB-01, OQ-DB-02, OQ-DB-03 | 2026-11-17 |
 | [API Specification (Public REST API v1)](architecture/04_API_SPECIFICATION.md) | Specification ready | ARC-03, ARC-06, TRD-05 | OQ-API-01, OQ-API-02, OQ-API-03 | 2026-11-15 |
 | [Data Flow](architecture/05_DATA_FLOW.md) | Specification ready | ARC-01, ARC-08, TRD-07 | — | 2026-11-15 |
 | [Security Architecture](architecture/06_SECURITY_ARCHITECTURE.md) | Specification ready | ARC-01, ARC-03, ARC-08 | OQ-SEC-01, OQ-SEC-02, OQ-SEC-03 | 2026-11-15 |
 | [AI and LLM Architecture](architecture/07_AI_AND_LLM_ARCHITECTURE.md) | Specification ready (provider pending) | TRD-04, ADR-009 | OQ-AI-01, OQ-AI-02, OQ-AI-03 | 2026-11-15 |
-| [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) | Specification ready (Kite facts to verify) | ADR-007, ADR-011 | OQ-INT-01, OQ-INT-02, OQ-INT-03 | 2026-11-15 |
+| [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) | Specification ready (Kite facts to verify) | ADR-007, ADR-011 | OQ-INT-01, OQ-INT-02, OQ-INT-03, OQ-INT-04 | 2026-11-17 |
 | [Trading Methodology](trading/01_TRADING_METHODOLOGY.md) | Specification ready (parameters = hypotheses) | ADR-008 | OQ-TRD-01, OQ-TRD-02, OQ-TRD-03 | 2026-11-15 |
 | [Market Structure Rules](trading/02_MARKET_STRUCTURE_RULES.md) | Specification ready | TRD-01 | OQ-STR-01, OQ-STR-02, OQ-STR-03 | 2026-11-15 |
 | [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) | Specification ready | TRD-01, TRD-02 | OQ-SR-01, OQ-SR-02, OQ-SR-03 | 2026-11-15 |
@@ -73,7 +73,7 @@
 
 ## 2. Open questions register
 
-All unresolved decisions, aggregated from each document's "Open questions" section (61 items). Resolve by updating the owning document (and an ADR where the decision is architectural), then remove the row there; this table is regenerated from the documents.
+All unresolved decisions, aggregated from each document's "Open questions" section (62 items). Resolve by updating the owning document (and an ADR where the decision is architectural), then remove the row there; this table is regenerated from the documents.
 
 | ID | Question | Owning document |
 |---|---|---|
@@ -102,6 +102,7 @@ All unresolved decisions, aggregated from each document's "Open questions" secti
 | OQ-INT-01 | Verify Kite Connect historical limits, rate limits, token expiry, subscription requirements, and terms of use for personal vs multi-user apps. | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) |
 | OQ-INT-02 | Are Kite daily candles adjusted for splits/bonuses? Determines whether the adjustment step is applied or skipped for this provider. | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) |
 | OQ-INT-03 | Licensed vendor selection for SaaS mode (coverage of delisted symbols, corporate actions, historical index constituents). | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) |
+| OQ-INT-04 | Should Groww (the owner's broker) be the first real market-data adapter instead of, or alongside, Kite? Deferred to M2: compare Groww API historical daily candles, instrument master, rate limits, cost and terms against Kite in T-203. Needs no change to ADR-007 (a new adapter behind `MarketDataProvider`); choosing it as first provider changes the "Kite first" plan and goes through CLAUDE.md §8. | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) |
 | OQ-TRD-01 | Should weekly structure be added as a context filter (e.g. only long when weekly is not `BEARISH`)? | [Trading Methodology](trading/01_TRADING_METHODOLOGY.md) |
 | OQ-TRD-02 | Should volume confirmation become a scored component? It is currently evidence-only to stay "pure price action". | [Trading Methodology](trading/01_TRADING_METHODOLOGY.md) |
 | OQ-TRD-03 | Which backtest result thresholds promote a parameter from `HYPOTHESIS` to `VALIDATED`? Proposed in TRD-08 §6, needs sign-off. | [Trading Methodology](trading/01_TRADING_METHODOLOGY.md) |
@@ -143,6 +144,7 @@ All unresolved decisions, aggregated from each document's "Open questions" secti
 
 | ID | Blocks | Why |
 |---|---|---|
+| OQ-INT-04 | M2 | Groww vs Kite as first real provider; decide after the T-203 comparison, before the adapter is built. |
 | OQ-INT-01 / OQ-INT-02 | M2 | Kite historical limits, rate limits, token expiry, terms and price adjustment must be verified before the adapter is finalised. |
 | OQ-SEC-01 | M2 / G2 | Kite app model (platform app vs bring-your-own key) affects token custody and terms compliance. |
 | OQ-RM-04 | M6 | Canonical risk defaults (5 positions / 5% heat / 25% max position) vs current UI values. |

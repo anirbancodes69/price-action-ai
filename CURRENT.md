@@ -1,6 +1,6 @@
 # CURRENT — Project State
 
-Last verified: **2026-11-16** against the repository and GitHub (`main` at `9a0ca07`; design-standards work on branch `feature/frontend-ui-redesign`).
+Last verified: **2026-11-17** against the repository (`main` at `d0cc298`; seeder work on branch `feature/backend-seeders-and-groww-decision`).
 
 Status vocabulary: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REVIEW`.
 Update this file at the end of every substantial task, based only on verified state.
@@ -19,12 +19,12 @@ Update this file at the end of every substantial task, based only on verified st
 | Area | Status | What actually exists |
 |---|---|---|
 | Frontend UI | `COMPLETED` (Phase 1, mock data) | Next.js 16.4.6, React 19, Tailwind v4, Lightweight Charts v5. Routes: auth (login/register/forgot-password), onboarding, dashboard, market-scanner, analysis, watchlists, trade-plans, portfolio, journal, backtesting, settings. Vitest unit tests for format, labels, colours, auth validation and scanner filters (25). |
-| Frontend design system | `NEEDS REVIEW` (on branch) | [docs/design-standards.md](docs/design-standards.md) adopted ([ADR-013](docs/adr/ADR-013-DESIGN-STANDARDS.md)): OKLCH tokens with PriceAction brand values, light/dark/system themes (dark default), shared components and `lib/colors.ts`, every screen refactored, `(app)/error.tsx`. Verified locally (lint, typecheck, tests, build, screenshots in both themes at three widths, WCAG AA contrast). Implementation and deviations: [ENG-02 §11](docs/engineering/02_FRONTEND_ARCHITECTURE.md#11-design-system). |
+| Frontend design system | `COMPLETED` (PR #18) | [docs/design-standards.md](docs/design-standards.md) adopted ([ADR-013](docs/adr/ADR-013-DESIGN-STANDARDS.md)): OKLCH tokens with PriceAction brand values, light/dark/system themes (dark default), shared components and `lib/colors.ts`, every screen refactored, `(app)/error.tsx`. Verified locally (lint, typecheck, tests, build, screenshots in both themes at three widths, WCAG AA contrast). Implementation and deviations: [ENG-02 §11](docs/engineering/02_FRONTEND_ARCHITECTURE.md#11-design-system). |
 | Frontend data | **Mock only** | Every page reads the `DataSource` mock adapter (`frontend/src/lib/data`). Analysis overlays come from a demo heuristic (`src/mocks/demo-analysis.ts`), **not** the specified trading rules. Login accepts any well-formed email and password. There is no mutation client yet. |
-| Frontend ↔ spec | `NEEDS REVIEW` | 24 known discrepancies (D-01..D-24) in [ENG-02 §9](docs/engineering/02_FRONTEND_ARCHITECTURE.md#9-discrepancy-register), to be resolved in M7 (D-20 partly resolved on the design-standards branch). |
+| Frontend ↔ spec | `NEEDS REVIEW` | 24 known discrepancies (D-01..D-24) in [ENG-02 §9](docs/engineering/02_FRONTEND_ARCHITECTURE.md#9-discrepancy-register), to be resolved in M7 (D-20 partly resolved by the design-standards work, PR #18). |
 | Claude Code skills | `COMPLETED` (PR #16) | 8 project skills in `.claude/skills/` (price-action-domain, quant-engine, market-data, schema-and-contracts, frontend-ui, security-guardrails, quality-gate, docs-sync). They are workflows that link to the specs, plus two stdlib scripts (docs impact mapping, relative link and anchor check). Indexed in CLAUDE.md §10. No agents and no `.claude/settings.json`. |
 | Documentation | `COMPLETED` (specification) | 58 spec files under `docs/`, the design standards and 13 accepted ADRs. They describe the target system, so most of it is **not implemented**. |
-| Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1), merged:** ARC-03 §4–§5 (12 identity and trading-configuration tables, PR #13), §6 market data (9 tables + `trading_preferences.universe_id` FK, PR #14) and §7 analysis (ruleset versions, candle snapshots, analysis batches/runs, swing points, structure events, price zones, liquidity events, detected setups, AI explanations) with immutability triggers (PR #15). **Merged (PR #17):** §8 trading (watchlists, trade plans, paper and actual trades, journal, backtests, notifications) and single-writer role grants (`apply_role_grants()`; new tables stay closed to the runtime roles until listed). 60 backend tests incl. 55 database tests. **Not yet:** seeders, domain modules, `/api/v1` endpoints. |
+| Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1), merged:** ARC-03 §4–§5 (12 identity and trading-configuration tables, PR #13), §6 market data (9 tables + `trading_preferences.universe_id` FK, PR #14) and §7 analysis (ruleset versions, candle snapshots, analysis batches/runs, swing points, structure events, price zones, liquidity events, detected setups, AI explanations) with immutability triggers (PR #15). **Merged (PR #17):** §8 trading (watchlists, trade plans, paper and actual trades, journal, backtests, notifications) and single-writer role grants (`apply_role_grants()`; new tables stay closed to the runtime roles until listed). 60 backend tests incl. 55 database tests. **Seeders (T-102, on branch, PR pending):** `pa-core 0.1.0` ruleset, six universes, DEMO data source, 36 demo equities + 3 NSE index instruments, DEMO universe, one backfill run and 8,640 generated demo candles (PHP port of `frontend/src/mocks`, bar-for-bar parity test). Run with `make seed` (schema-owner role, idempotent). 67 backend tests. **Not yet:** domain modules, `/api/v1` endpoints. |
 | Python engine | `IN PROGRESS` (skeleton only) | FastAPI `/health` and authenticated `/internal/v1/ping`, arq worker settings, structured logging, pytest. `app/domain/` is empty. **No trading logic, providers or ingestion.** |
 | Contracts (`contracts/`) | `NOT STARTED` | Directory does not exist (planned for M1). |
 | Infrastructure | `COMPLETED` (local dev) | Docker Compose with frontend, backend (php-fpm + nginx), queue worker, scheduler, engine, engine worker, PostgreSQL 17 and Redis 7.4, all with health checks. Dev overlay with hot reload. Makefile. `scripts/setup-env.sh`. No staging or production environments. |
@@ -41,18 +41,18 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Work in progress
 
-- Branch `feature/frontend-ui-redesign`: **T-003** (design-standards adoption, ADR-013). Verified locally; not yet committed or merged.
-- Local dev databases created before PR #13 must be recreated (`make reset`), because the stock Laravel `users` migration was replaced (UUID ids, no `name`, no sessions table).
+- Branch `feature/backend-seeders-and-groww-decision`: Groww decision deferred (OQ-INT-04, T-203; committed locally, not pushed) and **T-102** seeders (committed locally, not pushed).
+- Local dev databases created before PR #13 must be recreated (`make reset`), because the stock Laravel `users` migration was replaced (UUID ids, no `name`, no sessions table). After that, `make migrate` then `make seed`. Note: `make migrate` runs the prebuilt image, so run `make build` (or use the dev overlay) after pulling new migrations.
 
 ## Immediate next task
 
-**T-102 — seeders** (then T-103, T-104, T-105) — see [TASKS.md](TASKS.md). T-003 awaits PR and CI. An owner decision on OQ-RM-04 helps the seed data but does not block it.
+**T-103 — `contracts/api/openapi.yaml`** (then T-104, T-105) — see [TASKS.md](TASKS.md). T-102 awaits PR and CI.
 
 ## Known blockers
 
 | Blocks | Item |
 |---|---|
-| M2 | OQ-INT-01/02 — Kite Connect limits, token expiry, price adjustment and terms not verified. OQ-SEC-01 — Kite app model. Kite developer app needed. |
+| M2 | OQ-INT-01/02 — Kite Connect limits, token expiry, price adjustment and terms not verified. OQ-SEC-01 — Kite app model. Kite developer app needed. OQ-INT-04 — Groww vs Kite as first provider (deferred to M2, T-203). |
 | M8 | OQ-AI-01 — LLM provider/model not chosen. |
 | M9–M10 | OQ-BT-01/03 — point-in-time NIFTY 500 membership and corporate-action data sources. |
 

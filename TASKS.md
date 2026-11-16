@@ -9,14 +9,16 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
-| T-102 | Seeders: ruleset `pa-core 0.1.0`, universes, DEMO data source, demo instruments and candles ported from `frontend/src/mocks` | P0 | M1 | T-103 | `contracts/api/openapi.yaml` derived from ARC-04, with OpenAPI lint in CI | P0 | M1 | — | Spec validates in CI; every ARC-04 endpoint ID present | NOT STARTED |
-| T-104 | Engine Pydantic models + exported `contracts/engine/*.json` schemas; SQLAlchemy table definitions (`python-engine/app/db/tables.py`) | P0 | M1 | T-105 | Add M1 required checks: `backend / migrations`, `backend / tests`, `python-engine / tests` covered by `ci-gate` | P1 | M1 | T-101d, T-104 | Checks run on PRs touching backend/engine; documented in ENG-10 §10 | NOT STARTED |
+| T-103 | `contracts/api/openapi.yaml` derived from ARC-04, with OpenAPI lint in CI | P0 | M1 | — | Spec validates in CI; every ARC-04 endpoint ID present | NOT STARTED |
+| T-104 | Engine Pydantic models + exported `contracts/engine/*.json` schemas; SQLAlchemy table definitions (`python-engine/app/db/tables.py`) | P0 | M1 | T-101d | Pydantic models and JSON Schemas exported; engine read model matches the migrated schema (schema-diff test) | NOT STARTED |
+| T-105 | Add M1 required checks: `backend / migrations`, `backend / tests`, `python-engine / tests` covered by `ci-gate` | P1 | M1 | T-101d, T-104 | Checks run on PRs touching backend/engine; documented in ENG-10 §10 | NOT STARTED |
 
 ## Backlog
 
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
 | T-201 | Kite Connect verification spike: historical limits, rate limits, token expiry, price adjustment, personal vs multi-user terms | P0 | M2 | Kite developer app | Findings recorded in ARC-08; OQ-INT-01/02 resolved or re-scoped | BLOCKED (needs Kite app) |
+| T-203 | Compare Groww API with Kite as first real data provider: historical daily candles, instrument master, rate limits, cost, terms (OQ-INT-04) | P1 | M2 | Groww API access (owner) | Findings in ARC-08; owner picks provider; ADR-007 note or new ADR per CLAUDE.md §8; OQ-INT-04 closed | NOT STARTED |
 | T-202 | Owner decision on Kite app model (platform app vs bring-your-own key) | P0 | M2 | T-201 | Decision recorded as an ADR + DECISIONS.md row; OQ-SEC-01 closed | NOT STARTED |
 | T-301 | Owner decision on canonical risk defaults (OQ-RM-04) | P1 | M6 | — | TRD-05 defaults confirmed; UI/onboarding values listed as discrepancies to fix in M7 | NOT STARTED |
 | T-901 | Pin third-party GitHub Actions by commit SHA (M0 follow-up) | P2 | M0 | — | All non-GitHub-owned `uses:` pinned by SHA; Dependabot still updates them | NOT STARTED |
@@ -25,9 +27,7 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 ## In Progress
 
-| ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
-|---|---|---|---|---|---|---|
-| T-003 | Adopt `docs/design-standards.md` across the frontend (ADR-013): OKLCH tokens + brand values, light/dark/system theme, shared components (PageFrame, Panel, StatGrid, FilterRow, ChoiceGroup, SectionLinks, Empty, ErrorState, skeletons, `lib/colors.ts`), all 13 screens refactored, chart annotation tokens, `(app)/error.tsx` | P1 | — | — | Lint, typecheck, 25 Vitest tests and `next build` pass; every route checked by headless-Chrome screenshots in both themes at 1440/820/390 px with no page overflow; WCAG 2.1 AA contrast computed for all token pairs (0 failures); docs synced (ENG-02 §11, PRD-07, CLAUDE.md). **Verified locally 2026-11-16; awaiting PR + CI.** | NEEDS REVIEW |
+None.
 
 ## Blocked
 
@@ -37,6 +37,8 @@ See T-201 (needs a Kite developer app).
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-102 | Seeders: ruleset `pa-core 0.1.0` (ACTIVE, HYPOTHESIS), six universes, DEMO data source, 36 demo equities + 3 NSE indices, DEMO universe membership, one backfill ingestion run and 8,640 generated demo candles (PHP port of `frontend/src/mocks`, parity-tested); `make seed` | M1 | 2026-11-17 (verified locally: 67 backend tests; seeded twice on a fresh DB; PR pending) |
+| T-003 | Adopt `docs/design-standards.md` across the frontend (ADR-013) | — | 2026-11-16 (PR #18 merged) |
 | T-101d | Migrations for ARC-03 §8 trading (12 tables) and per-table writer grants (`apply_role_grants()`) | M1 | 2026-11-16 (PR #17 merged) |
 | T-002 | Project Claude Code skills in `.claude/skills/` + CLAUDE.md §10 index | — | 2026-11-16 (PR #16 merged) |
 | T-101c | Migrations for ARC-03 §7 analysis (9 tables) with immutability triggers | M1 | 2026-11-16 (PR #15 merged) |

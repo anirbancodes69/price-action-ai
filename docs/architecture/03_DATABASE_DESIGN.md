@@ -31,7 +31,7 @@ Legend for "Writer": **L** = Laravel, **E** = engine/engine-worker.
 
 ### 2.1 Implementation notes (as migrated)
 
-Migrations are raw SQL in `backend/database/migrations` so constraints match this document exactly. Implemented: §4–§8 (`0001_01_01_000000_create_users_table`, `2026_11_16_000001`–`000005`) plus an extensions migration and the role grants (`000006`). Deviations and decisions:
+Migrations are raw SQL in `backend/database/migrations` so constraints match this document exactly. Implemented: §4–§8 and the §12 seeders (`0001_01_01_000000_create_users_table`, `2026_11_16_000001`–`000005`) plus an extensions migration and the role grants (`000006`). Deviations and decisions:
 
 - `users` has no `name` column (the display name is `user_profiles.display_name`) and there is no `sessions` table (Redis).
 - `trading_preferences.universe_id` is a plain `uuid` until `universes` exists (§6.4); its FK is added in T-101b.
@@ -66,6 +66,12 @@ Migrations are raw SQL in `backend/database/migrations` so constraints match thi
   - `provider_connections` is not readable by the engine (tokens reach it through the just-in-time endpoint only).
   - Default privileges for both roles are removed, so a new table is **closed** until its migration lists it in `apply_role_grants()` and re-runs it. Laravel's `migrations` table is no longer accessible to the runtime roles; migrations run as `app_migrator`.
   - Engine `notifications` writes are not granted: the spec lists it as Laravel-written, so engine events reach users through Laravel.
+- Seeders (T-102; `backend/database/seeders`, run as the schema owner with `make seed`; `DatabaseSeeder` → `DemoSeeder` → `RulesetSeeder` + `UniverseSeeder`). All ids are UUIDv5 and inserts use `ON CONFLICT DO NOTHING`, so re-running changes nothing (an `ACTIVE` ruleset is never rewritten):
+  - **Ruleset** `pa-core 0.1.0` is `ACTIVE` / `HYPOTHESIS`, `score_version` `paqs-0.1.0`, parameters from `database/seeders/data/pa-core-0.1.0.json` (the 29 TRD-01 §6 defaults, flat dotted keys). `parameters_hash` is sha256 of canonical JSON: sorted keys, no whitespace, floats keep `.0` (the form Python's `json.dumps` produces), so the engine can reproduce it. ENG-04 §5 also expects the same file at `python-engine/rulesets/pa-core/0.1.0.json` with a CI hash check. The backend container cannot see `python-engine/`, so that copy and the check are still to do (with T-104/T-105).
+  - **Universes:** all six codes are created. Only `DEMO` has members (the 36 demo equities, effective from 2000-01-01). The real NIFTY universes stay empty until the M2 universe loader fills them.
+  - **DEMO data:** one global `DEMO` data source; 36 equities and 3 NSE index instruments (`NIFTY 50`, `NIFTY BANK`, `INDIA VIX`), all `is_demo`, no ISIN, each with a `DEMO` provider ref and an instrument snapshot (tick 0.05 equities, 0.01 indices); one completed `BACKFILL` ingestion run (240 trading days to 2026-11-13); 8,640 daily candles for the equities. The generator is a port of `frontend/src/mocks/demo-series.ts`, and a parity test compares every series with a fixture exported from the TypeScript source.
+  - **Deliberate gaps:** SENSEX is BSE, which `instruments.exchange` does not allow, so it is not seeded. Index instruments have no candles (the dashboard strip keeps using its own sample trend until a decision on DEMO index series). Sector and index-membership attributes of the sample universe have no column and are not stored.
+  - **M2 risk:** demo equities use real tickers (`RELIANCE`, …) as `ACTIVE`, and `uq_instruments__active_symbol` makes those unique per exchange. The M2 instrument-master sync must adopt or replace the demo rows (for example match by symbol and flip `is_demo`), or a real sync will conflict with them.
 - Tests: `backend/tests/Feature/Database/` assert the constraints against a real PostgreSQL; the grant tests use `has_table_privilege`/`has_column_privilege` and skip when the roles do not exist.
 
 ## 3. Entity-relationship overview

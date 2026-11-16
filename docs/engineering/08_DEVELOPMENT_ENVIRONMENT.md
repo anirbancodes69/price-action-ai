@@ -64,7 +64,7 @@ The `Makefile` wraps the commands below (`make help`); the raw Compose commands 
 | Shell | `docker compose exec backend sh` / `docker compose exec engine sh` |
 | Migrations (as schema owner) | `make migrate` (runs artisan with `DB_USERNAME=app_migrator`) |
 | Rollback last migration (dev only) | `docker compose run --rm backend php artisan migrate:rollback --step=1` |
-| Seed demo data | `docker compose run --rm backend php artisan db:seed --class=DemoSeeder` |
+| Seed reference + demo data | `make seed` (artisan `db:seed` as the schema-owner role; idempotent). Seeders write engine-owned tables, so they cannot run as `app_backend` |
 | Frontend tests | `make test-frontend` |
 | Frontend lint/typecheck | `make lint-frontend` |
 | Laravel tests | `make test-backend` (`vendor/bin/phpunit` against a throwaway `priceaction_test` database that the target creates, migrated by the `app_migrator` role; `artisan test` warns when no `backend/.env` file exists) |

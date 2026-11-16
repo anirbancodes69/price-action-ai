@@ -10,10 +10,10 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed reference data (ruleset, universes) and the DEMO data mode. Run as the schema owner: `make seed`.
      */
     public function run(): void
     {
-        // Reference data (ruleset, universes, DEMO data source and instruments) is seeded in M1 (TASKS T-102).
+        $this->call(DemoSeeder::class);
     }
 }
