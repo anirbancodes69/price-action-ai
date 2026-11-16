@@ -25,7 +25,7 @@ jobs:
           docker compose config -q
           docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev config -q
 
-      - uses: docker/setup-buildx-action@v4
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build images
         run: docker compose build

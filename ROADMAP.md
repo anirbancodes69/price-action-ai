@@ -38,7 +38,7 @@ Full acceptance and exit criteria are in ENG-01 §3.
 
 ## M0 notes
 
-M0 included the GitHub repository configuration (ruleset, squash-only merges, secret scanning, Dependabot, CODEOWNERS, templates) and the GitHub Actions CI implementation. Deviations recorded in ENG-01 M0: backend and engine CI were pulled forward from M1; Trivy and Semgrep were deferred to image publishing; Actions are pinned by tag, not SHA.
+M0 included the GitHub repository configuration (ruleset, squash-only merges, secret scanning, Dependabot, CODEOWNERS, templates) and the GitHub Actions CI implementation. Deviations recorded in ENG-01 M0: backend and engine CI were pulled forward from M1; Trivy and Semgrep were deferred to image publishing; third-party Actions were pinned by tag at first and are now pinned by commit SHA (T-901, 2026-11-17).
 
 ## Open roadmap questions
 

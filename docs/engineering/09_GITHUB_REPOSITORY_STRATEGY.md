@@ -80,7 +80,7 @@ Adapted to the existing layout (the `frontend/` directory stays where it is; not
 | Dependabot alerts + security updates | Enabled |
 | Code scanning (CodeQL) | Enabled for JS/TS and Python (PHP via other SAST, ENG-10 §8) |
 | Actions permissions | Default `GITHUB_TOKEN` read-only; workflows request elevated permissions explicitly |
-| Allowed actions | GitHub-owned and verified creators; third-party actions pinned by commit SHA |
+| Allowed actions | GitHub-owned and verified creators; third-party actions pinned by commit SHA (`uses: owner/repo@<40-hex sha> # vX.Y.Z`; resolve with `gh api repos/owner/repo/commits/<tag> --jq .sha`; implemented in T-901) |
 | Issues | Enabled with templates: bug, feature, spec change, open question |
 | Wiki | Disabled (docs live in repo) |
 

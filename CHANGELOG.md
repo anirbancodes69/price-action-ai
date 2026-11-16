@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- Third-party GitHub Actions are pinned by commit SHA with a version comment (`setup-php`, `setup-uv`, `gitleaks-action`, `paths-filter`, `setup-buildx-action`); GitHub-owned `actions/*` stay on version tags (ENG-09 §6). Dependabot continues to update them.
 - CI hardening (T-105): `ci-gate` only passes when every needed job is `success` or `skipped` by its path filter, `changes` succeeded and (on PRs) the title check succeeded; migration changes now trigger the engine schema-diff; `contracts/scripts/check_ruleset_hash.py` verifies that `pa-core 0.1.0` is identical in `python-engine/rulesets/`, the backend seeder data and TRD-01 §6. The M1 gates are documented as built in ENG-10 §10.
 - Engine contract (T-104): 13 Pydantic models in `python-engine/app/schemas` for the ARC-08 §5 internal API, exported as JSON Schema to `contracts/engine/` (`make export-schemas`, stale-export check in `python-engine-ci.yml`); SQLAlchemy Core read model `app/db/tables.py` for the 32 tables the engine touches; schema-diff test and CI job that compare it with the Laravel-migrated database. Added the `sqlalchemy` dependency.
 - CI: PR title check no longer fails on GitHub's branch-name default title. `semantic-title` rewrites it from the newest conforming commit subject and validates the result; `ci.yml` also runs on the `edited` event so a corrected title re-runs CI (replaces `amannn/action-semantic-pull-request`).

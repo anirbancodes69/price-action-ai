@@ -40,7 +40,7 @@ M3 can start on fixture data in parallel with M2.
 
 ### M0 — Repository, Docker and infrastructure foundation
 
-> **Status: complete (2026-11-15)** on branch `chore/m0-foundation`. Deviations: backend-ci and python-engine-ci workflows were pulled forward from M1 because the skeletons exist; Trivy and Semgrep are deferred to Phase 2 image publishing; third-party Actions are pinned by major version tag, not SHA (follow-up); branch protection, secret scanning and CodeQL default setup are GitHub settings to apply once the repository is pushed (ENG-09 §6–7). *Update 2026-11-16:* applied. The "Protect Main" ruleset requires `ci-gate`; secret scanning with push protection is on; CodeQL runs on `main`.
+> **Status: complete (2026-11-15)** on branch `chore/m0-foundation`. Deviations: backend-ci and python-engine-ci workflows were pulled forward from M1 because the skeletons exist; Trivy and Semgrep are deferred to Phase 2 image publishing; third-party Actions were pinned by major version tag at first (*Update 2026-11-17, T-901:* now pinned by commit SHA); branch protection, secret scanning and CodeQL default setup are GitHub settings to apply once the repository is pushed (ENG-09 §6–7). *Update 2026-11-16:* applied. The "Protect Main" ruleset requires `ci-gate`; secret scanning with push protection is on; CodeQL runs on `main`.
 
 | Item | Detail |
 |---|---|

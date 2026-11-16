@@ -18,7 +18,6 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 | T-203 | Compare Groww API with Kite as first real data provider: historical daily candles, instrument master, rate limits, cost, terms (OQ-INT-04) | P1 | M2 | Groww API access (owner) | Findings in ARC-08; owner picks provider; ADR-007 note or new ADR per CLAUDE.md §8; OQ-INT-04 closed | NOT STARTED |
 | T-202 | Owner decision on Kite app model (platform app vs bring-your-own key) | P0 | M2 | T-201 | Decision recorded as an ADR + DECISIONS.md row; OQ-SEC-01 closed | NOT STARTED |
 | T-301 | Owner decision on canonical risk defaults (OQ-RM-04) | P1 | M6 | — | TRD-05 defaults confirmed; UI/onboarding values listed as discrepancies to fix in M7 | NOT STARTED |
-| T-901 | Pin third-party GitHub Actions by commit SHA (M0 follow-up) | P2 | M0 | — | All non-GitHub-owned `uses:` pinned by SHA; Dependabot still updates them | NOT STARTED |
 | T-903 | Error boundaries for `(auth)` and `onboarding`; request id on `ErrorState` from the typed `ApiError` (ENG-02 D-20 remainder) | P2 | M7 | HTTP adapter | Every route group has `error.tsx`; request id shown | NOT STARTED |
 | T-902 | Resolve repository visibility mismatch (ENG-09 says private; GitHub repo is public) | P2 | M0 | Owner decision | Setting and ENG-09 agree | NOT STARTED |
 
@@ -34,6 +33,7 @@ See T-201 (needs a Kite developer app).
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-901 | Pin third-party GitHub Actions by commit SHA: `shivammathur/setup-php`, `astral-sh/setup-uv`, `gitleaks/gitleaks-action`, `dorny/paths-filter`, `docker/setup-buildx-action` (GitHub-owned `actions/*` stay on tags per ENG-09 §6) | M0 | 2026-11-17 (every SHA resolved from its release tag through the GitHub API; all workflows parse; Dependabot `github-actions` keeps them current; CI pending) |
 | T-105 | M1 required checks: every M1 gate enforced through `ci-gate` and documented as built in ENG-10 §10; `ci-gate` hardened (only `success`/`skipped` pass, `changes` must succeed, PR title must succeed on PRs); migration PRs now trigger the engine schema-diff; ruleset `pa-core 0.1.0` copied to `python-engine/rulesets/` with a CI check that engine file, seeder file and TRD-01 §6 are identical | M1 | 2026-11-17 (gate script simulated in 6 scenarios; 13 contract-script tests; PHP and Python hashes equal; CI pending) |
 | T-104 | Engine Pydantic contract models (13, `app/schemas`) exported to `contracts/engine/*.json`; SQLAlchemy read model `app/db/tables.py` (32 tables); schema-diff test; `export_engine_schemas.py --check` and a `schema-diff` job in `python-engine-ci.yml` | M1 | 2026-11-17 (23 engine tests, ruff/format/mypy clean; schema-diff 4/4 against a freshly migrated DB and caught an injected type and nullability drift; CI pending) |
 | T-103 | `contracts/api/openapi.yaml` derived from ARC-04 (88 operations, `x-arc04-id`), Redocly lint + ARC-04 coverage check in `contracts-ci.yml` (wired into `ci-gate`) | M1 | 2026-11-17 (lint clean, coverage 88/88, checker tests 6/6 locally; PR pending) |

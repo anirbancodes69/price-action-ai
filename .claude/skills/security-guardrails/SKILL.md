@@ -47,7 +47,7 @@ Read the ARC-06 section for the area you touch:
 - [ ] Client-supplied quantity or levels are never trusted (TV-API-01). The LLM receives no PII (ARC-06 §11).
 
 **Supply chain**
-- [ ] New dependencies are justified, pinned via lockfiles, and pass the CI audits. GitHub Actions are pinned (SHA pinning is pending, T-901).
+- [ ] New dependencies are justified, pinned via lockfiles, and pass the CI audits. Third-party GitHub Actions (anything not under `actions/`) are pinned by 40-character commit SHA with a `# vX.Y.Z` comment; Dependabot updates both (T-901).
 
 ## Constraints
 

@@ -62,7 +62,6 @@ Update this file at the end of every substantial task, based only on verified st
 |---|---|
 | Repo visibility | [ENG-09 §6](docs/engineering/09_GITHUB_REPOSITORY_STRATEGY.md#6-repository-settings) specifies **Private**; the GitHub repository is currently **public**. Owner to decide; then align the doc or the setting. |
 | Ruleset merge methods | The ruleset allows merge/squash/rebase, but repo settings disable merge commits and linear history is required. Effective behaviour is squash or rebase. ENG-09 says squash only. Low impact. |
-| Action pinning | Third-party Actions are pinned by major tag, not commit SHA (ENG-09 §6 asks for SHA). Known follow-up from M0. |
 | Risk defaults | OQ-RM-04 — UI (6 positions / 2% heat) vs onboarding (5) vs spec (5 / 5% / 25%). |
 | Test tooling vs ENG-07 | ENG-07 §2 names Pest, Larastan and import-linter. The backend actually uses PHPUnit 12, and none of the three tools exists yet. Owner to decide: align ENG-07 to PHPUnit, or adopt Pest. |
 | Docs CI | ENG-10 §2.2 describes a `docs-lint` job (markdown lint, link check). `ci.yml` has none. A local link checker now exists (`.claude/skills/docs-sync/scripts/check_links.py`) and could back that job. |
