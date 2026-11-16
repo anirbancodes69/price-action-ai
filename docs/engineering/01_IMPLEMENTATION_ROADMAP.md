@@ -4,10 +4,28 @@
 |---|---|
 | Document ID | ENG-01 |
 | Version | 0.1.0 |
-| Status | Specification ready |
+| Status | Specification ready; §0 intraday roadmap (ADR-014) supersedes M2–M10 |
 | Owner | Technical Lead |
 | Last updated | 2026-11-15 |
 | Related | [PRD-06 Feature catalog](../product/06_FEATURE_CATALOG.md) · [PRD-02 Release gates](../product/02_BRD.md#12-release-gates) · [ENG-10 CI/CD](10_GITHUB_ACTIONS_CI_CD.md) · [DOCUMENTATION_STATUS](../DOCUMENTATION_STATUS.md) |
+
+## 0. Intraday roadmap (ADR-014)
+
+On 2026-11-17 the product direction changed to a personal intraday workstation ([ADR-014](../adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md)). M0 and M1 (§3) are complete and stand. **Milestones M2–M10 below are superseded** and kept for reference: much of their content (engine layering, test catalogue, contracts) carries over into I1–I8. Effort is in solo engineering days; the total for I0–I8 is about 68–102 days, of which the MVP (I0–I7) is about 58–87.
+
+| # | Scope | Depends on | Acceptance | Effort (days) | Main risks |
+|---|---|---|---|---|---|
+| I0 | ADR-014 (direction) and ADR-015 (time and snapshot model); intraday TRD-01..07; product documents refreshed | M1 | ADRs accepted; DECISIONS.md and the ADR index updated; TRD-08 vectors drafted for 5m/15m | 4–6 | Spec scope creep |
+| I1 | Expand migrations: bar timestamps, timeframes `1m`/`5m`/`15m`/`1D`, timestamp columns on analysis and trading tables, snapshot by reference, risk-state table, NSE calendar seed; OpenAPI and engine contracts; `app/db/tables.py` | I0 | Fresh DB migrates and seeds; schema-diff, OpenAPI coverage and ruleset identity checks green | 4–6 | Churn across the 32 read-model tables |
+| I2 | Provider adapter (Kite first unless T-203 decides otherwise) for historical intraday bars and current prices; bar-close fetcher process; Redis current-price cache; quality checks (calendar gaps, duplicates, late and revised bars); DEMO intraday generator | I1, provider subscription | Recorded-fixture adapter tests; one full NIFTY 50 session ingested without gaps | 8–12 | Provider limits and history depth unverified (OQ-INT-01/04) |
+| I3 | `app/domain`: candles, `RulesetParams` per timeframe, pivots, structure, BOS/CHoCH on 15m and 5m, higher-timeframe alignment | I1 | TRD-08 vectors; property tests for no look-ahead and determinism (`result_hash`) | 10–15 | Repainting through pivot confirmation or misaligned higher-timeframe bars |
+| I4 | Session context (opening range, previous-day high/low/close, cutoff time), S/R zones, setups (opening range breakout, previous-day high/low break, S/R breakout-retest; trend continuation and sweep reversal after validation), levels, expiry, NO_TRADE | I3 | Vectors with boundary cases for every setup | 10–15 | Opening-range window is a hypothesis |
+| I5 | Sizing from stop distance with the ₹ position cap; daily loss and consecutive-loss limits; open positions and open risk; intraday cost schedule; end-of-day exit rule | I1 | TRD-05 worked examples for ₹1,00,000 capital; every limit breach blocks a plan | 6–9 | Cost values unverified |
+| I6 | Laravel `/api/v1` subset (scanner, analysis, plans, trades, live positions, daily risk); frontend HTTP adapter behind `DataSource`; intraday chart (timestamps, IST, session gaps); polling | I2–I5 | Scan → analyse → plan → record → monitor works on DEMO data, then on the provider | 12–18 | Time-zone and session-gap bugs |
+| I7 | Journal: planned vs actual entry and exit, net P&L after costs, mistakes, notes; stats server-side; screenshots later | I6 | Stats equal hand-computed examples | 4–6 | File storage choice |
+| I8 | Intraday backtester: 5m replay, session rules, same-bar collision, end-of-day exit, costs, out-of-sample and walk-forward splits | I3–I5, history | Reproducible runs; collision, end-of-day and cost vectors pass | 10–15 | History depth and quality |
+
+Forward paper logging starts with I6 so that real-time evidence accumulates while I8 is built.
 
 ## 1. Purpose
 

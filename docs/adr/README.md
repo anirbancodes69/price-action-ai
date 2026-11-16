@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Current |
 | Owner | Solution Architect |
-| Last updated | 2026-11-16 |
+| Last updated | 2026-11-17 |
 
 ## Purpose
 
@@ -32,6 +32,7 @@ Each ADR has: Status, Date, Context, Decision, Alternatives considered, Conseque
 | [ADR-011](ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md) | Demo, Personal and Licensed Data Modes with Tenant Isolation | Accepted | 2026-11-15 |
 | [ADR-012](ADR-012-GITHUB-ACTIONS-CI-CD.md) | GitHub Actions for CI/CD | Accepted | 2026-11-15 |
 | [ADR-013](ADR-013-DESIGN-STANDARDS.md) | Adopt the Project Design Standards | Accepted | 2026-11-16 |
+| [ADR-014](ADR-014-PERSONAL-INTRADAY-WORKSTATION.md) | Personal Intraday Price-Action Workstation | Accepted | 2026-11-17 |
 
 ## Candidate future ADRs
 

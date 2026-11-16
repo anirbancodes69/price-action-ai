@@ -4,12 +4,12 @@ Persistent instructions for Claude Code (and any other contributor). Keep this f
 
 ## 1. Project overview
 
-PriceAction AI is an AI-assisted, rule-based **price-action analysis and trade-planning** platform for Indian equity swing and positional traders. Initial scope: NSE cash market, NIFTY 500, daily timeframe. It is decision support only: users execute trades themselves on their broker's platform.
+PriceAction AI is a rule-based **personal intraday price-action workstation** for its owner ([ADR-014](docs/adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md), 2026-11-17). Scope: NSE cash equities, NIFTY 50, 15-minute structure with 5-minute setups (daily bars only as context), closed bars only, long-only actionability. It is decision support only: the owner executes trades on the broker's platform.
 
-- **Users:** retail swing traders, positional traders, equity investors who use price action.
-- **Capabilities (planned):** market scanner, per-stock structure analysis (swings, BOS/CHoCH, S/R zones, liquidity), setup detection with a quality score, risk-based trade plans, watchlists, paper trading, backtesting, journal, LLM explanations.
+- **User:** one primary user (the owner), trading intraday. Planning values (HYPOTHESIS): capital ₹1,00,000, ₹50,000 per position, 0.5% risk per trade.
+- **Capabilities (planned):** intraday scanner, multi-timeframe structure analysis (swings, BOS/CHoCH, S/R zones), session setups (opening range, previous-day levels, breakout-retest), risk-checked trade plans with account-level limits, manual trade log with live P&L, journal, intraday backtesting. LLM explanations are deferred.
 - **Methodology:** pure price action. No RSI, MACD or moving-average signals. See [TRD-01](docs/trading/01_TRADING_METHODOLOGY.md).
-- **Direction:** personal-first, designed so it can become a SaaS later (data licensing and legal review gate that step; see [ADR-011](docs/adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md)).
+- **Direction:** personal use first. SaaS features (onboarding, entitlements, licensed data) are deferred, not removed, and still gated by data licensing and legal review ([ADR-011](docs/adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md)). Many specs under `docs/` still describe the earlier daily scope; [DOCUMENTATION_STATUS](docs/DOCUMENTATION_STATUS.md) lists which, and ADR-014 wins where they disagree.
 
 Current state: **[CURRENT.md](CURRENT.md)**. Milestones: **[ROADMAP.md](ROADMAP.md)**.
 

@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- ADR-014: PriceAction AI becomes a personal intraday price-action workstation (NSE cash, NIFTY 50, 15m structure + 5m setups, daily bars as context, long-only actionability, manual execution, account-level risk limits). Roadmap milestones M2–M10 are replaced by I0–I8; M1 is complete.
 - Third-party GitHub Actions are pinned by commit SHA with a version comment (`setup-php`, `setup-uv`, `gitleaks-action`, `paths-filter`, `setup-buildx-action`); GitHub-owned `actions/*` stay on version tags (ENG-09 §6). Dependabot continues to update them.
 - CI hardening (T-105): `ci-gate` only passes when every needed job is `success` or `skipped` by its path filter, `changes` succeeded and (on PRs) the title check succeeded; migration changes now trigger the engine schema-diff; `contracts/scripts/check_ruleset_hash.py` verifies that `pa-core 0.1.0` is identical in `python-engine/rulesets/`, the backend seeder data and TRD-01 §6. The M1 gates are documented as built in ENG-10 §10.
 - Engine contract (T-104): 13 Pydantic models in `python-engine/app/schemas` for the ARC-08 §5 internal API, exported as JSON Schema to `contracts/engine/` (`make export-schemas`, stale-export check in `python-engine-ci.yml`); SQLAlchemy Core read model `app/db/tables.py` for the 32 tables the engine touches; schema-diff test and CI job that compare it with the Laravel-migrated database. Added the `sqlalchemy` dependency.
