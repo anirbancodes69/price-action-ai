@@ -4,7 +4,7 @@
 |---|---|
 | Document ID | ARC-04 |
 | Version | 0.1.0 |
-| Status | Specification ready; machine-readable contract in `contracts/api/openapi.yaml` (M1, T-103) |
+| Status | Specification ready (daily); intraday conventions in §2.9 (ADR-015). Machine-readable contract in `contracts/api/openapi.yaml` (M1, T-103) |
 | Owner | Backend Lead |
 | Last updated | 2026-11-15 |
 | Related | [ARC-03 Database](03_DATABASE_DESIGN.md) · [ARC-06 Security](06_SECURITY_ARCHITECTURE.md) · [ARC-08 Internal engine API](08_INTEGRATION_ARCHITECTURE.md) · [ENG-02 Frontend mapping](../engineering/02_FRONTEND_ARCHITECTURE.md#8-route--feature--api--entity-mapping) |
@@ -98,6 +98,18 @@ Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After` on 429.
 ### 2.8 Idempotency
 
 `POST` endpoints that create trading records (`/trade-plans`, `/actual-trades`, `/actual-trades/{id}/fills`, `/backtests`) accept `Idempotency-Key` (UUID). Same key + same body within 24 h returns the original response; same key + different body → 409 `IDEMPOTENCY_KEY_REUSED`.
+
+### 2.9 Intraday time conventions (ADR-015)
+
+For the intraday direction ([ADR-014](../adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md), [ADR-015](../adr/ADR-015-INTRADAY-TIME-AND-SNAPSHOT-MODEL.md)). These conventions apply when the endpoints below are revised in I1/I6; the OpenAPI file changes in the same PR.
+
+- Every bar and every moment is an ISO-8601 timestamp **with the `+05:30` offset** (for example `2026-11-17T10:35:00+05:30`). Dates (`YYYY-MM-DD`) remain only for session dates.
+- `Candle = { start, end, open, high, low, close: Price, volume: int }` where `start`/`end` are timestamps; daily candles use the session open and close.
+- Candles and analysis take `?interval=5m|15m|1D` (`1m` reserved). The default for analysis is the 5m primary run with its 15m and daily context.
+- `meta.as_of` becomes the timestamp of the end of the last completed bar used (still mandatory with `meta.data_mode`, C-03). Responses add `meta.next_bar_close` so the client knows when data can change.
+- Signals carry `signal_at` (bar close that produced them) and `valid_until` (expiry within the session).
+- Clients poll; recommended interval 10–30 seconds during the session. There is no push channel in the MVP (OQ-API-03 stays post-MVP).
+- New resources (specified in TRD-05 revision, T-I06): `GET /api/v1/risk/today` (remaining daily risk, losing streak, block reason) and `GET /api/v1/positions/live` (current price and unrealised P&L of open positions, from the current-price cache).
 
 ## 3. Shared schemas
 

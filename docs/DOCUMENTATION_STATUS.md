@@ -20,7 +20,7 @@
 | [TRD-05 Risk management](trading/05_RISK_MANAGEMENT_RULES.md) | % sizing only, next-day gap rules, no daily limits | Pending | T-I06 |
 | [TRD-06 Backtesting](trading/06_BACKTESTING_METHODOLOGY.md), [TRD-07 Paper trading](trading/07_PAPER_TRADING_SPECIFICATION.md) | Next-open fills, end-of-day processing, delivery costs | Pending | T-I07 |
 | [TRD-08 Engine validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Daily vectors | Pending (with each TRD) | T-I04..T-I07 |
-| [ARC-03 Database](architecture/03_DATABASE_DESIGN.md), [ARC-04 API](architecture/04_API_SPECIFICATION.md), [ENG-05 Ingestion](engineering/05_DATA_INGESTION_SPECIFICATION.md) | Date-based time model, payload snapshots, daily ingestion | Pending | T-I02 (spec), T-I09 (code) |
+| [ARC-03 Database](architecture/03_DATABASE_DESIGN.md), [ARC-04 API](architecture/04_API_SPECIFICATION.md), [ENG-05 Ingestion](engineering/05_DATA_INGESTION_SPECIFICATION.md) | Date-based time model, payload snapshots, daily ingestion | Spec done (ADR-015; ARC-03 §2.2, ARC-04 §2.9, ENG-05 §12); code pending | T-I02 (spec), T-I09 (code) |
 | [Product vision](product/01_PRODUCT_VISION.md), [BRD](product/02_BRD.md), [PRD](product/03_PRD.md), [PRD-06 Feature catalog](product/06_FEATURE_CATALOG.md), [PRD-07 UI/UX](product/07_UI_UX_SPECIFICATION.md) | Swing/positional users, NIFTY 500, SaaS-first | Pending | T-I08 |
 
 ## 1. Document status

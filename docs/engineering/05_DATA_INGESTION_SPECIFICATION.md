@@ -89,3 +89,30 @@ Metrics: `ingestion_run_duration_seconds`, `ingestion_instruments_failed_total`,
 |---|---|
 | OQ-ING-01 | Should demo data roll forward daily (looks alive, but might be mistaken for live) or stay fixed at a past as-of date (clearer)? Proposed: fixed. |
 | OQ-ING-02 | Exact thresholds for PARTIAL vs FAILED runs. |
+
+## 12. Intraday ingestion (ADR-015)
+
+For the intraday direction ([ADR-014](../adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md), [ADR-015](../adr/ADR-015-INTRADAY-TIME-AND-SNAPSHOT-MODEL.md)); implemented in milestone I2. Sections 5–9 above describe the daily pipeline, which stays for daily context bars (previous-day levels).
+
+**Process.** One long-running asyncio process in the engine image (a Compose service, not a separate service codebase) runs only while `market_calendar` says the session is open.
+
+1. **Bar-close fetch.** At each 5-minute close plus a settle delay (initial value 20 s, HYPOTHESIS), fetch the just-completed 5m bar for every NIFTY 50 instrument through the provider's historical-bars API, and the 15m bar at each 15-minute close. Forming bars are never requested or stored. Write with an `INTRADAY_BARS` ingestion run per (timeframe, bar close).
+2. **Analysis trigger.** When a 5m close is complete for the universe (or the per-bar deadline passes), enqueue one analysis batch for that `as_of_ts`.
+3. **Current prices.** Keep the last traded price of open positions and the watchlist in Redis (key per instrument, short TTL) from the provider's quote or streaming API. Current prices are never written to `candles` and never used by analysis; they only feed live P&L and the "distance to level" display.
+4. **Session end.** After the close, re-fetch the whole session's 5m and 15m bars and reconcile: insert missing bars, compare stored bars, and correct changed ones (increment `revision`, copy the old values to `candle_revisions`). Then fetch the daily bar as today.
+
+**Quality checks (intraday).**
+
+| Check | Rule | Action |
+|---|---|---|
+| Completeness | A normal session has 75 5m and 25 15m bars per active instrument (special sessions per calendar) | `MISSING_BAR` issue; the analysis for that bar uses what exists and marks the run inputs incomplete |
+| Late bar | Bar not available by the per-bar deadline | Retry with backoff until the next bar close, then `LATE_BAR` issue |
+| Alignment | `bar_start` on the 09:15 grid for the timeframe | Reject the bar, `MISALIGNED_BAR` issue |
+| Consistency | 15m bar equals the aggregate of its three 5m bars (OHLC exactly, volume within tolerance) | `AGGREGATE_MISMATCH` issue; provider's 15m bar is kept |
+| OHLC validity | As for daily (§7) | Reject the bar |
+| Outside session | `bar_start` before the open or at/after the close | Reject the bar |
+
+**Rate limits and recovery.** About 50 requests per 5m close (plus 50 per 15m close) are spread to respect the provider's limit (to verify, OQ-INT-01). A provider outage marks runs `PARTIAL`/`FAILED` and the session-end reconciliation backfills. Restarting the process resumes from the last stored bar per instrument.
+
+**Demo data.** The DEMO source gets a deterministic intraday generator (session-shaped 5m bars aggregated to 15m) with the same seeded-random approach as the daily one (`backend/database/seeders/Demo/`), flagged `is_demo`.
+

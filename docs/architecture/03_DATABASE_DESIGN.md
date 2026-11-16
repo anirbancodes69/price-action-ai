@@ -31,7 +31,7 @@ Legend for "Writer": **L** = Laravel, **E** = engine/engine-worker.
 
 ### 2.1 Implementation notes (as migrated)
 
-Migrations are raw SQL in `backend/database/migrations` so constraints match this document exactly. Implemented: §4–§8 and the §12 seeders (`0001_01_01_000000_create_users_table`, `2026_11_16_000001`–`000005`) plus an extensions migration and the role grants (`000006`). Deviations and decisions:
+Migrations are raw SQL in `backend/database/migrations` so constraints match this document exactly. Implemented: §4–§8 and the §12 seeders for the daily M1 schema; the intraday target is §2.2 (ADR-015). Files: (`0001_01_01_000000_create_users_table`, `2026_11_16_000001`–`000005`) plus an extensions migration and the role grants (`000006`). Deviations and decisions:
 
 - `users` has no `name` column (the display name is `user_profiles.display_name`) and there is no `sessions` table (Redis).
 - `trading_preferences.universe_id` is a plain `uuid` until `universes` exists (§6.4); its FK is added in T-101b.
@@ -73,6 +73,28 @@ Migrations are raw SQL in `backend/database/migrations` so constraints match thi
   - **Deliberate gaps:** SENSEX is BSE, which `instruments.exchange` does not allow, so it is not seeded. Index instruments have no candles (the dashboard strip keeps using its own sample trend until a decision on DEMO index series). Sector and index-membership attributes of the sample universe have no column and are not stored.
   - **M2 risk:** demo equities use real tickers (`RELIANCE`, …) as `ACTIVE`, and `uq_instruments__active_symbol` makes those unique per exchange. The M2 instrument-master sync must adopt or replace the demo rows (for example match by symbol and flip `is_demo`), or a real sync will conflict with them.
 - Tests: `backend/tests/Feature/Database/` assert the constraints against a real PostgreSQL; the grant tests use `has_table_privilege`/`has_column_privilege` and skip when the roles do not exist.
+
+### 2.2 Intraday time model (ADR-015, to be implemented in I1)
+
+[ADR-015](../adr/ADR-015-INTRADAY-TIME-AND-SNAPSHOT-MODEL.md) changes the time model for the intraday direction ([ADR-014](../adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md)). The sections below §3 still describe the M1 (daily) schema as migrated; this table is the target for the I1 expand migrations (task T-I09) and wins where they disagree.
+
+| Table | Change |
+|---|---|
+| `candles` | Add `bar_start timestamptz NOT NULL` (UTC; IST session alignment). Primary key `(data_source_id, instrument_id, timeframe, bar_start)`. `timeframe` CHECK `('1m','5m','15m','1D')`. `trade_date` stays as the IST session date; index `(instrument_id, timeframe, trade_date)`. Check that `bar_start` falls inside the session for intraday timeframes is done by ingestion, not by a constraint. |
+| `candle_revisions` (new) | Append-only copy of a bar's previous values when it is corrected: `(data_source_id, instrument_id, timeframe, bar_start, revision, open, high, low, close, volume, replaced_at)`. Engine-written; no `UPDATE`/`DELETE` for the runtime roles. |
+| `candle_snapshots` | Drop `payload`. Add `from_bar_start`, `to_bar_start` (timestamptz) and `max_revision`; keep `bar_count`, `content_hash` (sha256 over the canonical bars at the revisions used), immutability trigger and the unique `(data_source_id, content_hash)`. `timeframe` CHECK as for `candles`. |
+| `analysis_run_inputs` (new) | `(analysis_run_id, role, candle_snapshot_id)`, role CHECK `('PRIMARY_5M','CONTEXT_15M','DAILY_CONTEXT')`, primary key `(analysis_run_id, role)`. Immutable like its run. |
+| `analysis_runs` | Add `as_of_ts timestamptz NOT NULL` (end of the last 5m bar used). Drop `candle_snapshot_id` after the inputs table is filled. `as_of_date` stays (session date). Uniqueness by `(data_source_id, instrument_id, ruleset_version_id, as_of_ts)`. |
+| `analysis_batches` | Add `as_of_ts`; one batch per data source and 5m close. |
+| `swing_points`, `structure_events`, `price_zones`, `liquidity_events`, `detected_setups` | Add the source timeframe and bar timestamps beside the existing indexes and dates (for example `swing_points.bar_start`, `confirmed_at_bar_start`, `timeframe`); no-look-ahead check `confirmed_at_bar_start >= bar_start`. |
+| `ingestion_runs` | Add `timeframe` and `bar_start` (the bar close being fetched) for intraday runs; duplicate-run guard on `(data_source_id, kind, timeframe, bar_start)` while queued or running. Kind `INTRADAY_BARS` added. |
+| `market_calendar` | Seeded with NSE sessions and holidays (special sessions as rows with their own times). |
+| `trade_plans` | Add `triggered_at timestamptz`; `valid_until timestamptz` (setup expiry inside the session). |
+| `paper_trades` | Add `entry_at`, `exit_at` (timestamptz); `exit_reason` adds `SESSION_END`. Checks move to timestamps (exit after entry). |
+| `backtest_trades` | Add `signal_at`, `entry_at`, `exit_at`; check `entry_at > signal_at` (fill on a later bar, C-09). |
+| `risk_profiles` | Add `max_position_value`, `daily_loss_limit`, `max_consecutive_losses`, `max_open_risk` (money or count; values are owner settings, defaults HYPOTHESIS per TRD-05). |
+| `daily_risk_state` (new) | Per tenant and session date and book: realised P&L, open risk, losing streak, `blocked_reason`. Engine and Laravel derive it from trades; single writer to be fixed in TRD-05 (T-I06). |
+| Retention | Intraday analysis runs not referenced by a plan, trade or journal entry are deleted after a configurable number of days (OPS-04). |
 
 ## 3. Entity-relationship overview
 
