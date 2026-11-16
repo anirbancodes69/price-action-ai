@@ -131,16 +131,30 @@ Defines the mandatory test catalogue for the trading engine. Every test ID below
 | TV-GAP-03 | Open below stop | SKIPPED_GAP_BELOW_STOP |
 | TV-GAP-04 | Fill degrades RR below min | SKIPPED_RR_DEGRADED |
 | TV-GAP-05 | Later bar gaps through stop | Exit at open |
-| TV-COL-01 | Same bar touches stop and target | Exit at stop |
+| TV-COL-01 | Same bar touches stop and target | Exit at stop (`STOP_COLLISION`) |
 | TV-COL-02 | Fill bar touches stop after open fill | Exit at stop same bar |
-| TV-COL-03 | Gap above target | Exit at open |
+| TV-COL-03 | Bar opens above target | Exit at open (`TARGET_GAP`) |
+| TV-EOD-01 | Position open when the bar starting at the exit time opens | Exit at that open (`SESSION_END`) |
+| TV-EOD-02 | Plan triggered on the last bar before the entry cutoff; next bar starts at the cutoff | `SKIPPED_SESSION_CUTOFF` |
+| TV-EOD-03 | Simulation across two sessions | No position or plan carried into the second session |
+| TV-EOD-04 | Daily loss limit reached mid-session in a backtest | No further entries that session; entries resume next session |
+| TV-CST-01 | Cost illustration TRD-06 §5 (33 shares, 1,498.10 → 1,529.00) | Charges ₹53.08; net ₹966.62 |
+
+### 3.6a Paper processing (TRD-07 §4)
+
+| ID | Scenario | Expected |
+|---|---|---|
+| TV-PT-01 | Plan triggered at close `t−1`; bar `t` opens inside the gap limit and its low hits the stop | Filled at the open, exited at the stop on bar `t` |
+| TV-PT-02 | Bar `t` arrives late for one instrument | Other instruments processed; the late one processed in order by the session-end pass |
+| TV-PT-03 | Manual close request during bar `t` | Exit at the open of bar `t+1` |
+| TV-PT-04 | Processing the same bar close twice | Idempotent: no duplicate fills or events |
 
 ### 3.7 Universe and survivorship (TRD-06 §8)
 
 | ID | Scenario | Expected |
 |---|---|---|
-| TV-UNI-01 | Symbol added to NIFTY 500 mid-test | No trades before effective date |
-| TV-UNI-02 | Symbol removed with open position | Position runs to exit; no new entries |
+| TV-UNI-01 | Symbol added to NIFTY 50 mid-test | No trades before effective date |
+| TV-UNI-02 | Symbol removed from NIFTY 50 | No new entries from the effective session (no position can be open overnight) |
 | TV-UNI-03 | Missing membership history | Run flagged `survivorship_bias_risk` |
 
 ### 3.8 No look-ahead (MP-04, BT-01)
@@ -149,7 +163,7 @@ Defines the mandatory test catalogue for the trading engine. Every test ID below
 |---|---|---|
 | TV-NLA-01 | **Truncation invariance:** for random `t`, analysis(snapshot[0..t]) equals the state replayed at bar `t` in a full-series replay | Identical pivots/zones/events/setups with `confirmed_at_index ≤ t` |
 | TV-NLA-02 | **Future perturbation:** mutate bars `> t` arbitrarily | Output at `t` unchanged |
-| TV-NLA-03 | Backtest entry uses only `O[c+1]` from future bars | Verified via instrumented candle accessor raising on forbidden access |
+| TV-NLA-03 | Backtest entry uses only `O[c+1]` from future bars, and 15m context only from closed 15m bars | Verified via instrumented candle accessors (5m and 15m) raising on forbidden access |
 | TV-NLA-04 | Determinism: two runs, same input | Byte-identical JSON |
 
 ## 4. Non-engine checks that are also required
@@ -171,10 +185,12 @@ Defines the mandatory test catalogue for the trading engine. Every test ID below
 
 A parameter set may be marked `VALIDATED` for a ruleset version when, on the OOS segment of TRD-06 §9:
 
-1. ≥ 100 filled trades across the universe;
-2. Net expectancy > 0.10 R;
+1. ≥ 100 filled trades across the universe, over ≥ 60 sessions;
+2. Net expectancy (after the verified cost schedule) > 0.10 R;
 3. Profit factor (net) > 1.2;
 4. Max drawdown ≤ 2× the IS max drawdown;
-5. `survivorship_bias_risk = false`.
+5. Positive net expectancy in most walk-forward OOS windows (TRD-06 §9);
+6. Forward paper log (TRD-07) over ≥ 40 sessions does not contradict the OOS result (net expectancy not below 0);
+7. `survivorship_bias_risk = false` and `short_history = false`.
 
 These are acceptance gates for promotion, not performance claims.

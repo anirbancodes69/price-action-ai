@@ -18,8 +18,8 @@
 | [TRD-02 Market structure](trading/02_MARKET_STRUCTURE_RULES.md), [TRD-03 Support and resistance](trading/03_SUPPORT_RESISTANCE_RULES.md) | Daily parameters, no higher-timeframe rule | Done (v0.2.0: per-timeframe parameters, higher-timeframe alignment, sessions, repainting checklist, session reference levels) | T-I04 |
 | [TRD-04 Setup detection](trading/04_SETUP_DETECTION_RULES.md) | Four daily setups | Done (v0.2.0: opening range breakout, previous-day high/low break, breakout-retest; trend continuation and sweep reversal specified for later; 15m context filter; session-bounded lifecycle; `paqs-intraday-0.1.0`) | T-I05 |
 | [TRD-05 Risk management](trading/05_RISK_MANAGEMENT_RULES.md) | % sizing only, next-day gap rules, no daily limits | Done (v0.2.0: ₹ position cap, daily loss / streak / open positions / open risk limits, derived account state, next-5m-bar entry gap, exit rules incl. session end, cost notes) | T-I06 |
-| [TRD-06 Backtesting](trading/06_BACKTESTING_METHODOLOGY.md), [TRD-07 Paper trading](trading/07_PAPER_TRADING_SPECIFICATION.md) | Next-open fills, end-of-day processing, delivery costs | Pending | T-I07 |
-| [TRD-08 Engine validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Daily vectors | In progress: structure, zones, alignment, session, reference-level, setup and risk vectors done (T-I04..T-I06) | T-I04..T-I07 |
+| [TRD-06 Backtesting](trading/06_BACKTESTING_METHODOLOGY.md), [TRD-07 Paper trading](trading/07_PAPER_TRADING_SPECIFICATION.md) | Next-open fills, end-of-day processing, delivery costs | Done (v0.2.0: 5m replay, session-bounded simulation with account limits, session-end exit, intraday cost schedule, walk-forward; bar-close paper processing) | T-I07 |
+| [TRD-08 Engine validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Daily vectors | Done (v0.2.0) for all revised TRDs | T-I04..T-I07 |
 | [ARC-03 Database](architecture/03_DATABASE_DESIGN.md), [ARC-04 API](architecture/04_API_SPECIFICATION.md), [ENG-05 Ingestion](engineering/05_DATA_INGESTION_SPECIFICATION.md) | Date-based time model, payload snapshots, daily ingestion | Spec done (ADR-015; ARC-03 §2.2, ARC-04 §2.9, ENG-05 §12); code pending | T-I02 (spec), T-I09 (code) |
 | [Product vision](product/01_PRODUCT_VISION.md), [BRD](product/02_BRD.md), [PRD](product/03_PRD.md), [PRD-06 Feature catalog](product/06_FEATURE_CATALOG.md), [PRD-07 UI/UX](product/07_UI_UX_SPECIFICATION.md) | Swing/positional users, NIFTY 500, SaaS-first | Pending | T-I08 |
 
@@ -47,8 +47,8 @@
 | [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) | Specification ready | TRD-01, TRD-02 | OQ-SR-01, OQ-SR-02, OQ-SR-03 | 2026-11-15 |
 | [Setup Detection Rules and Price Action Quality Score](trading/04_SETUP_DETECTION_RULES.md) | Specification ready | TRD-01..03, TRD-05 | OQ-SD-01, OQ-SD-02, OQ-SD-03, OQ-SD-04 | 2026-11-15 |
 | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) | Specification ready for intraday (v0.2.0, ADR-014) | TRD-01, TRD-04 | OQ-RM-01, OQ-RM-02, OQ-RM-03, OQ-RM-05, OQ-RM-06 | 2026-11-15 |
-| [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) | Specification ready (costs to verify; universe history source pending) | TRD-01..05 | OQ-BT-01, OQ-BT-02, OQ-BT-03, OQ-BT-04, OQ-BT-05 | 2026-11-15 |
-| [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) | Specification ready | TRD-04..06 | OQ-PT-01, OQ-PT-02, OQ-PT-03 | 2026-11-15 |
+| [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) | Specification ready for intraday (v0.2.0; costs and history depth to verify) | TRD-01..05 | OQ-BT-01, OQ-BT-02, OQ-BT-03, OQ-BT-05, OQ-BT-06, OQ-BT-07 | 2026-11-17 |
+| [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) | Specification ready for intraday (v0.2.0) | TRD-04..06 | OQ-PT-01, OQ-PT-02 | 2026-11-17 |
 | [Trading Engine Validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Specification ready | TRD-02..06 | — | 2026-11-15 |
 | [Implementation Roadmap](engineering/01_IMPLEMENTATION_ROADMAP.md) | Specification ready (M0 complete; progress in root ROADMAP.md) | All | OQ-RD-01, OQ-RD-02 | 2026-11-16 |
 | [Frontend Architecture](engineering/02_FRONTEND_ARCHITECTURE.md) | Reflects implemented code + plan (§11 design system) | PRD-07, ARC-04, ADR-013 | — | 2026-11-16 |
@@ -140,14 +140,14 @@ All unresolved decisions, aggregated from each document's "Open questions" secti
 | OQ-RM-03 | Confirm NSE tick-size table and its history for backtests. | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
 | OQ-RM-05 | Should the losing streak count only today's trades (chosen) or roll across sessions? | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
 | OQ-RM-06 | Broker automatic square-off time for intraday positions — verify, and keep the session-end exit earlier. | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
-| OQ-BT-01 | Source of point-in-time NIFTY 500 membership and delisted price history. | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
-| OQ-BT-02 | Source and maintenance of historical statutory charge schedules. | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
+| OQ-BT-01 | Source of point-in-time NIFTY 50 membership history. | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
+| OQ-BT-02 | Source and maintenance of current and historical intraday charge schedules (per broker). | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
 | OQ-BT-03 | Corporate-action data source. | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
-| OQ-BT-04 | Should cash dividends be credited in 0.1.x? | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
 | OQ-BT-05 | Promotion thresholds (proposed in TRD-08 §6). | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
-| OQ-PT-01 | Should paper fills optionally use a limit price at `entry_ref` instead of the open? | [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) |
+| OQ-BT-06 | How much 5m/15m history can the provider supply for NIFTY 50 (depth, per-request limits, gaps)? | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
+| OQ-BT-07 | Use 1m bars to resolve same-bar stop/target collisions instead of the conservative rule? | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
+| OQ-PT-01 | Should paper fills optionally use a limit price at `entry_ref` instead of the next 5m open? | [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) |
 | OQ-PT-02 | Should users be allowed multiple paper accounts (e.g. per strategy)? | [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) |
-| OQ-PT-03 | Timing of EOD job — proposed 18:30 IST to allow for late data corrections; confirm against provider data availability. | [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) |
 | OQ-RD-01 | Target dates per milestone. | [Implementation Roadmap](engineering/01_IMPLEMENTATION_ROADMAP.md) |
 | OQ-RD-02 | Should M8 (LLM) be deferred after M9 to reach G1 sooner? Dependency graph allows it. | [Implementation Roadmap](engineering/01_IMPLEMENTATION_ROADMAP.md) |
 | OQ-ING-01 | Should demo data roll forward daily (looks alive, but might be mistaken for live) or stay fixed at a past as-of date (clearer)? Proposed: fixed. | [Data Ingestion Specification](engineering/05_DATA_INGESTION_SPECIFICATION.md) |
@@ -169,6 +169,6 @@ All unresolved decisions, aggregated from each document's "Open questions" secti
 | OQ-INT-01 / OQ-INT-02 | M2 | Kite historical limits, rate limits, token expiry, terms and price adjustment must be verified before the adapter is finalised. |
 | OQ-SEC-01 | M2 / G2 | Kite app model (platform app vs bring-your-own key) affects token custody and terms compliance. |
 | OQ-AI-01 | M8 | LLM provider/model. |
-| OQ-BT-01 / OQ-BT-03 | M9–M10 | Point-in-time NIFTY 500 membership and corporate-action sources for unbiased backtests. |
+| OQ-BT-06 / OQ-INT-01 | I8 | Intraday history depth for NIFTY 50 limits the achievable backtest span. |
 | OQ-TRD-03 | M10 | Parameter promotion criteria sign-off. |
 | OQ-CMP-01 | G2 | Legal counsel engagement. |
