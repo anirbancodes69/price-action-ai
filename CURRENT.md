@@ -52,7 +52,7 @@ Update this file at the end of every substantial task, based only on verified st
 
 | Blocks | Item |
 |---|---|
-| M2 | OQ-INT-01/02 — Kite Connect limits, token expiry, price adjustment and terms not verified. OQ-SEC-01 — Kite app model. Kite developer app needed. |
+| M2 | OQ-INT-01/02 — Kite Connect limits, token expiry, price adjustment and terms not verified. OQ-SEC-01 — Kite app model. Kite developer app needed. OQ-INT-04 — Groww vs Kite as first provider (deferred to M2, T-203). |
 | M8 | OQ-AI-01 — LLM provider/model not chosen. |
 | M9–M10 | OQ-BT-01/03 — point-in-time NIFTY 500 membership and corporate-action data sources. |
 

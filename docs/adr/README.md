@@ -41,4 +41,5 @@ Each ADR has: Status, Date, Context, Decision, Alternatives considered, Conseque
 | Licensed market-data vendor | Before G3 |
 | PostgreSQL RLS adoption | M10 |
 | Edge proxy and hosting provider | M10 (OQ-OPS-01) |
+| First real market-data provider: Groww vs Kite (or both) | OQ-INT-04 resolved (T-203) |
 | Kite app model (platform app vs bring-your-own key) | OQ-SEC-01 resolved |

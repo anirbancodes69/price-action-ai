@@ -24,4 +24,4 @@ Rules: accepted decisions are changed only through a superseding ADR (see [CLAUD
 
 ## Candidate future decisions
 
-Tracked in [docs/adr/README.md](docs/adr/README.md#candidate-future-adrs): LLM provider (OQ-AI-01), Kite app model (OQ-SEC-01), licensed data vendor, PostgreSQL RLS adoption, edge proxy and hosting. Repository visibility (ENG-09 says private, actual is public) also needs an owner decision. See [CURRENT.md](CURRENT.md#pending-decisions-and-inconsistencies).
+Tracked in [docs/adr/README.md](docs/adr/README.md#candidate-future-adrs): LLM provider (OQ-AI-01), Kite app model (OQ-SEC-01), first real data provider Groww vs Kite (OQ-INT-04, deferred to M2), licensed data vendor, PostgreSQL RLS adoption, edge proxy and hosting. Repository visibility (ENG-09 says private, actual is public) also needs an owner decision. See [CURRENT.md](CURRENT.md#pending-decisions-and-inconsistencies).
