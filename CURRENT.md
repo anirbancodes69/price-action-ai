@@ -1,6 +1,6 @@
 # CURRENT — Project State
 
-Last verified: **2026-11-17** against the repository (`main` at `d0cc298`; seeder work on branch `feature/backend-seeders-and-groww-decision`).
+Last verified: **2026-11-17** against the repository (`main` at `185919f`; T-103 on branch `feature/contracts-openapi-spec`).
 
 Status vocabulary: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REVIEW`.
 Update this file at the end of every substantial task, based only on verified state.
@@ -24,7 +24,7 @@ Update this file at the end of every substantial task, based only on verified st
 | Frontend ↔ spec | `NEEDS REVIEW` | 24 known discrepancies (D-01..D-24) in [ENG-02 §9](docs/engineering/02_FRONTEND_ARCHITECTURE.md#9-discrepancy-register), to be resolved in M7 (D-20 partly resolved by the design-standards work, PR #18). |
 | Claude Code skills | `COMPLETED` (PR #16) | 8 project skills in `.claude/skills/` (price-action-domain, quant-engine, market-data, schema-and-contracts, frontend-ui, security-guardrails, quality-gate, docs-sync). They are workflows that link to the specs, plus two stdlib scripts (docs impact mapping, relative link and anchor check). Indexed in CLAUDE.md §10. No agents and no `.claude/settings.json`. |
 | Documentation | `COMPLETED` (specification) | 58 spec files under `docs/`, the design standards and 13 accepted ADRs. They describe the target system, so most of it is **not implemented**. |
-| Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1), merged:** ARC-03 §4–§5 (12 identity and trading-configuration tables, PR #13), §6 market data (9 tables + `trading_preferences.universe_id` FK, PR #14) and §7 analysis (ruleset versions, candle snapshots, analysis batches/runs, swing points, structure events, price zones, liquidity events, detected setups, AI explanations) with immutability triggers (PR #15). **Merged (PR #17):** §8 trading (watchlists, trade plans, paper and actual trades, journal, backtests, notifications) and single-writer role grants (`apply_role_grants()`; new tables stay closed to the runtime roles until listed). 60 backend tests incl. 55 database tests. **Seeders (T-102, on branch, PR pending):** `pa-core 0.1.0` ruleset, six universes, DEMO data source, 36 demo equities + 3 NSE index instruments, DEMO universe, one backfill run and 8,640 generated demo candles (PHP port of `frontend/src/mocks`, bar-for-bar parity test). Run with `make seed` (schema-owner role, idempotent). 67 backend tests. **Not yet:** domain modules, `/api/v1` endpoints. |
+| Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1), merged:** ARC-03 §4–§5 (12 identity and trading-configuration tables, PR #13), §6 market data (9 tables + `trading_preferences.universe_id` FK, PR #14) and §7 analysis (ruleset versions, candle snapshots, analysis batches/runs, swing points, structure events, price zones, liquidity events, detected setups, AI explanations) with immutability triggers (PR #15). **Merged (PR #17):** §8 trading (watchlists, trade plans, paper and actual trades, journal, backtests, notifications) and single-writer role grants (`apply_role_grants()`; new tables stay closed to the runtime roles until listed). 60 backend tests incl. 55 database tests. **Seeders (T-102, merged, PR #19):** `pa-core 0.1.0` ruleset, six universes, DEMO data source, 36 demo equities + 3 NSE index instruments, DEMO universe, one backfill run and 8,640 generated demo candles (PHP port of `frontend/src/mocks`, bar-for-bar parity test). Run with `make seed` (schema-owner role, idempotent). 67 backend tests. **Not yet:** domain modules, `/api/v1` endpoints. |
 | Python engine | `IN PROGRESS` (skeleton only) | FastAPI `/health` and authenticated `/internal/v1/ping`, arq worker settings, structured logging, pytest. `app/domain/` is empty. **No trading logic, providers or ingestion.** |
 | Contracts (`contracts/`) | `NOT STARTED` | Directory does not exist (planned for M1). |
 | Infrastructure | `COMPLETED` (local dev) | Docker Compose with frontend, backend (php-fpm + nginx), queue worker, scheduler, engine, engine worker, PostgreSQL 17 and Redis 7.4, all with health checks. Dev overlay with hot reload. Makefile. `scripts/setup-env.sh`. No staging or production environments. |
@@ -41,12 +41,12 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Work in progress
 
-- Branch `feature/backend-seeders-and-groww-decision`: Groww decision deferred (OQ-INT-04, T-203; committed locally, not pushed) and **T-102** seeders (committed locally, not pushed).
+- Branch `feature/contracts-openapi-spec`: **T-103** (OpenAPI contract from ARC-04). Groww decision deferred (OQ-INT-04, T-203) and T-102 seeders are merged (PR #19).
 - Local dev databases created before PR #13 must be recreated (`make reset`), because the stock Laravel `users` migration was replaced (UUID ids, no `name`, no sessions table). After that, `make migrate` then `make seed`. Note: `make migrate` runs the prebuilt image, so run `make build` (or use the dev overlay) after pulling new migrations.
 
 ## Immediate next task
 
-**T-103 — `contracts/api/openapi.yaml`** (then T-104, T-105) — see [TASKS.md](TASKS.md). T-102 awaits PR and CI.
+**T-103 — `contracts/api/openapi.yaml`** (then T-104, T-105) — see [TASKS.md](TASKS.md).
 
 ## Known blockers
 

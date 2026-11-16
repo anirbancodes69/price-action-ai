@@ -37,7 +37,7 @@ See T-201 (needs a Kite developer app).
 
 | ID | Task | M | Verified |
 |---|---|---|---|
-| T-102 | Seeders: ruleset `pa-core 0.1.0` (ACTIVE, HYPOTHESIS), six universes, DEMO data source, 36 demo equities + 3 NSE indices, DEMO universe membership, one backfill ingestion run and 8,640 generated demo candles (PHP port of `frontend/src/mocks`, parity-tested); `make seed` | M1 | 2026-11-17 (verified locally: 67 backend tests; seeded twice on a fresh DB; PR pending) |
+| T-102 | Seeders: ruleset `pa-core 0.1.0` (ACTIVE, HYPOTHESIS), six universes, DEMO data source, 36 demo equities + 3 NSE indices, DEMO universe membership, one backfill ingestion run and 8,640 generated demo candles (PHP port of `frontend/src/mocks`, parity-tested); `make seed` | M1 | 2026-11-17 (verified locally: 67 backend tests; seeded twice on a fresh DB; PR #19 merged) |
 | T-003 | Adopt `docs/design-standards.md` across the frontend (ADR-013) | — | 2026-11-16 (PR #18 merged) |
 | T-101d | Migrations for ARC-03 §8 trading (12 tables) and per-table writer grants (`apply_role_grants()`) | M1 | 2026-11-16 (PR #17 merged) |
 | T-002 | Project Claude Code skills in `.claude/skills/` + CLAUDE.md §10 index | — | 2026-11-16 (PR #16 merged) |
