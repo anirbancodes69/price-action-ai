@@ -17,9 +17,9 @@
 | [TRD-01 Trading methodology](trading/01_TRADING_METHODOLOGY.md) | Scope, MP-02, data requirements, registry `pa-core` | Done (v0.2.0: intraday scope, MP-10/11, session conventions, `pa-intraday 0.1.0`) | T-I03 |
 | [TRD-02 Market structure](trading/02_MARKET_STRUCTURE_RULES.md), [TRD-03 Support and resistance](trading/03_SUPPORT_RESISTANCE_RULES.md) | Daily parameters, no higher-timeframe rule | Done (v0.2.0: per-timeframe parameters, higher-timeframe alignment, sessions, repainting checklist, session reference levels) | T-I04 |
 | [TRD-04 Setup detection](trading/04_SETUP_DETECTION_RULES.md) | Four daily setups | Done (v0.2.0: opening range breakout, previous-day high/low break, breakout-retest; trend continuation and sweep reversal specified for later; 15m context filter; session-bounded lifecycle; `paqs-intraday-0.1.0`) | T-I05 |
-| [TRD-05 Risk management](trading/05_RISK_MANAGEMENT_RULES.md) | % sizing only, next-day gap rules, no daily limits | Pending | T-I06 |
+| [TRD-05 Risk management](trading/05_RISK_MANAGEMENT_RULES.md) | % sizing only, next-day gap rules, no daily limits | Done (v0.2.0: ₹ position cap, daily loss / streak / open positions / open risk limits, derived account state, next-5m-bar entry gap, exit rules incl. session end, cost notes) | T-I06 |
 | [TRD-06 Backtesting](trading/06_BACKTESTING_METHODOLOGY.md), [TRD-07 Paper trading](trading/07_PAPER_TRADING_SPECIFICATION.md) | Next-open fills, end-of-day processing, delivery costs | Pending | T-I07 |
-| [TRD-08 Engine validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Daily vectors | In progress: structure, zones, alignment, session, reference-level and setup vectors done (T-I04, T-I05) | T-I04..T-I07 |
+| [TRD-08 Engine validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Daily vectors | In progress: structure, zones, alignment, session, reference-level, setup and risk vectors done (T-I04..T-I06) | T-I04..T-I07 |
 | [ARC-03 Database](architecture/03_DATABASE_DESIGN.md), [ARC-04 API](architecture/04_API_SPECIFICATION.md), [ENG-05 Ingestion](engineering/05_DATA_INGESTION_SPECIFICATION.md) | Date-based time model, payload snapshots, daily ingestion | Spec done (ADR-015; ARC-03 §2.2, ARC-04 §2.9, ENG-05 §12); code pending | T-I02 (spec), T-I09 (code) |
 | [Product vision](product/01_PRODUCT_VISION.md), [BRD](product/02_BRD.md), [PRD](product/03_PRD.md), [PRD-06 Feature catalog](product/06_FEATURE_CATALOG.md), [PRD-07 UI/UX](product/07_UI_UX_SPECIFICATION.md) | Swing/positional users, NIFTY 500, SaaS-first | Pending | T-I08 |
 
@@ -46,7 +46,7 @@
 | [Market Structure Rules](trading/02_MARKET_STRUCTURE_RULES.md) | Specification ready | TRD-01 | OQ-STR-01, OQ-STR-02, OQ-STR-03 | 2026-11-15 |
 | [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) | Specification ready | TRD-01, TRD-02 | OQ-SR-01, OQ-SR-02, OQ-SR-03 | 2026-11-15 |
 | [Setup Detection Rules and Price Action Quality Score](trading/04_SETUP_DETECTION_RULES.md) | Specification ready | TRD-01..03, TRD-05 | OQ-SD-01, OQ-SD-02, OQ-SD-03, OQ-SD-04 | 2026-11-15 |
-| [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) | Specification ready | TRD-01, TRD-04 | OQ-RM-01, OQ-RM-02, OQ-RM-03, OQ-RM-04 | 2026-11-15 |
+| [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) | Specification ready for intraday (v0.2.0, ADR-014) | TRD-01, TRD-04 | OQ-RM-01, OQ-RM-02, OQ-RM-03, OQ-RM-05, OQ-RM-06 | 2026-11-15 |
 | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) | Specification ready (costs to verify; universe history source pending) | TRD-01..05 | OQ-BT-01, OQ-BT-02, OQ-BT-03, OQ-BT-04, OQ-BT-05 | 2026-11-15 |
 | [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) | Specification ready | TRD-04..06 | OQ-PT-01, OQ-PT-02, OQ-PT-03 | 2026-11-15 |
 | [Trading Engine Validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Specification ready | TRD-02..06 | — | 2026-11-15 |
@@ -89,7 +89,7 @@
 
 ## 2. Open questions register
 
-All unresolved decisions, aggregated from each document's "Open questions" section (65 items). Resolve by updating the owning document (and an ADR where the decision is architectural), then remove the row there; this table is regenerated from the documents.
+All unresolved decisions, aggregated from each document's "Open questions" section (66 items). Resolve by updating the owning document (and an ADR where the decision is architectural), then remove the row there; this table is regenerated from the documents.
 
 | ID | Question | Owning document |
 |---|---|---|
@@ -138,7 +138,8 @@ All unresolved decisions, aggregated from each document's "Open questions" secti
 | OQ-RM-01 | Should estimated round-trip costs be added to `risk_per_share` for sizing? | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
 | OQ-RM-02 | Add sector concentration limits? | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
 | OQ-RM-03 | Confirm NSE tick-size table and its history for backtests. | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
-| OQ-RM-04 | Frontend settings currently show defaults of 6 max positions and 2% portfolio heat; onboarding shows 5 positions. Canonical defaults here are 5 / 5% — confirm with product owner. | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
+| OQ-RM-05 | Should the losing streak count only today's trades (chosen) or roll across sessions? | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
+| OQ-RM-06 | Broker automatic square-off time for intraday positions — verify, and keep the session-end exit earlier. | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
 | OQ-BT-01 | Source of point-in-time NIFTY 500 membership and delisted price history. | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
 | OQ-BT-02 | Source and maintenance of historical statutory charge schedules. | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
 | OQ-BT-03 | Corporate-action data source. | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
@@ -167,7 +168,6 @@ All unresolved decisions, aggregated from each document's "Open questions" secti
 | OQ-INT-04 | M2 | Groww vs Kite as first real provider; decide after the T-203 comparison, before the adapter is built. |
 | OQ-INT-01 / OQ-INT-02 | M2 | Kite historical limits, rate limits, token expiry, terms and price adjustment must be verified before the adapter is finalised. |
 | OQ-SEC-01 | M2 / G2 | Kite app model (platform app vs bring-your-own key) affects token custody and terms compliance. |
-| OQ-RM-04 | M6 | Canonical risk defaults (5 positions / 5% heat / 25% max position) vs current UI values. |
 | OQ-AI-01 | M8 | LLM provider/model. |
 | OQ-BT-01 / OQ-BT-03 | M9–M10 | Point-in-time NIFTY 500 membership and corporate-action sources for unbiased backtests. |
 | OQ-TRD-03 | M10 | Parameter promotion criteria sign-off. |

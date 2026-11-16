@@ -95,7 +95,7 @@ Migrations are raw SQL in `backend/database/migrations` so constraints match thi
 | `paper_trades` | Add `entry_at`, `exit_at` (timestamptz); `exit_reason` adds `SESSION_END`. Checks move to timestamps (exit after entry). |
 | `backtest_trades` | Add `signal_at`, `entry_at`, `exit_at`; check `entry_at > signal_at` (fill on a later bar, C-09). |
 | `risk_profiles` | Add `max_position_value`, `daily_loss_limit`, `max_consecutive_losses`, `max_open_risk` (money or count; values are owner settings, defaults HYPOTHESIS per TRD-05). |
-| `daily_risk_state` (new) | Per tenant and session date and book: realised P&L, open risk, losing streak, `blocked_reason`. Engine and Laravel derive it from trades; single writer to be fixed in TRD-05 (T-I06). |
+| `daily_risk_state` | **Not a table in the MVP**: account state is computed on demand from the trade tables (TRD-05 §8.1). |
 | Retention | Intraday analysis runs not referenced by a plan, trade or journal entry are deleted after a configurable number of days (OPS-04). |
 
 ## 3. Entity-relationship overview

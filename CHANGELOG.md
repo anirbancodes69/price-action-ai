@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- TRD-05 v0.2.0 (intraday risk): ₹50,000 position cap, 0.5% risk, daily loss / consecutive-loss / open-position / open-risk limits that block plans, derived account state per book and session, next-bar entry-gap and session-end exit rules; worked examples at ₹1,00,000 capital.
 - TRD-04 v0.2.0 (intraday setups): opening range breakout, previous-day high break (low break informational), breakout-retest on zones and session levels, a 15m context filter, session-bounded setups with the entry cutoff, an intraday target ladder and `paqs-intraday-0.1.0`; trend continuation and sweep reversal specified for after validation.
 - TRD-02/03 v0.2.0 (intraday): structure and zones per timeframe, 15m context aligned to 5m bars without look-ahead, session handling and a repainting checklist, session reference levels (previous-day levels, opening range, session high/low); matching TRD-08 vectors.
 - TRD-01 v0.2.0 (intraday): 5m setups with 15m and daily context, closed bars only, higher-timeframe alignment without look-ahead, session-bounded trading (opening range, entry cutoff, session-end exit), and ruleset `pa-intraday 0.1.0` (41 hypothesis parameters, engine and seeder copies checked in CI). `pa-core 0.1.0` retired to an appendix.

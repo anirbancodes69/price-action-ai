@@ -107,21 +107,27 @@ Defines the mandatory test catalogue for the trading engine. Every test ID below
 
 | ID | Scenario | Expected |
 |---|---|---|
-| TV-RSK-01 | Worked example TRD-05 §3.1 | qty 167, binding POSITION_CAP |
-| TV-RSK-02 | Heat-binding example §3.2 | qty 135 |
+| TV-RSK-01 | Worked example TRD-05 §3.1 | qty 33, binding `POSITION_CAP`, actual risk ₹424.05 |
+| TV-RSK-02 | Daily-loss example §3.2 (₹1,200 lost today) | qty 23, binding `DAILY_LOSS` |
 | TV-RSK-03 | qty computes to 0 | Rejected with binding reason |
-| TV-RSK-04 | Stop ≥ entry / too tight / too wide | Respective errors |
+| TV-RSK-04 | Stop ≥ entry / closer than 0.15% or 2 ticks / wider than 2.0% | Respective errors |
 | TV-RSK-05 | RR 1.99 vs 2.00 | Reject / accept |
 | TV-RSK-06 | Rounding directions (property test) | entry ↑, stop ↓, target ↓, qty ↓ |
 | TV-RSK-07 | User min_rr lower than ruleset | Ruleset value used |
 | TV-RSK-08 | SHORT direction | `SHORT_NOT_SUPPORTED` |
+| TV-RSK-09 | Realised net loss today equals the limit | `DAILY_LOSS_LIMIT_REACHED`; unfilled plans cancelled `ACCOUNT_LIMIT` |
+| TV-RSK-10 | Losing streak 2 vs 3 (limit 3); a breakeven trade resets it | Allowed / blocked; reset to 0 |
+| TV-RSK-11 | Two open positions (limit 2) | `MAX_POSITIONS_REACHED` |
+| TV-RSK-12 | Request at the entry cutoff bar | `ENTRY_CUTOFF_PASSED` |
+| TV-RSK-13 | Paper and actual books with different losses | Each book's state independent |
+| TV-RSK-14 | Property: position value ≤ min(max_position_value, available capital) for every input | Holds |
 
 ### 3.6 Gaps and collisions (TRD-05 §7, TRD-06 §4)
 
 | ID | Scenario | Expected |
 |---|---|---|
-| TV-GAP-01 | Open 2.01% above entry_ref | SKIPPED_GAP_UP |
-| TV-GAP-02 | Open exactly 2.00% above | Filled |
+| TV-GAP-01 | Next 5m open 0.31% above entry_ref | SKIPPED_GAP_UP |
+| TV-GAP-02 | Next 5m open exactly 0.30% above | Filled |
 | TV-GAP-03 | Open below stop | SKIPPED_GAP_BELOW_STOP |
 | TV-GAP-04 | Fill degrades RR below min | SKIPPED_RR_DEGRADED |
 | TV-GAP-05 | Later bar gaps through stop | Exit at open |
