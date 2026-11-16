@@ -90,6 +90,14 @@ class RulesetCheck(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("pa-core-0.2.0.json has no engine ruleset", r.stdout)
 
+    def test_other_seed_data_files_are_not_rulesets(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            make_repo(root, PARAMS, PARAMS)
+            (root / "backend/database/seeders/data/nse-market-calendar.json").write_text("{}")
+            r = subprocess.run([sys.executable, "-I", str(SCRIPT), d], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout)
+
     def test_real_repository_is_consistent(self):
         r = subprocess.run([sys.executable, "-I", str(SCRIPT), str(REPO)], capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stdout)

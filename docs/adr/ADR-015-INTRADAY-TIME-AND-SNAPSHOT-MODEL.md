@@ -6,7 +6,7 @@
 | Date | 2026-11-17 |
 | Deciders | Product owner / Technical lead |
 | Version | 1.0 |
-| Related | [ADR-014](ADR-014-PERSONAL-INTRADAY-WORKSTATION.md) · [ADR-008](ADR-008-DETERMINISTIC-TRADING-ENGINE.md) · [ADR-005](ADR-005-POSTGRESQL-DATABASE.md) · [ARC-03 §2.2](../architecture/03_DATABASE_DESIGN.md#22-intraday-time-model-adr-015-to-be-implemented-in-i1) · [ARC-04 §2.9](../architecture/04_API_SPECIFICATION.md#29-intraday-time-conventions-adr-015) · [ENG-05 §12](../engineering/05_DATA_INGESTION_SPECIFICATION.md#12-intraday-ingestion-adr-015) |
+| Related | [ADR-014](ADR-014-PERSONAL-INTRADAY-WORKSTATION.md) · [ADR-008](ADR-008-DETERMINISTIC-TRADING-ENGINE.md) · [ADR-005](ADR-005-POSTGRESQL-DATABASE.md) · [ARC-03 §2.2](../architecture/03_DATABASE_DESIGN.md#22-intraday-time-model-adr-015-implemented-in-i1) · [ARC-04 §2.9](../architecture/04_API_SPECIFICATION.md#29-intraday-time-conventions-adr-015) · [ENG-05 §12](../engineering/05_DATA_INGESTION_SPECIFICATION.md#12-intraday-ingestion-adr-015) |
 
 ## Context
 

@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 ROW = re.compile(r"^\| `([a-z_]+(?:\.[a-z0-9_]+)+)` \| ([^|]+?) \|")
+RULESET_FILE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*-\d+\.\d+\.\d+\.json$")
 VERSION = re.compile(r"Ruleset ID: \*\*`([a-z0-9-]+)`\*\*, version \*\*`(\d+\.\d+\.\d+)`\*\*")
 
 
@@ -60,7 +61,10 @@ def same_value(a: object, b: object) -> bool:
 def check(root: Path) -> list[str]:
     problems: list[str] = []
     engine_files = sorted((root / "python-engine" / "rulesets").glob("*/*.json"))
-    seeder_files = sorted((root / "backend" / "database" / "seeders" / "data").glob("*-*.json"))
+    # Only `<code>-<x.y.z>.json` files are rulesets; other seed data (e.g. the market calendar) is ignored.
+    seeder_files = sorted(
+        p for p in (root / "backend" / "database" / "seeders" / "data").glob("*.json") if RULESET_FILE.match(p.name)
+    )
     if not engine_files:
         return ["no engine rulesets found under python-engine/rulesets"]
 
