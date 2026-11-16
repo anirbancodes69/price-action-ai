@@ -26,7 +26,7 @@ python-engine/
       pivots.py             # TRD-02 §3
       structure.py          # TRD-02 §4–8 state machine, events
       zones.py              # TRD-03
-      liquidity.py          # TRD-03 §6, TRD-04 §6 sweeps
+      liquidity.py          # TRD-03 §6, TRD-04 §7 sweeps
       setups/               # breakout_retest.py, support_rejection.py, trend_pullback.py, liquidity_sweep.py
       levels.py             # target ladder, rounding
       scoring.py            # PAQS

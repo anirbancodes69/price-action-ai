@@ -36,7 +36,7 @@ Changes to `frontend/` must look and behave like the existing product: dark-firs
 | Every market-data surface shows its data mode. DEMO shows `SampleDataBadge` and is never styled or worded as live | C-03, ARC-08 §2 |
 | No order-placement UI. Plans are for manual execution | ADR-010, BAC-06 |
 | SHORT setups are informational (dashed or reference styling, no buy action). NO_TRADE is presented as a valid result, not an error | C-12, PRD-07 §7 |
-| Legacy setup vocabulary is mapped at the adapter boundary (TRD-04 §12), not in components | ENG-02 §5 |
+| Legacy setup vocabulary is mapped at the adapter boundary (TRD-04 §13), not in components | ENG-02 §5 |
 | No redesigns or renames during integration work. Keep the existing structure | ROADMAP M7, CLAUDE.md §5 |
 
 ## Deliverables

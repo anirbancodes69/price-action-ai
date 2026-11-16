@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- TRD-04 v0.2.0 (intraday setups): opening range breakout, previous-day high break (low break informational), breakout-retest on zones and session levels, a 15m context filter, session-bounded setups with the entry cutoff, an intraday target ladder and `paqs-intraday-0.1.0`; trend continuation and sweep reversal specified for after validation.
 - TRD-02/03 v0.2.0 (intraday): structure and zones per timeframe, 15m context aligned to 5m bars without look-ahead, session handling and a repainting checklist, session reference levels (previous-day levels, opening range, session high/low); matching TRD-08 vectors.
 - TRD-01 v0.2.0 (intraday): 5m setups with 15m and daily context, closed bars only, higher-timeframe alignment without look-ahead, session-bounded trading (opening range, entry cutoff, session-end exit), and ruleset `pa-intraday 0.1.0` (41 hypothesis parameters, engine and seeder copies checked in CI). `pa-core 0.1.0` retired to an appendix.
 - ADR-015: intraday time model (bars keyed by `bar_start`, 1m/5m/15m/1D, completed bars only, revision history) and snapshots by reference (bar range + content hash, several inputs per run). Target schema in ARC-03 §2.2, API time conventions in ARC-04 §2.9, intraday ingestion in ENG-05 §12.

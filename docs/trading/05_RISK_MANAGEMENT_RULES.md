@@ -7,7 +7,7 @@
 | Status | Specification ready (defaults are hypotheses) |
 | Owner | Quant / Trading Engine Lead |
 | Last updated | 2026-11-15 |
-| Related | [TRD-01 Parameter Registry](01_TRADING_METHODOLOGY.md#6-ruleset-parameter-registry-authoritative) · [TRD-04 Levels](04_SETUP_DETECTION_RULES.md#7-levels) · [TRD-07 Paper Trading](07_PAPER_TRADING_SPECIFICATION.md) · [ARC-04 Risk API](../architecture/04_API_SPECIFICATION.md#81-risk) |
+| Related | [TRD-01 Parameter Registry](01_TRADING_METHODOLOGY.md#6-ruleset-parameter-registry-authoritative) · [TRD-04 Levels](04_SETUP_DETECTION_RULES.md#8-levels) · [TRD-07 Paper Trading](07_PAPER_TRADING_SPECIFICATION.md) · [ARC-04 Risk API](../architecture/04_API_SPECIFICATION.md#81-risk) |
 
 ## 1. Purpose and principles
 
@@ -28,7 +28,7 @@ Defines deterministic position sizing and risk validation for trade plans, paper
 |---|---|---|
 | `capital` | User risk profile (`trading_capital`) or paper account capital | ₹10,00,000 |
 | `risk_pct` | Risk profile (`risk_per_trade_pct`, default `risk.default_risk_per_trade_pct` = 1.0) | 1.0% |
-| `entry`, `stop`, `target` | Analysis levels (TRD-04 §7) or user-edited plan values (validated) | 1,495.50 / 1,477.00 / 1,560.00 |
+| `entry`, `stop`, `target` | Analysis levels (TRD-04 §8) or user-edited plan values (validated) | 1,495.50 / 1,477.00 / 1,560.00 |
 | `tick_size` | Instrument master (provider-sourced; never hard-coded) | 0.10 |
 | `lot_size` | Instrument master (NSE EQ = 1) | 1 |
 | `open_positions` | Paper or actual book (the two books are never mixed) | — |

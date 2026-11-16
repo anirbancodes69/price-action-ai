@@ -16,10 +16,10 @@
 | [ENG-01 Implementation roadmap](engineering/01_IMPLEMENTATION_ROADMAP.md) | M2–M10 | Done: §0 intraday roadmap; M2–M10 marked superseded | T-I01 |
 | [TRD-01 Trading methodology](trading/01_TRADING_METHODOLOGY.md) | Scope, MP-02, data requirements, registry `pa-core` | Done (v0.2.0: intraday scope, MP-10/11, session conventions, `pa-intraday 0.1.0`) | T-I03 |
 | [TRD-02 Market structure](trading/02_MARKET_STRUCTURE_RULES.md), [TRD-03 Support and resistance](trading/03_SUPPORT_RESISTANCE_RULES.md) | Daily parameters, no higher-timeframe rule | Done (v0.2.0: per-timeframe parameters, higher-timeframe alignment, sessions, repainting checklist, session reference levels) | T-I04 |
-| [TRD-04 Setup detection](trading/04_SETUP_DETECTION_RULES.md) | Four daily setups | Pending | T-I05 |
+| [TRD-04 Setup detection](trading/04_SETUP_DETECTION_RULES.md) | Four daily setups | Done (v0.2.0: opening range breakout, previous-day high/low break, breakout-retest; trend continuation and sweep reversal specified for later; 15m context filter; session-bounded lifecycle; `paqs-intraday-0.1.0`) | T-I05 |
 | [TRD-05 Risk management](trading/05_RISK_MANAGEMENT_RULES.md) | % sizing only, next-day gap rules, no daily limits | Pending | T-I06 |
 | [TRD-06 Backtesting](trading/06_BACKTESTING_METHODOLOGY.md), [TRD-07 Paper trading](trading/07_PAPER_TRADING_SPECIFICATION.md) | Next-open fills, end-of-day processing, delivery costs | Pending | T-I07 |
-| [TRD-08 Engine validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Daily vectors | In progress: structure, zones, alignment, session and reference-level vectors done (T-I04) | T-I04..T-I07 |
+| [TRD-08 Engine validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Daily vectors | In progress: structure, zones, alignment, session, reference-level and setup vectors done (T-I04, T-I05) | T-I04..T-I07 |
 | [ARC-03 Database](architecture/03_DATABASE_DESIGN.md), [ARC-04 API](architecture/04_API_SPECIFICATION.md), [ENG-05 Ingestion](engineering/05_DATA_INGESTION_SPECIFICATION.md) | Date-based time model, payload snapshots, daily ingestion | Spec done (ADR-015; ARC-03 §2.2, ARC-04 §2.9, ENG-05 §12); code pending | T-I02 (spec), T-I09 (code) |
 | [Product vision](product/01_PRODUCT_VISION.md), [BRD](product/02_BRD.md), [PRD](product/03_PRD.md), [PRD-06 Feature catalog](product/06_FEATURE_CATALOG.md), [PRD-07 UI/UX](product/07_UI_UX_SPECIFICATION.md) | Swing/positional users, NIFTY 500, SaaS-first | Pending | T-I08 |
 

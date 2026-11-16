@@ -563,7 +563,7 @@ All have `id uuid PK`, `analysis_run_id uuid FK NOT NULL` and index `(analysis_r
 | paqs_components | jsonb | five components with `points`, `max`, `missing`, `reason` |
 | anchor_zone_id | uuid | FK price_zones NULL |
 | anchor_swing_point_id | uuid | FK swing_points NULL |
-| evidence | jsonb | ordered evidence items (TRD-04 §8) |
+| evidence | jsonb | ordered evidence items (TRD-04 §9) |
 | reason_codes | text[] | |
 
 Indexes: `(analysis_run_id)`, `(setup_key)`, `(instrument_id, status)`.

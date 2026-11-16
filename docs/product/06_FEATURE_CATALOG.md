@@ -36,9 +36,9 @@ A feature can carry two statuses (e.g. "Mock functionality only · Backend pendi
 | F-09 | **Daily candle ingestion** with data-quality checks | Reliable data | F-08 | ENG-05 §5–8; ingestion runs visible | Specification ready | M2 |
 | F-10 | **Market structure engine** — pivots, labels, state, BOS/CHoCH, wick breaches | Objective structure | F-09 | TRD-02; TV-PIV/TV-STR tests | Specification ready (frontend uses a different demo heuristic) | M3/M4 |
 | F-11 | **Zones & liquidity** — S/R zones, strength, equal highs/lows | Key levels | F-10 | TRD-03; TV-ZON | Specification ready | M4 |
-| F-12 | **Setup detection** — 4 setups, lifecycle, expiry | Actionable shortlist | F-10, F-11 | TRD-04 §3–6, §10; TV-SET | Specification ready | M5 |
-| F-13 | **Quality score (PAQS)** | Prioritisation | F-12 | TRD-04 §9 | Mock functionality only (UI shows score/factors) · Backend pending | M5 |
-| F-14 | **Signal states** — NO TRADE / BUY WATCH / ENTRY CONFIRMED / HOLD / EXIT with explanations | Clear meaning, no bare BUY/SELL | F-12, F-21 | TRD-04 §11; `lib/labels.ts` copy | Frontend implemented (labels/explanations) · Backend pending (computation) | M5 |
+| F-12 | **Setup detection** — 4 setups, lifecycle, expiry | Actionable shortlist | F-10, F-11 | TRD-04 §3–7, §11; TV-SET | Specification ready | M5 |
+| F-13 | **Quality score (PAQS)** | Prioritisation | F-12 | TRD-04 §10 | Mock functionality only (UI shows score/factors) · Backend pending | M5 |
+| F-14 | **Signal states** — NO TRADE / BUY WATCH / ENTRY CONFIRMED / HOLD / EXIT with explanations | Clear meaning, no bare BUY/SELL | F-12, F-21 | TRD-04 §12; `lib/labels.ts` copy | Frontend implemented (labels/explanations) · Backend pending (computation) | M5 |
 | F-15 | **Market scanner** | Daily shortlist | F-12 | FR-030–034; US-03 | Mock functionality only · Backend pending | M6/M7 |
 | F-16 | **Dashboard** | Daily overview | F-15, F-20 | FR-035 | Mock functionality only · Backend pending | M7 |
 | F-17 | **Stock analysis view** — annotated chart & panels | Understand a setup | F-10–F-13 | FR-040–049; US-04/05 | Mock functionality only · Backend pending | M7 |

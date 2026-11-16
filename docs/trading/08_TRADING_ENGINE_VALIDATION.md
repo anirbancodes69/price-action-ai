@@ -83,18 +83,25 @@ Defines the mandatory test catalogue for the trading engine. Every test ID below
 
 | ID | Scenario | Expected |
 |---|---|---|
-| TV-SET-01 | Breakout, retest on bar b+3, confirmation | ENTRY_CONFIRMED with exact trigger/stop/target |
-| TV-SET-02 | Breakout, no retest within 10 bars | EXPIRED (`NO_RETEST`) on bar b+11 |
+| TV-SET-01 | Breakout-retest: breakout, retest on bar b+3, confirmation | ENTRY_CONFIRMED with exact trigger/stop/target |
+| TV-SET-02 | Breakout, no retest within 6 bars | EXPIRED (`NO_RETEST`) on bar b+7 |
 | TV-SET-03 | Breakout then close below zone low × (1 − bb) | INVALIDATED (`FAILED_BREAKOUT`) |
-| TV-SET-04 | Rejection candle with wick ratio 0.49 / 0.50 / 0.51 | Boundary behaviour |
-| TV-SET-05 | Trend pullback HL confirmation and trigger | Trigger = max high of confirmation window |
-| TV-SET-06 | Liquidity sweep same-bar reclaim / next-bar reclaim / no reclaim | Sweep, sweep, none |
-| TV-SET-07 | Setup age 20 vs 21 bars | Open at 20, EXPIRED at 21 |
-| TV-SET-08 | Target ladder: nearest resistance fails RR, next passes | Second zone chosen |
+| TV-SET-04 | Opening range breakout worked example (TRD-04 §3) | Trigger 1,496.50, confirmation at 09:45, stop 1,485.25, measured move 1,507.00 |
+| TV-SET-05 | Opening range width 0.29% / 0.30% / 2.00% / 2.01% | No setup (`OR_TOO_NARROW`), setup, setup, no setup (`OR_TOO_WIDE`) |
+| TV-SET-06 | Close below OR low × (1 − bb) before confirmation | INVALIDATED (`OR_LOW_BROKEN`) |
+| TV-SET-07 | Setup age 12 vs 13 bars | Open at 12, EXPIRED (`AGED_OUT`) at 13 |
+| TV-SET-08 | Target ladder: measured move fails RR, zone at 1,529.00 passes | Zone target, rr 2.40 |
 | TV-SET-09 | No candidate meets RR | `rr_below_min`, signal NO_TRADE |
-| TV-SET-10 | Bearish breakdown-retest | SHORT, informational, signal NO_TRADE |
-| TV-SET-11 | PAQS worked example (TRD-04 §9) | 82 |
+| TV-SET-10 | Bearish OR breakdown, PDL break, breakdown-retest | SHORT, informational, signal NO_TRADE |
+| TV-SET-11 | PAQS worked example (TRD-04 §10) | 90 |
 | TV-SET-12 | Missing zone component | Component 0, `missing=true`, no renormalisation |
+| TV-SET-13 | Session opens at / above PDH | No PREV_DAY_HIGH_BREAK (`OPENED_ABOVE_LEVEL`) |
+| TV-SET-14 | Approach and close beyond PDH × (1 + bb) on the same bar | Detected and confirmed on that bar |
+| TV-SET-15 | 15m state turns BEARISH while a long setup is open | INVALIDATED (`HTF_AGAINST`) |
+| TV-SET-16 | Setup awaiting confirmation at the entry cutoff | EXPIRED (`SESSION_CUTOFF`); no confirmation by a bar ending after the cutoff |
+| TV-SET-17 | 09:25 close (opening range of 15 minutes incomplete) | No opening range breakout can form |
+| TV-SET-18 | Signal timestamps | `signal_at = E(T)`; `valid_until` per TRD-04 §12 |
+| TV-SET-19 | Trend continuation and sweep reversal | Disabled in `pa-intraday 0.1.0`: never emitted (vectors for their rules are written when enabled) |
 
 ### 3.5 Risk (TRD-05)
 

@@ -181,7 +181,7 @@ Mirror for levels below price using `L[t]` and `C[t] < X × (1 − buf)`.
 
 A close that lands between `X` and `X × (1 + buf)` is **not** a break (inside the buffer). It is recorded as `WICK_BREACH` with `close_inside_buffer = true` for transparency.
 
-Wick breaches of swing levels feed liquidity-sweep detection ([TRD-04 §6](04_SETUP_DETECTION_RULES.md)).
+Wick breaches of swing levels feed liquidity-sweep detection ([TRD-04 §7](04_SETUP_DETECTION_RULES.md)).
 
 ## 9. Higher-timeframe alignment (15m context on a 5m run)
 

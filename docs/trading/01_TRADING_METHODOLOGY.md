@@ -24,7 +24,7 @@ Scope ([ADR-014](../adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md)): personal **i
 
 | ID | Principle | Consequence for implementation |
 |---|---|---|
-| MP-01 | **Pure price action.** Only OHLCV of confirmed candles is used. | No RSI, MACD, moving averages, Bollinger bands, ATR-based signals or other derived indicators. Volume may be shown as context and used as a *non-signal* evidence item only (see TRD-04 §8). |
+| MP-01 | **Pure price action.** Only OHLCV of confirmed candles is used. | No RSI, MACD, moving averages, Bollinger bands, ATR-based signals or other derived indicators. Volume may be shown as context and used as a *non-signal* evidence item only (see TRD-04 §9). |
 | MP-02 | **Two intraday timeframes, one context timeframe.** | 15m bars give structure and direction (context); 5m bars give setups, confirmation and levels (primary). Daily bars supply only context: previous-day high, low and close and the daily structure state. 1m bars are not used in `pa-intraday 0.1.x`. |
 | MP-03 | **Closed bars only.** | The engine never evaluates a forming bar. A bar is closed once its end time has passed and the provider's completed bar has been stored ([ENG-05 §12](../engineering/05_DATA_INGESTION_SPECIFICATION.md#12-intraday-ingestion-adr-015)). A signal produced at the close of bar `t` can be acted on no earlier than the open of bar `t+1`. Current prices (last traded price) never enter analysis. |
 | MP-04 | **No look-ahead.** | Every object (pivot, zone, event, setup) carries the bar index at which it became *known* (`confirmed_at_index`). Any evaluation at bar `t` may only use objects whose `confirmed_at_index ≤ t`. |
@@ -51,13 +51,13 @@ flowchart LR
   C --> D[Swing labels HH/HL/LH/LL<br/>TRD-02 §4]
   D --> E[Structure state + BOS/CHoCH<br/>TRD-02 §5-7]
   C --> F[Zones + equal highs/lows<br/>TRD-03]
-  E --> G[Liquidity sweeps<br/>TRD-04 §6]
+  E --> G[Liquidity sweeps<br/>TRD-04 §7]
   F --> G
   E --> H[Setup detection<br/>TRD-04]
   F --> H
   G --> H
-  H --> I[Levels: entry / stop / target<br/>TRD-04 §7]
-  I --> J[Quality score<br/>TRD-04 §9]
+  H --> I[Levels: entry / stop / target<br/>TRD-04 §8]
+  I --> J[Quality score<br/>TRD-04 §10]
   I --> K[Risk sizing<br/>TRD-05 — needs user risk profile]
   J --> L[Analysis run output]
 ```
@@ -167,11 +167,11 @@ The engine's output vocabulary is fixed per ruleset version and mirrored in the 
 | Timeframe | `5m` (primary), `15m` (context), `1D` (context); `1m` reserved |
 | Time fields | `as_of_ts` (end of the last 5m bar), `signal_at`, `valid_until` (ARC-04 §2.9) |
 
-Mapping of setup status to signal state is defined in [TRD-04 §11](04_SETUP_DETECTION_RULES.md). `HOLD` and `EXIT` are position-level states derived from a paper or actual trade, never from an analysis run alone.
+Mapping of setup status to signal state is defined in [TRD-04 §12](04_SETUP_DETECTION_RULES.md). `HOLD` and `EXIT` are position-level states derived from a paper or actual trade, never from an analysis run alone.
 
 ## 8. What the methodology explicitly does not do
 
-- It does not predict price or output a probability of success. The quality score is a rule-conformance score (TRD-04 §9).
+- It does not predict price or output a probability of success. The quality score is a rule-conformance score (TRD-04 §10).
 - It does not evaluate forming bars, ticks or order-book data, and does not use news or fundamentals.
 - It does not hold positions overnight (MP-11).
 - It does not support short-selling execution, F&O, or leverage in MVP.

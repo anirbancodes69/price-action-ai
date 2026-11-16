@@ -200,7 +200,7 @@ Detailed in [PRD-05](05_ONBOARDING_SPECIFICATION.md).
 | BR-012 | AI explanations cannot introduce numbers or advice. | ARC-07 |
 | BR-013 | At least one watchlist must exist. | Current UI behaviour |
 | BR-014 | Capital ≥ ₹10,000; risk per trade 0.1–2.0% (backtests allow up to 5% for exploration). | TRD-01 §6 / current UI |
-| BR-015 | The quality score is never described as a probability. | TRD-04 §9 |
+| BR-015 | The quality score is never described as a probability. | TRD-04 §10 |
 
 ## 5. User permissions
 

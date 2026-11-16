@@ -80,13 +80,13 @@ A zone is **broken downward** when `zone.break_confirm_closes` (default 1 in `pa
 
 Buffer ownership: **swing-level** breaks (BOS/CHoCH, TRD-02) use `structure.break_buffer_pct_<tf>`; **zone** breaks and breakouts use `setup.breakout_buffer_pct`. All default to 0.05% in `pa-intraday`.
 
-A single close beyond (with the next close back inside) is a **failed break**; it is counted as a touch and may qualify as a liquidity sweep (TRD-04 §6).
+A single close beyond (with the next close back inside) is a **failed break**; it is counted as a touch and may qualify as a liquidity sweep (TRD-04 §7).
 
 > Note: `pa-core` required 2 closes for a zone break. Intraday, a second 5m close often arrives after the move is gone, so `pa-intraday 0.1.0` uses 1 close, the same as BOS (OQ-SR-01 resolved for this ruleset). The retest requirement of the breakout-retest setup (TRD-04) protects against single-close false breaks.
 
 ### 5.2 Role reversal (flip)
 
-After a break, the zone is retained with `role_reversed = true` and its role swaps (broken resistance → support candidate). Breakout-retest setups depend on this ([TRD-04 §3](04_SETUP_DETECTION_RULES.md)). A flipped zone that is broken again in the opposite direction is **retired** (`status = RETIRED`) and no longer drawn.
+After a break, the zone is retained with `role_reversed = true` and its role swaps (broken resistance → support candidate). Breakout-retest setups depend on this ([TRD-04 §5](04_SETUP_DETECTION_RULES.md)). A flipped zone that is broken again in the opposite direction is **retired** (`status = RETIRED`) and no longer drawn.
 
 ### 5.3 Zone status values
 

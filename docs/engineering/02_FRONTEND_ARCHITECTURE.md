@@ -73,7 +73,7 @@ Integration plan (M7):
 
 1. Add `src/lib/data/http-source.ts` implementing the read methods via `/api/v1` (server-side fetch forwarding cookies; see [ARC-04 §2.2](../architecture/04_API_SPECIFICATION.md#22-authentication)).
 2. Add a **mutations client** (`src/lib/api/`) for writes (plans, watchlists, settings, onboarding, journal, backtests, integrations) — the current interface is read-only; mutations today are local state + toasts.
-3. Generate API types from `contracts/api/openapi.yaml` into `src/lib/api/schema.ts`; map API schemas to existing view types in `src/lib/data/mappers/` so components stay unchanged (enum mapping per [TRD-04 §12](../trading/04_SETUP_DETECTION_RULES.md#12-frontend-vocabulary-reconciliation); price strings → numbers for display only).
+3. Generate API types from `contracts/api/openapi.yaml` into `src/lib/api/schema.ts`; map API schemas to existing view types in `src/lib/data/mappers/` so components stay unchanged (enum mapping per [TRD-04 §13](../trading/04_SETUP_DETECTION_RULES.md#13-frontend-vocabulary-reconciliation); price strings → numbers for display only).
 4. Replace global `DataSource.kind` with per-response `meta.data_mode`; render `SampleDataBadge` when `DEMO`.
 5. Select adapter with `NEXT_PUBLIC_DATA_SOURCE=mock|http` (server-only env preferred: `DATA_SOURCE`), keeping the mock adapter for Storybook-style development and frontend tests.
 6. Remove `getPlaceholderEquityCurve` once backtest results exist.
@@ -122,7 +122,7 @@ Differences between the current frontend and the specified product. None is fixe
 
 | ID | Area | Current frontend | Specification | Resolution | Milestone |
 |---|---|---|---|---|---|
-| D-01 | Setup types | `breakout-retest`, `pullback-to-support`, `range-breakout`, `breakdown-retest`, `trend-continuation`, `range-bound` | 4 canonical types (TRD-04) | Update `SetupType` + `SETUP_TYPES` labels; mapping table TRD-04 §12 | M7 |
+| D-01 | Setup types | `breakout-retest`, `pullback-to-support`, `range-breakout`, `breakdown-retest`, `trend-continuation`, `range-bound` | 4 canonical types (TRD-04) | Update `SetupType` + `SETUP_TYPES` labels; mapping table TRD-04 §13 | M7 |
 | D-02 | Setup status | No `expired`; `detected` | `FORMING`, …, `EXPIRED` | Add `expired`; rename label of `detected` → "Forming" | M7 |
 | D-03 | Universe options | NIFTY 50/100/200/MIDCAP 150, "All NSE equities"; default NIFTY 100 | NIFTY 500 default; subsets only | Add NIFTY 500, remove All NSE, change default | M7 |
 | D-04 | Types `Exchange`, `IndexMembership` | `BSE` allowed; index list lacks NIFTY 500 | NSE only; universes from API | Narrow types / use API universes | M7 |

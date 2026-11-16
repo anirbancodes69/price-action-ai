@@ -41,7 +41,7 @@ Tones (`lib/colors.ts`): status `success`, `warning`, `destructive`, `info`, `ne
 | `EXIT` | EXIT | destructive | soft fill + border, LogOut |
 | `NO_TRADE` | NO TRADE | neutral | outline, Ban |
 
-Setup status, structure, plan status and outcome labels/tones are centralised in `lib/labels.ts`; backend enum values map onto these keys in the HTTP adapter (vocabulary reconciliation in [TRD-04 §12](../trading/04_SETUP_DETECTION_RULES.md#12-frontend-vocabulary-reconciliation)). New labels required: setup status `EXPIRED`, plan statuses `SKIPPED`/`EXPIRED`/`FILLED`, structure `SIDEWAYS` (replaces "Range").
+Setup status, structure, plan status and outcome labels/tones are centralised in `lib/labels.ts`; backend enum values map onto these keys in the HTTP adapter (vocabulary reconciliation in [TRD-04 §13](../trading/04_SETUP_DETECTION_RULES.md#13-frontend-vocabulary-reconciliation)). New labels required: setup status `EXPIRED`, plan statuses `SKIPPED`/`EXPIRED`/`FILLED`, structure `SIDEWAYS` (replaces "Range").
 
 ## 5. Layout and navigation
 
