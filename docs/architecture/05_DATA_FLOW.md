@@ -3,11 +3,13 @@
 | Field | Value |
 |---|---|
 | Document ID | ARC-05 |
-| Version | 0.1.0 |
-| Status | Specification ready |
+| Version | 0.1.1 |
+| Status | Daily flows; intraday flows are specified in ENG-05 §12 and TRD-07 §4 and are revised here with I1/I2 (ADR-014) |
 | Owner | Solution Architect |
 | Last updated | 2026-11-15 |
-| Related | [ARC-01](01_SYSTEM_ARCHITECTURE.md) · [ARC-08 Integration](08_INTEGRATION_ARCHITECTURE.md) · [ENG-05 Ingestion](../engineering/05_DATA_INGESTION_SPECIFICATION.md) · [TRD-07 EOD processing](../trading/07_PAPER_TRADING_SPECIFICATION.md#4-end-of-day-processing) |
+| Related | [ARC-01](01_SYSTEM_ARCHITECTURE.md) · [ARC-08 Integration](08_INTEGRATION_ARCHITECTURE.md) · [ENG-05 Ingestion](../engineering/05_DATA_INGESTION_SPECIFICATION.md) · [TRD-07 EOD processing](../trading/07_PAPER_TRADING_SPECIFICATION.md#4-bar-close-processing) |
+
+> **Daily scope.** This document still describes the end-of-day data flow of the original scope. For the intraday direction ([ADR-014](../adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md)) the authoritative flows are bar-close ingestion ([ENG-05 §12](../engineering/05_DATA_INGESTION_SPECIFICATION.md#12-intraday-ingestion-adr-015)), bar-close paper processing ([TRD-07 §4](../trading/07_PAPER_TRADING_SPECIFICATION.md#4-bar-close-processing)) and the time model of [ADR-015](../adr/ADR-015-INTRADAY-TIME-AND-SNAPSHOT-MODEL.md). This document is revised with milestone I1/I2.
 
 ## 1. Purpose
 
@@ -154,7 +156,7 @@ sequenceDiagram
 
 ## 8. Paper trade updates (EOD)
 
-Sequence in [TRD-07 §4](../trading/07_PAPER_TRADING_SPECIFICATION.md#4-end-of-day-processing). Data written: `trade_plans.status`, `paper_trades`, `paper_trade_events`, `journal_entries` (drafts), then Laravel creates `notifications` from emitted events.
+Sequence in [TRD-07 §4](../trading/07_PAPER_TRADING_SPECIFICATION.md#4-bar-close-processing). Data written: `trade_plans.status`, `paper_trades`, `paper_trade_events`, `journal_entries` (drafts), then Laravel creates `notifications` from emitted events.
 
 ## 9. Frontend consumption
 

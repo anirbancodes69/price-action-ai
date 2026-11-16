@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- Product documents revised for the personal intraday direction: vision, BRD and PRD v0.2.0 (single owner, NIFTY 50 intraday, account limits, session rules; SaaS features deferred), a trading-day user journey, onboarding deferred, feature catalog and UI/UX additions (freshness, session clock, limit banners, intraday chart time axis).
 - TRD-06/07 v0.2.0 (intraday backtesting and paper trading): 5m bar replay with session-bounded account limits and session-end exits, an intraday cost schedule (to verify), walk-forward and forward-paper validation, bar-close paper processing with a session-end pass.
 - TRD-05 v0.2.0 (intraday risk): ₹50,000 position cap, 0.5% risk, daily loss / consecutive-loss / open-position / open-risk limits that block plans, derived account state per book and session, next-bar entry-gap and session-end exit rules; worked examples at ₹1,00,000 capital.
 - TRD-04 v0.2.0 (intraday setups): opening range breakout, previous-day high break (low break informational), breakout-retest on zones and session levels, a 15m context filter, session-bounded setups with the entry cutoff, an intraday target ladder and `paqs-intraday-0.1.0`; trend continuation and sweep reversal specified for after validation.

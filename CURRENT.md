@@ -11,7 +11,7 @@ Update this file at the end of every substantial task, based only on verified st
 |---|---|
 | Phase | Foundation and M1 complete. **Direction changed to a personal intraday workstation** ([ADR-014](docs/adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md)); specifications being restructured (I0) |
 | Last completed milestone | **M1** — database and contracts (PRs #13–#15, #17, #19–#21; 2026-11-17) |
-| Current milestone | **I0** — direction and specifications: `IN PROGRESS`. M2–M10 are superseded by I0–I8 |
+| Current milestone | **I0** — direction and specifications: `NEEDS REVIEW` (T-I01..T-I08 done; PR pending). Next: **I1** — intraday schema and contracts (T-I09) |
 | Detailed plan | [ROADMAP.md](ROADMAP.md) → [ENG-01](docs/engineering/01_IMPLEMENTATION_ROADMAP.md) |
 
 ## Component status
@@ -23,7 +23,7 @@ Update this file at the end of every substantial task, based only on verified st
 | Frontend data | **Mock only** | Every page reads the `DataSource` mock adapter (`frontend/src/lib/data`). Analysis overlays come from a demo heuristic (`src/mocks/demo-analysis.ts`), **not** the specified trading rules. Login accepts any well-formed email and password. There is no mutation client yet. |
 | Frontend ↔ spec | `NEEDS REVIEW` | 24 known discrepancies (D-01..D-24) in [ENG-02 §9](docs/engineering/02_FRONTEND_ARCHITECTURE.md#9-discrepancy-register), to be resolved in M7 (D-20 partly resolved by the design-standards work, PR #18). |
 | Claude Code skills | `COMPLETED` (PR #16) | 8 project skills in `.claude/skills/` (price-action-domain, quant-engine, market-data, schema-and-contracts, frontend-ui, security-guardrails, quality-gate, docs-sync). They are workflows that link to the specs, plus two stdlib scripts (docs impact mapping, relative link and anchor check). Indexed in CLAUDE.md §10. No agents and no `.claude/settings.json`. |
-| Documentation | `IN PROGRESS` (intraday restructuring) | 58 spec files under `docs/`, the design standards and 14 ADRs. ADR-014 changed the direction to intraday; the specs still describing the daily scope are listed in [DOCUMENTATION_STATUS](docs/DOCUMENTATION_STATUS.md) and are revised in I0. Most of the target system is **not implemented**. |
+| Documentation | `NEEDS REVIEW` (intraday restructuring done on branch) | 58 spec files, the design standards and 15 ADRs. The trading specs (TRD-01..08) and product documents describe the intraday direction; ARC-05, parts of ARC-01, the remaining ARC-03 §4–§8 text and ARC-04 endpoint shapes are revised with I1/I2 (DOCUMENTATION_STATUS §0). Most of the target system is **not implemented**. |
 | Backend (Laravel 13) | `IN PROGRESS` | `GET /api/health`, log redaction, PHPUnit tests. **Schema (M1), merged:** ARC-03 §4–§5 (12 identity and trading-configuration tables, PR #13), §6 market data (9 tables + `trading_preferences.universe_id` FK, PR #14) and §7 analysis (ruleset versions, candle snapshots, analysis batches/runs, swing points, structure events, price zones, liquidity events, detected setups, AI explanations) with immutability triggers (PR #15). **Merged (PR #17):** §8 trading (watchlists, trade plans, paper and actual trades, journal, backtests, notifications) and single-writer role grants (`apply_role_grants()`; new tables stay closed to the runtime roles until listed). 60 backend tests incl. 55 database tests. **Seeders (T-102, merged, PR #19):** `pa-core 0.1.0` ruleset, six universes, DEMO data source, 36 demo equities + 3 NSE index instruments, DEMO universe, one backfill run and 8,640 generated demo candles (PHP port of `frontend/src/mocks`, bar-for-bar parity test). Run with `make seed` (schema-owner role, idempotent). 67 backend tests. **Not yet:** domain modules, `/api/v1` endpoints. |
 | Python engine | `IN PROGRESS` (skeleton + contract) | FastAPI `/health` and authenticated `/internal/v1/ping`, arq worker settings, structured logging. **T-104 (PR #21):** `app/schemas` (13 contract models for the ARC-08 §5 internal API, exported to `contracts/engine/`), `app/db/tables.py` (32-table SQLAlchemy read model) and a schema-diff test against the Laravel-migrated database; SQLAlchemy 2.1 added. 23 tests (+1 DB test that CI runs). `app/domain/` is empty. **No trading logic, providers or ingestion.** |
 | Contracts (`contracts/`) | `COMPLETED` (daily scope; intraday changes in I1) | **T-103 (PR #20):** `contracts/api/openapi.yaml`, OpenAPI 3.1, all 88 ARC-04 operations tagged `x-arc04-id`, 110 schemas (enums taken from the migrated schema), shared error responses. Redocly lint is clean. `contracts/scripts/check_arc04_coverage.py` (with unit tests) fails CI if ARC-04 and the spec differ; `contracts-ci.yml` is wired into `ci-gate`. Payloads ARC-04 leaves open (backtest metrics, exposure, entity, …) are deliberately loose until the M6 contract tests. `contracts/engine/` (13 JSON Schemas from Pydantic, T-104) with a stale-export check in `python-engine-ci.yml`. |
@@ -42,12 +42,12 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Work in progress
 
-- Branch `docs/intraday-direction-and-specs`: I0 batch — ADR-014 (direction), ADR-015 (intraday time and snapshot model), TRD-01 intraday rewrite with `pa-intraday 0.1.0`.
+- Branch `docs/intraday-direction-and-specs`: all of I0 — ADR-014, ADR-015, TRD-01..08 v0.2.0 (intraday), product documents, frontend discrepancies D-25..D-28. Pushed once at the end; PR pending.
 - Local dev databases created before PR #13 must be recreated (`make reset`), because the stock Laravel `users` migration was replaced (UUID ids, no `name`, no sessions table). After that, `make migrate` then `make seed`. Note: `make migrate` runs the prebuilt image, so run `make build` (or use the dev overlay) after pulling new migrations.
 
 ## Immediate next task
 
-Finish **I0**: TRD-02/03 (structure and zones per timeframe, higher-timeframe alignment), TRD-04 (intraday setups), TRD-05 (intraday risk), TRD-06/07 (intraday backtest and paper), product documents — see [TASKS.md](TASKS.md). Then I1 (schema). Provider access (Kite or Groww) is needed before I2.
+Open the I0 PR. Then **I1 / T-I09**: expand migrations per ADR-015 and ARC-03 §2.2, seed `pa-intraday 0.1.0` and the NSE calendar, update the OpenAPI file, engine contracts (risk shape of TRD-05 §11) and `app/db/tables.py`. Owner decisions that help: OQ-TRD-04 (risk defaults) and the provider choice (T-201/T-203) before I2.
 
 ## Known blockers
 

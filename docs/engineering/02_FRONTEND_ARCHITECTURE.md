@@ -146,6 +146,10 @@ Differences between the current frontend and the specified product. None is fixe
 | D-22 | Scanner exchange filter | NSE/BSE filter | Remove (NSE only) | Remove | M7 |
 | D-23 | Plan sizing input | Risk budget ₹5,000 default in dialog | Risk % from profile (₹ shown as derived) | See D-06 | M7 |
 | D-24 | Prices | `number` in types | Strings in API | Adapter parses | M7 |
+| D-25 | Time model | `Candle.time` is a date string; `Timeframe = "1D" \| "1W" \| "1M"`; chart aggregates daily bars (`lib/chart/aggregate.ts`) | Timestamped bars, `5m`/`15m` (daily display only), IST labels, session separators (ADR-015, ARC-04 §2.9) | Change types, chart and mocks | I6 (UIA-15) |
+| D-26 | Market session | `use-market-session.ts` derives the session from the clock and ignores holidays | NSE calendar via `GET /market/session`; session clock with cutoff and exit times | Replace hook | I6 (UIA-16) |
+| D-27 | Risk settings and dashboard | Daily risk fields (positions/heat %); no account limits, live P&L or freshness | ₹ position cap, daily loss and streak limits, today panel, last-bar time (TRD-05, PRD-07 UIA-11/17/18) | Rework settings and dashboard | I6 |
+| D-28 | Mock data | Daily demo series and daily setup vocabulary (`src/mocks`) | Intraday DEMO series and `pa-intraday` setup vocabulary (TRD-04 §13) | Replace when the HTTP adapter lands; DEMO intraday generator in I2 | I2/I6 |
 
 ## 10. Testing (frontend)
 

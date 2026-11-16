@@ -21,24 +21,27 @@
 | [TRD-06 Backtesting](trading/06_BACKTESTING_METHODOLOGY.md), [TRD-07 Paper trading](trading/07_PAPER_TRADING_SPECIFICATION.md) | Next-open fills, end-of-day processing, delivery costs | Done (v0.2.0: 5m replay, session-bounded simulation with account limits, session-end exit, intraday cost schedule, walk-forward; bar-close paper processing) | T-I07 |
 | [TRD-08 Engine validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Daily vectors | Done (v0.2.0) for all revised TRDs | T-I04..T-I07 |
 | [ARC-03 Database](architecture/03_DATABASE_DESIGN.md), [ARC-04 API](architecture/04_API_SPECIFICATION.md), [ENG-05 Ingestion](engineering/05_DATA_INGESTION_SPECIFICATION.md) | Date-based time model, payload snapshots, daily ingestion | Spec done (ADR-015; ARC-03 §2.2, ARC-04 §2.9, ENG-05 §12); code pending | T-I02 (spec), T-I09 (code) |
-| [Product vision](product/01_PRODUCT_VISION.md), [BRD](product/02_BRD.md), [PRD](product/03_PRD.md), [PRD-06 Feature catalog](product/06_FEATURE_CATALOG.md), [PRD-07 UI/UX](product/07_UI_UX_SPECIFICATION.md) | Swing/positional users, NIFTY 500, SaaS-first | Pending | T-I08 |
+| [Product vision](product/01_PRODUCT_VISION.md), [BRD](product/02_BRD.md), [PRD](product/03_PRD.md), [User journeys](product/04_USER_JOURNEYS.md), [Onboarding](product/05_ONBOARDING_SPECIFICATION.md), [PRD-06 Feature catalog](product/06_FEATURE_CATALOG.md), [PRD-07 UI/UX](product/07_UI_UX_SPECIFICATION.md) | Swing/positional users, NIFTY 500, SaaS-first | Done (vision, BRD, PRD, journeys v0.2.0; onboarding marked deferred; feature catalog and UI/UX revised) | T-I08 |
+
+| [ARC-05 Data flow](architecture/05_DATA_FLOW.md), [ARC-01 System architecture](architecture/01_SYSTEM_ARCHITECTURE.md) §9–10 (scheduling, scaling) | End-of-day pipeline | Pending: banner added; revised with I1/I2 (the intraday flows are in ENG-05 §12 and TRD-07 §4) | T-I09 / I2 |
+| [ENG-02 Frontend architecture](engineering/02_FRONTEND_ARCHITECTURE.md) | Daily time model in the frontend | Discrepancies D-25..D-28 recorded; fixed in I6 | I6 |
 
 ## 1. Document status
 
 | Document | Status | Dependencies | Open questions | Last reviewed |
 |---|---|---|---|---|
-| [Product Vision](product/01_PRODUCT_VISION.md) | Approved for MVP planning | — | OQ-VIS-01, OQ-VIS-02 | 2026-11-15 |
-| [Business Requirements Document (BRD)](product/02_BRD.md) | Draft for owner sign-off | PRD-01 | — | 2026-11-15 |
-| [Product Requirements Document (PRD)](product/03_PRD.md) | Specification ready | PRD-02, TRD-*, ARC-04 | OQ-PRD-01, OQ-PRD-02, OQ-PRD-03 | 2026-11-15 |
-| [User Journeys](product/04_USER_JOURNEYS.md) | Specification ready | PRD-03, PRD-05 | — | 2026-11-15 |
-| [Onboarding Specification](product/05_ONBOARDING_SPECIFICATION.md) | Specification ready | PRD-03, ARC-03, ARC-04 | OQ-ONB-01, OQ-ONB-02 | 2026-11-15 |
-| [Feature Catalog](product/06_FEATURE_CATALOG.md) | Specification ready | PRD-03, ENG-01 | — | 2026-11-15 |
-| [UI/UX Specification](product/07_UI_UX_SPECIFICATION.md) | Reflects implemented frontend + additions | ENG-02, design-standards | — | 2026-11-16 |
+| [Product Vision](product/01_PRODUCT_VISION.md) | Approved for intraday MVP planning (v0.2.0, ADR-014) | — | OQ-VIS-01, OQ-VIS-02 | 2026-11-17 |
+| [Business Requirements Document (BRD)](product/02_BRD.md) | Revised for intraday (v0.2.0); draft for owner sign-off | PRD-01 | — | 2026-11-17 |
+| [Product Requirements Document (PRD)](product/03_PRD.md) | Specification ready for intraday (v0.2.0) | PRD-02, TRD-*, ARC-04 | OQ-PRD-01, OQ-PRD-02 | 2026-11-17 |
+| [User Journeys](product/04_USER_JOURNEYS.md) | Specification ready for intraday (v0.2.0) | PRD-03 | — | 2026-11-17 |
+| [Onboarding Specification](product/05_ONBOARDING_SPECIFICATION.md) | Deferred (ADR-014) | PRD-03, ARC-03, ARC-04 | OQ-ONB-01, OQ-ONB-02 | 2026-11-17 |
+| [Feature Catalog](product/06_FEATURE_CATALOG.md) | Revised for intraday (v0.2.0) | PRD-03, ENG-01 | — | 2026-11-17 |
+| [UI/UX Specification](product/07_UI_UX_SPECIFICATION.md) | Reflects implemented frontend + additions, revised for intraday (v0.3.0) | ENG-02, design-standards | — | 2026-11-17 |
 | [System Architecture](architecture/01_SYSTEM_ARCHITECTURE.md) | Specification ready | ADR-001..006 | OQ-ARC-01, OQ-ARC-02, OQ-ARC-03 | 2026-11-15 |
 | [Technology Stack](architecture/02_TECHNOLOGY_STACK.md) | Specification ready (versions pinned in M0) | ARC-01 | — | 2026-11-15 |
 | [Database Design](architecture/03_DATABASE_DESIGN.md) | Specification ready; §4–§8 implemented as migrations and §12 seeders (M1) | ARC-01, TRD-01..07, ADR-005, ADR-011 | OQ-DB-01, OQ-DB-02, OQ-DB-03 | 2026-11-17 |
 | [API Specification (Public REST API v1)](architecture/04_API_SPECIFICATION.md) | Specification ready; OpenAPI 3.1 file in `contracts/api/openapi.yaml` (M1) | ARC-03, ARC-06, TRD-05 | OQ-API-01, OQ-API-02, OQ-API-03 | 2026-11-17 |
-| [Data Flow](architecture/05_DATA_FLOW.md) | Specification ready | ARC-01, ARC-08, TRD-07 | — | 2026-11-15 |
+| [Data Flow](architecture/05_DATA_FLOW.md) | Daily flows; intraday revision pending (I1/I2) | ARC-01, ARC-08, TRD-07 | — | 2026-11-17 |
 | [Security Architecture](architecture/06_SECURITY_ARCHITECTURE.md) | Specification ready | ARC-01, ARC-03, ARC-08 | OQ-SEC-01, OQ-SEC-02, OQ-SEC-03 | 2026-11-15 |
 | [AI and LLM Architecture](architecture/07_AI_AND_LLM_ARCHITECTURE.md) | Specification ready (provider pending) | TRD-04, ADR-009 | OQ-AI-01, OQ-AI-02, OQ-AI-03 | 2026-11-15 |
 | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) | Specification ready (Kite facts to verify) | ADR-007, ADR-011 | OQ-INT-01, OQ-INT-02, OQ-INT-03, OQ-INT-04 | 2026-11-17 |
@@ -89,15 +92,14 @@
 
 ## 2. Open questions register
 
-All unresolved decisions, aggregated from each document's "Open questions" section (66 items). Resolve by updating the owning document (and an ADR where the decision is architectural), then remove the row there; this table is regenerated from the documents.
+All unresolved decisions, aggregated from each document's "Open questions" section (65 items). Resolve by updating the owning document (and an ADR where the decision is architectural), then remove the row there; this table is regenerated from the documents.
 
 | ID | Question | Owning document |
 |---|---|---|
 | OQ-VIS-01 | Market sizing and willingness-to-pay research before Phase C. | [Product Vision](product/01_PRODUCT_VISION.md) |
 | OQ-VIS-02 | Brand/legal name availability and trademark check for "PriceAction AI". | [Product Vision](product/01_PRODUCT_VISION.md) |
 | OQ-PRD-01 | Paper trades: dedicated `/paper-trades` route or a tab inside `/portfolio`? | [Product Requirements Document (PRD)](product/03_PRD.md) |
-| OQ-PRD-02 | Should the scanner show SHORT informational setups by default (current UI does) or hide them behind a toggle? Proposed: hidden by default when preference is `LONG_ONLY`. | [Product Requirements Document (PRD)](product/03_PRD.md) |
-| OQ-PRD-03 | Keep "Exchange" filter (NSE/BSE) in scanner UI? Proposed: remove for MVP. | [Product Requirements Document (PRD)](product/03_PRD.md) |
+| OQ-PRD-02 | Should the scanner show SHORT informational setups by default or hide them behind a toggle? Proposed: hidden by default. | [Product Requirements Document (PRD)](product/03_PRD.md) |
 | OQ-ONB-01 | Is product analytics wanted in the personal phase? | [Onboarding Specification](product/05_ONBOARDING_SPECIFICATION.md) |
 | OQ-ONB-02 | Should experience level change defaults (e.g. lower risk % for `NEW`)? Proposed: suggest 0.5% for `NEW`, user can change. | [Onboarding Specification](product/05_ONBOARDING_SPECIFICATION.md) |
 | OQ-ARC-01 | Managed Postgres vs container in production (cost vs operational safety). | [System Architecture](architecture/01_SYSTEM_ARCHITECTURE.md) |

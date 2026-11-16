@@ -11,7 +11,7 @@ Direction changed on 2026-11-17 to a **personal intraday workstation** ([ADR-014
 | M0 | Repository and infrastructure foundation | Monorepo, Compose stack skeleton, GitHub repo config and CI gates | — | `COMPLETED` | 2026-11-15 |
 | M1 | Database and API contracts | ARC-03 schema, seeders, OpenAPI and engine JSON Schemas | M0 | `COMPLETED` | 2026-11-17 (PRs #13–#15, #17, #19–#21) |
 | M2–M10 | Daily-timeframe roadmap | — | — | Superseded by ADR-014 (not started) | — |
-| I0 | Direction and specifications | ADR-014/015, intraday TRD-01..07, product docs | M1 | `IN PROGRESS` | — |
+| I0 | Direction and specifications | ADR-014/015, intraday TRD-01..07, product docs | M1 | `NEEDS REVIEW` (all I0 tasks done on branch `docs/intraday-direction-and-specs`; PR pending) | — |
 | I1 | Intraday schema and contracts | Bar timestamps, 1m/5m/15m/1D, snapshot by reference, risk state, calendar seed | I0 | `NOT STARTED` | — |
 | I2 | Intraday market data | Provider adapter (Kite or Groww), bar-close fetcher, current-price cache, quality checks, DEMO intraday data | I1, provider access | `NOT STARTED` (blocked: OQ-INT-01/04) | — |
 | I3 | Engine core on 15m/5m | Pivots, structure, BOS/CHoCH, higher-timeframe alignment | I1 | `NOT STARTED` | — |
