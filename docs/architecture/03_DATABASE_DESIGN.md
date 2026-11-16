@@ -87,6 +87,8 @@ Migrations are raw SQL in `backend/database/migrations` so constraints match thi
 | `analysis_runs` | Add `as_of_ts timestamptz NOT NULL` (end of the last 5m bar used). Drop `candle_snapshot_id` after the inputs table is filled. `as_of_date` stays (session date). Uniqueness by `(data_source_id, instrument_id, ruleset_version_id, as_of_ts)`. |
 | `analysis_batches` | Add `as_of_ts`; one batch per data source and 5m close. |
 | `swing_points`, `structure_events`, `price_zones`, `liquidity_events`, `detected_setups` | Add the source timeframe and bar timestamps beside the existing indexes and dates (for example `swing_points.bar_start`, `confirmed_at_bar_start`, `timeframe`); no-look-ahead check `confirmed_at_bar_start >= bar_start`. |
+| `detected_setups` | `setup_type` CHECK becomes the `pa-intraday` vocabulary of TRD-01 §7 (`OPENING_RANGE_BREAKOUT`, `PREV_DAY_HIGH_BREAK`, `PREV_DAY_LOW_BREAK`, `BREAKOUT_RETEST`, `TREND_CONTINUATION`, `LIQUIDITY_SWEEP_REVERSAL`); add `signal_at`, `valid_until`. Same change for `ai_explanations` and `backtest_runs.setup_types`. |
+| `ruleset_versions` | Seed `pa-intraday 0.1.0` as `ACTIVE`; set `pa-core 0.1.0` to `RETIRED`. |
 | `ingestion_runs` | Add `timeframe` and `bar_start` (the bar close being fetched) for intraday runs; duplicate-run guard on `(data_source_id, kind, timeframe, bar_start)` while queued or running. Kind `INTRADAY_BARS` added. |
 | `market_calendar` | Seeded with NSE sessions and holidays (special sessions as rows with their own times). |
 | `trade_plans` | Add `triggered_at timestamptz`; `valid_until timestamptz` (setup expiry inside the session). |

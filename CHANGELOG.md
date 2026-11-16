@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- TRD-01 v0.2.0 (intraday): 5m setups with 15m and daily context, closed bars only, higher-timeframe alignment without look-ahead, session-bounded trading (opening range, entry cutoff, session-end exit), and ruleset `pa-intraday 0.1.0` (41 hypothesis parameters, engine and seeder copies checked in CI). `pa-core 0.1.0` retired to an appendix.
 - ADR-015: intraday time model (bars keyed by `bar_start`, 1m/5m/15m/1D, completed bars only, revision history) and snapshots by reference (bar range + content hash, several inputs per run). Target schema in ARC-03 §2.2, API time conventions in ARC-04 §2.9, intraday ingestion in ENG-05 §12.
 - ADR-014: PriceAction AI becomes a personal intraday price-action workstation (NSE cash, NIFTY 50, 15m structure + 5m setups, daily bars as context, long-only actionability, manual execution, account-level risk limits). Roadmap milestones M2–M10 are replaced by I0–I8; M1 is complete.
 - Third-party GitHub Actions are pinned by commit SHA with a version comment (`setup-php`, `setup-uv`, `gitleaks-action`, `paths-filter`, `setup-buildx-action`); GitHub-owned `actions/*` stay on version tags (ENG-09 §6). Dependabot continues to update them.

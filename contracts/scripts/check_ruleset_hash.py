@@ -17,7 +17,7 @@ import re
 import sys
 from pathlib import Path
 
-ROW = re.compile(r"^\| `([a-z_]+(?:\.[a-z_]+)+)` \| ([^|]+?) \|")
+ROW = re.compile(r"^\| `([a-z_]+(?:\.[a-z0-9_]+)+)` \| ([^|]+?) \|")
 VERSION = re.compile(r"Ruleset ID: \*\*`([a-z0-9-]+)`\*\*, version \*\*`(\d+\.\d+\.\d+)`\*\*")
 
 

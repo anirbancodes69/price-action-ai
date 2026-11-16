@@ -73,6 +73,14 @@ class RulesetCheck(unittest.TestCase):
         r = run(PARAMS | {"risk.min_rr": 2}, PARAMS | {"risk.min_rr": 2})
         self.assertEqual(r.returncode, 0, r.stdout)
 
+    def test_keys_with_timeframe_suffixes_are_compared(self):
+        trd = TRD.replace("| `pivot.left_bars` | 2 | bars |", "| `pivot.left_bars_5m` | 2 | bars |")
+        params = {k: v for k, v in PARAMS.items() if k != "pivot.left_bars"} | {"pivot.left_bars_5m": 2}
+        self.assertEqual(run(params, params, trd).returncode, 0)
+        r = run(params | {"pivot.left_bars_5m": 3}, params | {"pivot.left_bars_5m": 3}, trd)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("pivot.left_bars_5m", r.stdout)
+
     def test_seeder_without_engine_file_fails(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)

@@ -25,7 +25,7 @@ Keeps every trading concept in the project consistent with the authoritative met
 3. **Check the invariants** below against the proposed change.
 4. **For (b) or (c):** this is a methodology change. It needs:
    - the TRD doc updated in the same PR;
-   - a new `pa-core` ruleset version if outputs change (TRD-01 §6, ENG-04 §5);
+   - a new ruleset version (active ruleset `pa-intraday`, TRD-01 §6) if outputs change (TRD-01 §6, ENG-04 §5);
    - new or updated TRD-08 test vectors.
    Indicators are outside product scope (MP-01): refuse to add them as signal inputs and point to OQ-TRD-02 when volume is the topic. Check the canonical names in TRD-01 §7 before adding vocabulary.
 5. **For vocabulary in other layers** (API enum, DB `CHECK`, frontend label): use the TRD-01 §7 canonical values. The frontend still uses the legacy mock vocabulary. Map it through [TRD-04 §12](../../../docs/trading/04_SETUP_DETECTION_RULES.md#12-frontend-vocabulary-reconciliation) and do not invent a third set.
