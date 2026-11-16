@@ -45,7 +45,7 @@ function SearchResults({
   onHover: (i: number) => void;
 }) {
   if (results.length === 0) {
-    return <p className="px-3 py-6 text-center text-xs text-fg-subtle">No matching NSE symbols in the sample universe.</p>;
+    return <p className="px-3 py-6 text-center text-xs text-muted-foreground">No matching NSE symbols in the sample universe.</p>;
   }
   return (
     <ul id={id} role="listbox" className="max-h-80 overflow-y-auto p-1">
@@ -57,14 +57,14 @@ function SearchResults({
             onClick={() => onPick(s)}
             onMouseEnter={() => onHover(i)}
             className={cn(
-              "flex w-full items-center gap-3 rounded px-2.5 py-2 text-left",
-              i === active ? "bg-hover" : "hover:bg-hover",
+              "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left",
+              i === active ? "bg-muted" : "hover:bg-accent",
             )}
           >
-            <span className="w-24 shrink-0 text-[13px] font-semibold text-fg">{s.symbol}</span>
-            <span className="min-w-0 flex-1 truncate text-xs text-fg-muted">{s.name}</span>
-            <span className="hidden text-2xs text-fg-subtle sm:inline">{s.sector}</span>
-            <span className="text-2xs text-fg-subtle">{s.exchange}</span>
+            <span className="w-24 shrink-0 text-sm font-medium text-foreground">{s.symbol}</span>
+            <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{s.name}</span>
+            <span className="hidden text-xs text-muted-foreground sm:inline">{s.sector}</span>
+            <span className="text-xs text-muted-foreground">{s.exchange}</span>
           </button>
         </li>
       ))}
@@ -126,7 +126,7 @@ export function GlobalSearch({ stocks }: { stocks: SearchableStock[] }) {
     <>
       {/* Desktop / tablet inline search */}
       <div className="relative hidden w-full max-w-sm md:block">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-fg-subtle" aria-hidden />
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <input
           ref={input}
           type="search"
@@ -145,14 +145,14 @@ export function GlobalSearch({ stocks }: { stocks: SearchableStock[] }) {
           onFocus={() => setOpen(true)}
           onBlur={() => setOpen(false)}
           onKeyDown={onKeyDown}
-          className="h-8 w-full rounded border border-border bg-subtle pl-8 pr-12 text-[13px] text-fg placeholder:text-fg-subtle hover:border-border-strong focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 [&::-webkit-search-cancel-button]:hidden"
+          className="h-8 w-full rounded-lg border border-input bg-card pl-8 pr-12 text-sm text-foreground placeholder:text-muted-foreground hover:border-muted-foreground dark:bg-input/30 [&::-webkit-search-cancel-button]:hidden"
         />
-        <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-sm border border-border bg-raised px-1.5 text-[10px] font-medium text-fg-subtle">
+        <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-sm border bg-muted px-1.5 font-mono text-2xs font-medium text-muted-foreground">
           ⌘K
         </kbd>
         {open && (
-          <div className="absolute left-0 right-0 top-full z-50 mt-1.5 animate-pop-in overflow-hidden rounded-md border border-border-strong bg-raised shadow-pop">
-            <p className="flex items-center justify-between border-b border-border px-3 py-1.5 text-2xs text-fg-subtle">
+          <div className="absolute left-0 right-0 top-full z-50 mt-1.5 animate-pop-in overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-float">
+            <p className="flex items-center justify-between border-b px-3 py-1.5 text-xs text-muted-foreground">
               <span>{query ? "Matches" : "Popular in sample universe"}</span>
               <span className="flex items-center gap-1">
                 <CornerDownLeft className="size-3" aria-hidden /> to open analysis
@@ -167,14 +167,14 @@ export function GlobalSearch({ stocks }: { stocks: SearchableStock[] }) {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="rounded p-1.5 text-fg-muted hover:bg-hover hover:text-fg md:hidden"
+        className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
         aria-label="Search stocks"
       >
         <Search className="size-[18px]" />
       </button>
       <Dialog open={mobileOpen} onClose={() => setMobileOpen(false)} title="Search stocks">
         <div className="-mx-5 -my-4">
-          <div className="border-b border-border px-4 py-3">
+          <div className="border-b px-4 py-3">
             <input
               type="search"
               autoFocus
@@ -186,7 +186,7 @@ export function GlobalSearch({ stocks }: { stocks: SearchableStock[] }) {
                 setActive(0);
               }}
               onKeyDown={onKeyDown}
-              className="h-9 w-full rounded border border-border bg-subtle px-3 text-sm text-fg placeholder:text-fg-subtle focus:border-accent focus:outline-none"
+              className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground dark:bg-input/30"
             />
           </div>
           <SearchResults id={`${listId}-m`} results={results} active={active} onPick={pick} onHover={setActive} />

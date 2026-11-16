@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 export function Disclaimer({ className, children }: { className?: string; children?: React.ReactNode }) {
   return (
-    <p className={cn("flex items-start gap-2 text-2xs leading-relaxed text-fg-subtle", className)}>
+    <p className={cn("flex items-start gap-2 text-xs leading-relaxed text-muted-foreground", className)}>
       <ShieldAlert className="mt-px size-3.5 shrink-0" aria-hidden />
       <span>
         {children ??

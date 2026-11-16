@@ -9,7 +9,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import type { LucideIcon } from "lucide-react";
+import { Check, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface DropdownItem {
@@ -19,6 +19,8 @@ export interface DropdownItem {
   href?: string;
   tone?: "default" | "danger";
   disabled?: boolean;
+  /** Renders as a menuitemradio with a check (e.g. the theme choice). */
+  checked?: boolean;
 }
 
 interface DropdownProps {
@@ -78,7 +80,7 @@ export function Dropdown({ trigger, items, children, header, align = "end", widt
           role="menu"
           onKeyDown={onMenuKey}
           className={cn(
-            "absolute top-full z-50 mt-1.5 origin-top animate-pop-in overflow-hidden rounded-md border border-border-strong bg-raised shadow-pop",
+            "absolute top-full z-50 mt-1.5 origin-top animate-pop-in overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-float",
             align === "end" ? "right-0" : "left-0",
             width,
           )}
@@ -88,7 +90,7 @@ export function Dropdown({ trigger, items, children, header, align = "end", widt
             <div className="p-1">
               {items?.map((item, i) =>
                 item === "separator" ? (
-                  <div key={`sep-${i}`} className="my-1 h-px bg-border" />
+                  <div key={`sep-${i}`} role="separator" className="my-1 h-px bg-border" />
                 ) : (
                   <DropdownMenuItem key={item.label} item={item} onDone={close} />
                 ),
@@ -104,14 +106,15 @@ export function Dropdown({ trigger, items, children, header, align = "end", widt
 function DropdownMenuItem({ item, onDone }: { item: DropdownItem; onDone: () => void }) {
   const Icon = item.icon;
   const cls = cn(
-    "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px] outline-none transition-colors",
-    "focus:bg-hover hover:bg-hover disabled:opacity-50",
-    item.tone === "danger" ? "text-bear" : "text-fg",
+    "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors focus-visible:outline-offset-0",
+    "focus:bg-accent hover:bg-accent disabled:opacity-50",
+    item.tone === "danger" ? "text-destructive" : "text-foreground",
   );
   const inner = (
     <>
-      {Icon && <Icon className="size-4 text-fg-subtle" />}
-      {item.label}
+      {Icon && <Icon className="size-4 text-current opacity-70" aria-hidden />}
+      <span className="flex-1">{item.label}</span>
+      {item.checked && <Check className="size-4 text-foreground" aria-hidden />}
     </>
   );
   if (item.href) {
@@ -123,7 +126,8 @@ function DropdownMenuItem({ item, onDone }: { item: DropdownItem; onDone: () => 
   }
   return (
     <button
-      role="menuitem"
+      role={item.checked === undefined ? "menuitem" : "menuitemradio"}
+      aria-checked={item.checked}
       type="button"
       disabled={item.disabled}
       className={cls}

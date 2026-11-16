@@ -54,7 +54,7 @@ A feature can carry two statuses (e.g. "Mock functionality only · Backend pendi
 | F-27 | **AI explanations & chart Q&A** | Plain-language understanding | F-17, LLM provider | ARC-07; FR-050–054; US-12 | Specification ready | M8 |
 | F-28 | **In-app notifications** | Timely awareness | events from F-21/22/06/26 | FR-100–101 | Mock functionality only · Backend pending | M6/M9 |
 | F-29 | **Settings** | Control | various | FR-007, FR-016, FR-069, FR-102 | Mock functionality only (session-only saves) · Backend pending | M6/M7 |
-| F-30 | **Theme (dark/light)** | Comfort | — | FR-103; persisted locally | Frontend implemented | — |
+| F-30 | **Theme (dark/light/system)** | Comfort | — | FR-103; persisted locally; dark default (ADR-013) | Frontend implemented | — |
 | F-31 | **Market session indicator** | Context | market calendar | FR-037 | Frontend implemented (clock-only, no holidays) · Backend pending (calendar API) | M2/M7 |
 | F-32 | **Entitlements & quotas** | SaaS readiness, cost control | F-01 | ARC-03 §5.3 | Specification ready | M6 |
 | F-33 | **Audit logging** | Accountability | F-01 | ARC-06 §10 | Specification ready | M1/M6 |

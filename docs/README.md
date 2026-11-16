@@ -22,7 +22,8 @@ This directory is the **authoritative specification** for PriceAction AI: an AI-
 | [trading/](trading/) | TRD-01..08 | Methodology & parameter registry, market structure, S/R, setups & quality score, risk, backtesting, paper trading, validation |
 | [engineering/](engineering/) | ENG-01..12 | Roadmap, frontend, backend, Python engine, ingestion, errors/logging, testing, dev environment, GitHub repo, CI/CD, branching/release, code quality/PRs |
 | [operations/](operations/) | OPS-01..06 | Deployment, environment config, monitoring, retention/backup, compliance, disaster recovery |
-| [adr/](adr/README.md) | ADR-001..012 | Architecture decision records |
+| [adr/](adr/README.md) | ADR-001..013 | Architecture decision records |
+| [design-standards.md](design-standards.md) | — | UI/UX design standards (mandatory for all frontend work, ADR-013) |
 | [GLOSSARY.md](GLOSSARY.md) | — | Terminology |
 | [DOCUMENTATION_STATUS.md](DOCUMENTATION_STATUS.md) | — | Status, dependencies, open questions per document |
 | [AUDIT_REPORT.md](AUDIT_REPORT.md) | — | Cross-document consistency audit |
@@ -37,7 +38,7 @@ Note: in the product folder, `PRD-03` is the Product Requirements Document itsel
 | Product | PRD-02 BRD → PRD-03 PRD → PRD-04 Journeys → PRD-05 Onboarding → PRD-06 Features → PRD-07 UI/UX |
 | Trading engine | TRD-01 (parameter registry) → TRD-02 → TRD-03 → TRD-04 → TRD-05 → TRD-06 → TRD-07 → TRD-08 → ENG-04 |
 | Backend | ARC-03 DB → ARC-04 API → ARC-06 Security → ARC-08 Integration → ENG-03 → ENG-05 → ENG-06 |
-| Frontend | PRD-07 → ENG-02 (mapping + discrepancies) → ARC-04 |
+| Frontend | [design-standards](design-standards.md) → PRD-07 → ENG-02 (mapping, §9 discrepancies, §11 design system) → ARC-04 |
 | DevOps | ENG-08 → ENG-09 → ENG-10 → ENG-11 → OPS-01..06 |
 | Next implementer | ENG-01 Roadmap (start at M0) → DOCUMENTATION_STATUS → AUDIT_REPORT |
 

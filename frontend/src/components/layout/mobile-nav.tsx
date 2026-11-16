@@ -25,22 +25,22 @@ export function MobileNav({ open, onClose, user }: { open: boolean; onClose: () 
 
   return (
     <div className="fixed inset-0 z-[80] lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
-      <div className="absolute inset-0 animate-fade-in bg-canvas/70 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
-      <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] animate-slide-in-left flex-col border-r border-border bg-subtle">
-        <div className="flex h-14 items-center justify-between border-b border-border px-4">
+      <div className="absolute inset-0 animate-fade-in bg-overlay" onClick={onClose} aria-hidden />
+      <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] animate-slide-in-left flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-float">
+        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
           <Brand />
-          <button type="button" onClick={onClose} className="rounded p-1 text-fg-subtle hover:bg-hover hover:text-fg" aria-label="Close navigation">
+          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" aria-label="Close navigation">
             <X className="size-4" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-4">
           <SidebarNav onNavigate={onClose} />
         </div>
-        <div className="flex items-center gap-2.5 border-t border-border p-4">
+        <div className="flex items-center gap-2.5 border-t border-sidebar-border p-4">
           <Avatar name={user.name} />
           <div className="min-w-0">
-            <p className="truncate text-[13px] font-medium text-fg">{user.name}</p>
-            <p className="truncate text-2xs text-fg-subtle">{user.plan}</p>
+            <p className="truncate text-sm font-medium">{user.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{user.plan}</p>
           </div>
         </div>
       </div>

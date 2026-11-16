@@ -7,7 +7,7 @@ Rules: accepted decisions are changed only through a superseding ADR (see [CLAUD
 | ID | Decision | Date | Status | Summary | Rationale (short) | Source |
 |---|---|---|---|---|---|---|
 | DEC-001 | Next.js frontend | 2026-11-15 | Accepted | Next.js App Router + React + TypeScript strict + Lightweight Charts. The frontend consumes only `/api/v1`. | Data-dense SSR UI already built; clean backend boundary | [ADR-001](docs/adr/ADR-001-FRONTEND-ARCHITECTURE.md) |
-| DEC-002 | Tailwind CSS, no Bootstrap or UI library | 2026-11-15 | Accepted | Tailwind v4 with a custom token-based design system. Bootstrap and component libraries are excluded. | Existing design system; consistent dark-first trading UI | [ADR-001](docs/adr/ADR-001-FRONTEND-ARCHITECTURE.md) |
+| DEC-002 | Tailwind CSS, no Bootstrap or UI library | 2026-11-15 | Accepted | Tailwind v4 with a custom token-based design system (rules and tokens per DEC-015). Bootstrap and component libraries are excluded. | Existing design system; consistent dark-first trading UI | [ADR-001](docs/adr/ADR-001-FRONTEND-ARCHITECTURE.md), [ADR-013](docs/adr/ADR-013-DESIGN-STANDARDS.md) |
 | DEC-003 | Laravel application backend | 2026-11-15 | Accepted | Laravel owns auth, tenancy, the public API, plans, journal, notifications and the schema (migrations). | Mature app framework, fast CRUD/auth/queues | [ADR-002](docs/adr/ADR-002-LARAVEL-APPLICATION-BACKEND.md) |
 | DEC-004 | Python quantitative engine | 2026-11-15 | Accepted | FastAPI internal service + arq workers. All trading calculations live in `python-engine/app/domain`. | Numeric ecosystem; testable pure functions | [ADR-003](docs/adr/ADR-003-PYTHON-QUANTITATIVE-ENGINE.md) |
 | DEC-005 | Modular monolith + one quant service | 2026-11-15 | Accepted | One business deployable and one DB, plus the engine. No further microservices. | Solo developer; low operational cost | [ADR-004](docs/adr/ADR-004-MODULAR-MONOLITH.md) |
@@ -20,6 +20,7 @@ Rules: accepted decisions are changed only through a superseding ADR (see [CLAUD
 | DEC-012 | LLM is explanation-only | 2026-11-15 | Accepted | The LLM explains and summarises deterministic output. It never computes or overrides levels, quantity or classification. | Trust; avoids hallucinated numbers | [ADR-009](docs/adr/ADR-009-LLM-EXPLANATION-ONLY.md) |
 | DEC-013 | Manual trade execution in MVP | 2026-11-15 | Accepted | Analysis, planning and paper trading only. Users execute on the broker's platform. No order placement. | Regulatory and risk exposure | [ADR-010](docs/adr/ADR-010-MANUAL-TRADE-EXECUTION-MVP.md) |
 | DEC-014 | Demo, personal and licensed data separation | 2026-11-15 | Accepted | Three data modes with tenant isolation. Personal Kite data is never redistributed, and demo is never shown as live. | Data licensing; SaaS readiness | [ADR-011](docs/adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md) |
+| DEC-015 | Project design standards | 2026-11-16 | Accepted | `docs/design-standards.md` governs all frontend UI: its OKLCH token vocabulary, shared components, light/dark/system themes (dark default), WCAG 2.1 AA. Implemented without new UI dependencies. | One consistent design language; reusable rules for every new page | [ADR-013](docs/adr/ADR-013-DESIGN-STANDARDS.md) |
 
 ## Candidate future decisions
 

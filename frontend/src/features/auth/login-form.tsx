@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { AuthHeading, DemoNotice, TextLink } from "./auth-heading";
 import { PasswordInput } from "./password-input";
 import { validateEmail, validatePassword } from "./validation";
 
@@ -29,11 +29,10 @@ export function LoginForm() {
   };
 
   return (
-    <div>
-      <h1 className="text-xl font-semibold tracking-tight text-fg">Sign in</h1>
-      <p className="mt-1 text-[13px] text-fg-muted">Welcome back. Continue to your analysis workspace.</p>
+    <div className="flex flex-col gap-6">
+      <AuthHeading title="Sign in" description="Welcome back. Continue to your analysis workspace." />
 
-      <form onSubmit={submit} noValidate className="mt-7 flex flex-col gap-4">
+      <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         <Input
           label="Email"
           type="email"
@@ -45,36 +44,29 @@ export function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           error={errors.email}
         />
-        <div className="flex flex-col gap-1.5">
-          <PasswordInput
-            label="Password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.password}
-          />
-        </div>
-        <div className="flex items-center justify-between">
+        <PasswordInput
+          label="Password"
+          autoComplete="current-password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          error={errors.password}
+        />
+        <div className="flex items-center justify-between gap-3">
           <Checkbox label="Remember me" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-          <Link href="/forgot-password" className="text-xs font-medium text-accent hover:underline">
+          <TextLink href="/forgot-password" className="text-sm">
             Forgot password?
-          </Link>
+          </TextLink>
         </div>
-        <Button type="submit" variant="primary" size="lg" loading={loading} className="mt-2 w-full">
+        <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full">
           Sign in {!loading && <ArrowRight />}
         </Button>
       </form>
 
-      <div className="mt-4 rounded border border-border bg-subtle px-3 py-2.5 text-2xs leading-relaxed text-fg-subtle">
-        Demo build: any valid email and password signs you in to a sample workspace. No account is created.
-      </div>
+      <DemoNotice>Demo build: any valid email and password signs you in to a sample workspace. No account is created.</DemoNotice>
 
-      <p className="mt-8 text-center text-xs text-fg-muted">
-        New to PriceAction AI?{" "}
-        <Link href="/register" className="font-medium text-accent hover:underline">
-          Create an account
-        </Link>
+      <p className="text-center text-sm text-muted-foreground">
+        New to PriceAction AI? <TextLink href="/register">Create an account</TextLink>
       </p>
     </div>
   );

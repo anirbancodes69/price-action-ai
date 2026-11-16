@@ -14,10 +14,10 @@ interface PriceDisplayProps {
 }
 
 const PRICE_SIZE = {
-  sm: "text-[13px]",
+  sm: "text-sm",
   md: "text-sm",
-  lg: "text-lg",
-  xl: "text-2xl",
+  lg: "font-stat text-2xl leading-none",
+  xl: "font-stat text-4xl leading-none",
 };
 
 export function PriceDisplay({
@@ -32,13 +32,13 @@ export function PriceDisplay({
   return (
     <div
       className={cn(
-        "tnum flex",
-        layout === "inline" ? "items-baseline gap-2" : "flex-col gap-0.5",
+        "flex tabular-nums",
+        layout === "inline" ? "items-baseline gap-2" : "flex-col gap-1",
         className,
       )}
     >
-      <span className={cn("font-semibold tracking-tight text-fg", PRICE_SIZE[size])}>
-        {currency && <span className="mr-px text-fg-muted">₹</span>}
+      <span className={cn("font-medium text-foreground", PRICE_SIZE[size])}>
+        {currency && <span className="mr-0.5 text-muted-foreground">₹</span>}
         {formatPrice(price)}
       </span>
       {changePct !== undefined && <ChangeDisplay change={change} changePct={changePct} size={size === "xl" || size === "lg" ? "md" : "sm"} />}
@@ -61,9 +61,9 @@ export function ChangeDisplay({ change, changePct, size = "sm", showIcon = true,
   return (
     <span
       className={cn(
-        "tnum inline-flex items-center gap-0.5 font-medium",
+        "tabular-nums inline-flex items-center gap-0.5 font-medium",
         size === "sm" ? "text-xs" : "text-sm",
-        up ? "text-bull" : down ? "text-bear" : "text-fg-muted",
+        up ? "text-bull" : down ? "text-bear" : "text-muted-foreground",
         className,
       )}
     >

@@ -1,95 +1,92 @@
 import Link from "next/link";
-import {
-  Activity,
-  BellRing,
-  BookOpenText,
-  ClipboardList,
-  History,
-  ListChecks,
-  Radar,
-  XCircle,
-  type LucideIcon,
-} from "lucide-react";
+import { BellRing, BookOpenText, ClipboardList, ListChecks, Radar, XCircle, type LucideIcon } from "lucide-react";
+import { TONE_CHIP, type Tone } from "@/lib/colors";
 import { formatDateTime, formatPct, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ActivityItem, StockAnalysis, TriggerAlert } from "@/types";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { Panel, PanelLink, RowList } from "@/components/ui/panel";
 import { MarketStructureBadge } from "@/components/trading/market-structure-badge";
 import { SignalBadge } from "@/components/trading/signal-badge";
 
+const ROWS = 5;
+
+/** What needs the reader: trigger levels, nearest (or already crossed) first. */
 export function UpcomingTriggers({ triggers }: { triggers: TriggerAlert[] }) {
+  const ordered = [...triggers].sort((a, b) => a.distancePct - b.distancePct).slice(0, ROWS);
   return (
-    <Panel>
-      <PanelHeader title="Upcoming trade triggers" description="Levels that would confirm a detected setup" icon={<BellRing />} />
-      <ul className="divide-y divide-border/60">
-        {triggers.map((t) => (
+    <Panel
+      boxed
+      title="Upcoming triggers"
+      meta={<span className="text-xs text-muted-foreground">{triggers.length}</span>}
+      hint="Levels that would confirm a detected setup, nearest first."
+      footer={<PanelLink href="/market-scanner">All setups</PanelLink>}
+    >
+      <RowList>
+        {ordered.map((t) => (
           <li key={t.id}>
-            <Link href={`/analysis/${t.symbol}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-hover/50">
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-semibold text-fg">{t.symbol}</p>
-                <p className="truncate text-2xs text-fg-subtle">{t.condition}</p>
+            <Link href={`/analysis/${t.symbol}`} className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <p className="text-sm font-medium text-foreground">{t.symbol}</p>
+                <p className="truncate text-xs text-muted-foreground">{t.condition}</p>
               </div>
-              <div className="tnum text-right">
-                <p className="text-[13px] font-medium text-fg">{formatPrice(t.level)}</p>
-                <p className={cn("text-2xs", t.distancePct <= 0 ? "text-bull" : "text-fg-subtle")}>
+              <div className="flex flex-col items-end gap-1 tabular-nums">
+                <p className="text-sm text-foreground">{formatPrice(t.level)}</p>
+                <p className={cn("text-xs", t.distancePct <= 0 ? "text-success" : "text-muted-foreground")}>
                   {t.distancePct <= 0 ? "Above trigger" : `${formatPct(t.distancePct, { signed: false })} away`}
                 </p>
               </div>
             </Link>
           </li>
         ))}
-      </ul>
+      </RowList>
     </Panel>
   );
 }
 
 export function RecentAnalyses({ analyses }: { analyses: StockAnalysis[] }) {
   return (
-    <Panel>
-      <PanelHeader title="Recent analyses" icon={<History />} />
-      <ul className="divide-y divide-border/60">
-        {analyses.map((a) => (
+    <Panel boxed title="Recent analyses" footer={<PanelLink href="/market-scanner">Open the scanner</PanelLink>}>
+      <RowList>
+        {analyses.slice(0, ROWS).map((a) => (
           <li key={a.stock.symbol}>
-            <Link href={`/analysis/${a.stock.symbol}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-hover/50">
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-semibold text-fg">{a.stock.symbol}</p>
-                <MarketStructureBadge structure={a.structure} variant="text" className="text-2xs" />
+            <Link href={`/analysis/${a.stock.symbol}`} className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <p className="text-sm font-medium text-foreground">{a.stock.symbol}</p>
+                <MarketStructureBadge structure={a.structure} variant="text" />
               </div>
-              <SignalBadge signal={a.setup.signal} />
+              <SignalBadge signal={a.setup.signal} explain={false} />
             </Link>
           </li>
         ))}
-      </ul>
+      </RowList>
     </Panel>
   );
 }
 
-const ACTIVITY_ICONS: Record<ActivityItem["kind"], { icon: LucideIcon; cls: string }> = {
-  setup: { icon: Radar, cls: "text-accent bg-accent/10" },
-  plan: { icon: ClipboardList, cls: "text-info bg-info/10" },
-  trigger: { icon: BellRing, cls: "text-bull bg-bull/10" },
-  invalidated: { icon: XCircle, cls: "text-bear bg-bear/10" },
-  journal: { icon: BookOpenText, cls: "text-warn bg-warn/10" },
-  watchlist: { icon: ListChecks, cls: "text-fg-muted bg-hover" },
+const ACTIVITY: Record<ActivityItem["kind"], { icon: LucideIcon; tone: Tone }> = {
+  setup: { icon: Radar, tone: "info" },
+  plan: { icon: ClipboardList, tone: "neutral" },
+  trigger: { icon: BellRing, tone: "success" },
+  invalidated: { icon: XCircle, tone: "destructive" },
+  journal: { icon: BookOpenText, tone: "neutral" },
+  watchlist: { icon: ListChecks, tone: "neutral" },
 };
 
 export function RecentActivity({ items }: { items: ActivityItem[] }) {
   return (
-    <Panel>
-      <PanelHeader title="Recent activity" icon={<Activity />} />
-      <ol className="flex flex-col px-4 py-3">
-        {items.map((a, i) => {
-          const { icon: Icon, cls } = ACTIVITY_ICONS[a.kind];
+    <Panel boxed title="Recent activity" footer={<PanelLink href="/journal">Trading journal</PanelLink>}>
+      <ol className="flex flex-col gap-3">
+        {items.slice(0, ROWS).map((a) => {
+          const { icon: Icon, tone } = ACTIVITY[a.kind];
           return (
-            <li key={a.id} className="relative flex gap-3 pb-4 last:pb-0">
-              {i < items.length - 1 && <span className="absolute left-3 top-7 bottom-0 w-px bg-border" aria-hidden />}
-              <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full", cls)}>
+            <li key={a.id} className="flex gap-3">
+              <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full", TONE_CHIP[tone])}>
                 <Icon className="size-3.5" aria-hidden />
               </span>
-              <div className="min-w-0 pt-0.5">
-                <p className="text-[13px] text-fg">{a.title}</p>
-                <p className="text-xs text-fg-muted">{a.detail}</p>
-                <p className="mt-0.5 text-2xs text-fg-subtle">{formatDateTime(a.at)}</p>
+              <div className="flex min-w-0 flex-col gap-1">
+                <p className="text-sm text-foreground">{a.title}</p>
+                <p className="text-xs text-muted-foreground">{a.detail}</p>
+                <p className="text-xs text-muted-foreground">{formatDateTime(a.at)}</p>
               </div>
             </li>
           );

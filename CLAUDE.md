@@ -31,7 +31,7 @@ docs/            Authoritative specification. Start at docs/README.md
 
 Next.js (App Router) · React · TypeScript (strict) · Tailwind CSS · TradingView Lightweight Charts · Laravel · Python FastAPI + arq workers · PostgreSQL · Redis · Docker Compose · GitHub Actions.
 
-- **Do not** introduce Bootstrap or any UI component library. The frontend uses its own token-based design system ([ADR-001](docs/adr/ADR-001-FRONTEND-ARCHITECTURE.md)).
+- **Do not** introduce Bootstrap or any UI component library. The frontend uses its own token-based design system ([ADR-001](docs/adr/ADR-001-FRONTEND-ARCHITECTURE.md), [ADR-013](docs/adr/ADR-013-DESIGN-STANDARDS.md)).
 - Pinned versions: [ARC-02](docs/architecture/02_TECHNOLOGY_STACK.md). Changing a decision follows §8.
 
 ## 3. Architecture rules
@@ -58,7 +58,8 @@ Next.js (App Router) · React · TypeScript (strict) · Tailwind CSS · TradingV
 
 - **Docker first.** Use `make up`, `make dev`, `make test` and `make lint` (see [Makefile](Makefile) and [ENG-08](docs/engineering/08_DEVELOPMENT_ENVIRONMENT.md)).
 - Strong typing everywhere: TypeScript strict, mypy for Python, typed PHP. Domain types in `frontend/src/types` are the frontend contract.
-- Reuse existing components (`frontend/src/components/**`), labels (`lib/labels.ts`) and formatters (`lib/format.ts`). Do not create parallel versions.
+- **All frontend development must follow [docs/design-standards.md](docs/design-standards.md). Read it before creating or modifying any page, component, layout, theme or visual interaction. Existing design-system components and tokens must be reused. Any deviation requires an explicit technical justification** (recorded in [ENG-02 §11](docs/engineering/02_FRONTEND_ARCHITECTURE.md#11-design-system)).
+- Reuse existing components (`frontend/src/components/**`), labels (`lib/labels.ts`), semantic colours (`lib/colors.ts`) and formatters (`lib/format.ts`). Do not create parallel versions.
 - Pages depend only on the `DataSource` interface (`frontend/src/lib/data/source.ts`). Backend integration means swapping the adapter, not rewriting pages.
 - Add or update tests with every behaviour change ([ENG-07](docs/engineering/07_TESTING_STRATEGY.md)). Trading code needs the TRD-08 test vectors.
 - Error handling and logging follow [ENG-06](docs/engineering/06_ERROR_HANDLING_AND_LOGGING.md). Never log tokens, credentials or PII.
@@ -135,7 +136,7 @@ Skills in [.claude/skills/](.claude/skills/) are short workflows and checklists.
 | `quant-engine` | Code in `python-engine/app/domain`, rulesets, TRD-08 tests, backtest and paper simulation |
 | `market-data` | Providers, ingestion, candles, calendar, data modes, demo data |
 | `schema-and-contracts` | Migrations, grants, seeders, ARC-04 / `contracts/` changes |
-| `frontend-ui` | Anything in `frontend/` |
+| `frontend-ui` | Anything in `frontend/` (applies [docs/design-standards.md](docs/design-standards.md)) |
 | `security-guardrails` | Tokens, secrets, auth, tenancy, grants, logging, dependencies |
 | `quality-gate` | Verifying a change, CI failures, PR readiness |
 | `docs-sync` | End-of-task documentation sync, discrepancies, ADR changes, link check |

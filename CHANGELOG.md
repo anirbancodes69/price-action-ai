@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- Project design standards adopted for the whole frontend (`docs/design-standards.md`, ADR-013): OKLCH token system with PriceAction brand values; light, dark and system themes (dark default); shared components `PageFrame`/`PageHeader`, `Panel`/`Card`/`RowList`, `Stat`/`Eyebrow`/`StatGrid`, `FilterRow`/`ClearButton`, `ChoiceGroup`/`PillTabs`, `SectionLinks`, `Empty`, `ErrorState`, shaped skeletons and `lib/colors.ts`; route error boundary for the authenticated app; every screen refactored (one primary action, filters on the page, one stat row, panels capped at five rows on the dashboard). Chart annotations use dedicated tokens, with distinct line styles for entry, stop and target, and dashed "(ref)" levels for reference-only setups. WCAG 2.1 AA contrast verified for all token pairs.
 - Database migrations for ARC-03 §8 trading (watchlists, trade plans with long-only and stop < entry < target checks, paper accounts/trades/events, actual trades and fills, journal entries, backtest runs and trades, notifications) and single-writer role grants (`apply_role_grants()`: per-table ownership, column-level shared writes, write-once `candle_snapshots`, append-only `audit_logs`, new tables closed by default), with database-level tests (M1, in progress).
 - Project Claude Code skills in `.claude/skills/`: `price-action-domain`, `quant-engine`, `market-data`, `schema-and-contracts`, `frontend-ui`, `security-guardrails`, `quality-gate`, `docs-sync`. They are workflows and checklists that point to the authoritative specs. `docs-sync` includes a relative Markdown link and anchor checker and a changed-files → docs-to-review script. Indexed in `CLAUDE.md` §10.
 - Database migrations for ARC-03 §7 analysis (ruleset versions, immutable candle snapshots, analysis batches and runs, swing points, structure events, price zones, liquidity events, detected setups, AI explanations), with triggers that make snapshots, runs, children and setups immutable and freeze rulesets once active, plus database-level tests (M1, in progress).
@@ -23,6 +24,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Changed
 
+- Frontend status tones: lifecycle states use `success/warning/destructive/info/neutral` instead of the brand accent and market colours; `MetricCard`, `EmptyState`, `Segmented` and `PageContainer` replaced by the standard components. Fixed a chart race where the initial visible range could apply before candles loaded.
 - `users` migration replaced the stock Laravel one: UUID primary key, `citext` email, status and soft delete; no `name` (moved to `user_profiles.display_name`) and no sessions table (Redis). Local dev databases need `make reset`.
 - `make test-backend` now runs against a dedicated `priceaction_test` database using the schema-owner role, so migration and constraint tests can run.
 - Frontend runtime aligned with Node 26 (Docker image, CI, `@types/node`) (PR #3, #11).

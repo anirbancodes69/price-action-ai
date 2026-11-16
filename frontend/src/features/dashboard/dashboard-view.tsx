@@ -1,15 +1,15 @@
-import { ArrowRight, CircleDashed, ClipboardList, Hourglass, Radar, ScanSearch, Sparkles, ListChecks } from "lucide-react";
+import { ScanSearch } from "lucide-react";
 import type { DashboardSummary } from "@/lib/data";
 import type { ActivityItem, MarketIndex, ScannerRow, StockAnalysis, TriggerAlert, Watchlist } from "@/types";
-import { PageContainer, PageHeader } from "@/components/layout/page-header";
+import { PageFrame, PageHeader } from "@/components/layout/page-frame";
 import { ButtonLink } from "@/components/ui/button";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { Panel, PanelLink } from "@/components/ui/panel";
 import { Disclaimer } from "@/components/data/disclaimer";
-import { MetricCard } from "@/components/data/metric-card";
 import { SampleDataBadge } from "@/components/data/sample-data-badge";
+import { Stat, StatGrid } from "@/components/data/stat";
 import { SetupCard } from "@/components/trading/setup-card";
 import { StockTable } from "@/components/trading/stock-table";
-import { IndexStrip } from "./index-strip";
+import { MarketPanel } from "./index-strip";
 import { RecentActivity, RecentAnalyses, UpcomingTriggers } from "./side-panels";
 
 export interface DashboardData {
@@ -24,80 +24,80 @@ export interface DashboardData {
   activity: ActivityItem[];
 }
 
+/**
+ * Dashboard order (design-standards §10): the figures → what needs the
+ * reader (triggers, nearest first) → what they answer for (setups,
+ * watchlist) → history (recent analyses, activity). Blocks with nothing to
+ * say are left out. Nothing is entered here; every figure links onward.
+ */
 export function DashboardView({ d }: { d: DashboardData }) {
   return (
-    <PageContainer>
+    <PageFrame>
       <PageHeader
         title="Dashboard"
         description="Market context, detected setups and your trade plans at a glance."
         meta={<SampleDataBadge asOf={d.asOf} />}
         actions={
           <>
-            <ButtonLink href="/market-scanner" size="sm" variant="secondary">
-              <ScanSearch /> Open scanner
+            <ButtonLink href="/trade-plans" variant="outline">
+              Trade plans
             </ButtonLink>
-            <ButtonLink href="/trade-plans" size="sm" variant="primary">
-              <ClipboardList /> Trade plans
+            <ButtonLink href="/market-scanner" variant="primary">
+              <ScanSearch /> Open scanner
             </ButtonLink>
           </>
         }
       />
 
-      <IndexStrip indices={d.indices} />
+      <StatGrid columns={3} label="Overview figures">
+        <Stat
+          label="Active setups"
+          value={d.summary.activeSetups}
+          hint={`Long setups among ${d.summary.stocksScanned} stocks scanned`}
+          href="/market-scanner"
+        />
+        <Stat label="Awaiting confirmation" value={d.summary.awaitingConfirmation} hint="Near trigger, no confirming close yet" href="/market-scanner" />
+        <Stat label="Open trade plans" value={d.summary.activeTradePlans} hint="Pending, confirmed or active" href="/trade-plans" />
+      </StatGrid>
 
-      <section aria-label="Overview metrics" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard label="Stocks scanned" value={d.summary.stocksScanned} icon={Radar} hint="Sample universe · daily timeframe" />
-        <MetricCard label="Active setups" value={d.summary.activeSetups} icon={Sparkles} tone="accent" hint="Long setups detected or confirmed" />
-        <MetricCard label="Awaiting confirmation" value={d.summary.awaitingConfirmation} icon={Hourglass} tone="warn" hint="Near trigger, no confirming close yet" />
-        <MetricCard label="Active trade plans" value={d.summary.activeTradePlans} icon={CircleDashed} hint="Pending, confirmed or active plans" />
-      </section>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        <div className="flex min-w-0 flex-col gap-6">
+          {d.triggers.length > 0 && <UpcomingTriggers triggers={d.triggers} />}
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px] lg:gap-5">
-        <div className="flex min-w-0 flex-col gap-4 lg:gap-5">
-          <Panel>
-            <PanelHeader
-              title="Top price-action setups"
-              description="Ranked by quality score. Detected setups are not entry signals."
-              icon={<Sparkles />}
-              actions={
-                <ButtonLink href="/market-scanner" size="xs" variant="ghost">
-                  View all <ArrowRight />
-                </ButtonLink>
-              }
-            />
-            <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 2xl:grid-cols-3">
-              {d.topSetups.map((row) => (
-                <SetupCard key={row.stock.symbol} row={row} />
-              ))}
-            </div>
-          </Panel>
+          {d.topSetups.length > 0 && (
+            <Panel
+              title="Top setups"
+              hint="Ranked by quality score. A detected setup is not an entry signal."
+              footer={<PanelLink href="/market-scanner">All setups in the scanner</PanelLink>}
+            >
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                {d.topSetups.map((row) => (
+                  <SetupCard key={row.stock.symbol} row={row} />
+                ))}
+              </div>
+            </Panel>
+          )}
 
-          <Panel>
-            <PanelHeader
-              title={`Watchlist · ${d.watchlist.name}`}
-              icon={<ListChecks />}
-              actions={
-                <ButtonLink href="/watchlists" size="xs" variant="ghost">
-                  Manage <ArrowRight />
-                </ButtonLink>
-              }
-            />
-            <StockTable
-              rows={d.watchlistRows}
-              columns={["symbol", "price", "change", "structure", "status", "signal"]}
-              caption="Watchlist snapshot"
-            />
-          </Panel>
+          {d.watchlistRows.length > 0 && (
+            <Panel title={`Watchlist · ${d.watchlist.name}`} footer={<PanelLink href="/watchlists">Manage watchlists</PanelLink>}>
+              <StockTable
+                rows={d.watchlistRows}
+                limit={5}
+                columns={["symbol", "price", "change", "structure", "status", "signal"]}
+                caption="Watchlist snapshot"
+              />
+            </Panel>
+          )}
         </div>
 
-        <aside className="flex min-w-0 flex-col gap-4 lg:gap-5">
-          <UpcomingTriggers triggers={d.triggers} />
-          <RecentAnalyses analyses={d.recentAnalyses} />
-          <RecentActivity items={d.activity} />
+        <aside className="flex min-w-0 flex-col gap-4" aria-label="Market and history">
+          <MarketPanel indices={d.indices} />
+          {d.recentAnalyses.length > 0 && <RecentAnalyses analyses={d.recentAnalyses} />}
+          {d.activity.length > 0 && <RecentActivity items={d.activity} />}
         </aside>
       </div>
 
       <Disclaimer />
-    </PageContainer>
+    </PageFrame>
   );
 }

@@ -6,18 +6,17 @@ import { ClipboardList, LayoutGrid, MoreHorizontal, Rows3, XCircle, Ban, Receipt
 import { formatInr, formatInt, formatRR } from "@/lib/format";
 import { PLAN_STATUS, SETUP_TYPES } from "@/lib/labels";
 import type { TradePlan, TradePlanStatus } from "@/types";
-import { PageContainer, PageHeader } from "@/components/layout/page-header";
+import { PageFrame, PageHeader } from "@/components/layout/page-frame";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Dropdown } from "@/components/ui/dropdown";
-import { Panel } from "@/components/ui/panel";
-import { Segmented } from "@/components/ui/segmented";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { Tabs } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { Disclaimer } from "@/components/data/disclaimer";
-import { EmptyState } from "@/components/data/empty-state";
-import { MetricCard } from "@/components/data/metric-card";
+import { Empty } from "@/components/data/empty";
+import { Stat, StatGrid } from "@/components/data/stat";
 import { SampleDataBadge } from "@/components/data/sample-data-badge";
 import { StatusBadge } from "@/components/data/status-badge";
 import { LifecycleStrip } from "@/components/trading/lifecycle-strip";
@@ -48,7 +47,7 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
       <Dropdown
         width="w-52"
         trigger={({ open, toggle, id }) => (
-          <Button size="icon-sm" variant="ghost" onClick={toggle} aria-label={`Actions for ${p.id}`} aria-haspopup="menu" aria-expanded={open} aria-controls={open ? id : undefined}>
+          <Button size="icon-sm" variant="ghost" onClick={toggle} aria-label={`Actions for plan ${p.id}`} aria-haspopup="menu" aria-expanded={open} aria-controls={open ? id : undefined}>
             <MoreHorizontal />
           </Button>
         )}
@@ -78,15 +77,16 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
       key: "symbol",
       header: "Symbol",
       sticky: true,
+      grow: true,
       sortValue: (p) => p.symbol,
       render: (p) => (
-        <Link href={`/analysis/${p.symbol}`} className="flex flex-col leading-tight">
-          <span className="text-[13px] font-semibold text-fg hover:text-accent">{p.symbol}</span>
-          <span className="tnum text-2xs text-fg-subtle">{p.id}</span>
+        <Link href={`/analysis/${p.symbol}`} className="flex flex-col rounded-lg leading-tight">
+          <span className="text-sm font-medium text-foreground underline-offset-4 hover:underline">{p.symbol}</span>
+          <span className="font-mono text-xs text-muted-foreground">{p.id}</span>
         </Link>
       ),
     },
-    { key: "setup", header: "Setup", hideBelow: "md", sortValue: (p) => p.setupType, render: (p) => <span className="text-fg-muted">{SETUP_TYPES[p.setupType].label}</span> },
+    { key: "setup", header: "Setup", hideBelow: "md", sortValue: (p) => p.setupType, render: (p) => <span className="text-muted-foreground">{SETUP_TYPES[p.setupType].label}</span> },
     { key: "levels", header: "Entry / SL / Target", align: "right", render: (p) => <PlanLevelsInline {...p} /> },
     { key: "rr", header: "R:R", align: "right", hideBelow: "sm", sortValue: (p) => p.riskReward, render: (p) => formatRR(p.riskReward) },
     { key: "qty", header: "Qty", align: "right", hideBelow: "lg", sortValue: (p) => p.quantity, render: (p) => formatInt(p.quantity) },
@@ -97,19 +97,19 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
       key: "exec",
       header: "Execution",
       hideBelow: "xl",
-      render: (p) => (p.linkedOrderId ? <span className="text-2xs text-bull">Order {p.linkedOrderId}</span> : <span className="text-2xs text-fg-subtle">Proposed — no order</span>),
+      render: (p) => (p.linkedOrderId ? <span className="text-xs text-success">Order {p.linkedOrderId}</span> : <span className="text-xs text-muted-foreground">Proposed — no order</span>),
     },
     { key: "actions", header: <span className="sr-only">Actions</span>, align: "right", render: (p) => actions(p) },
   ];
 
   return (
-    <PageContainer>
+    <PageFrame>
       <PageHeader
         title="Trade Plans"
         description="Proposed plans you have written against detected setups. A plan is not an order."
         meta={<SampleDataBadge asOf={asOf} />}
         actions={
-          <ButtonLink href="/market-scanner" size="sm" variant="primary">
+          <ButtonLink href="/market-scanner" variant="primary">
             <ClipboardList /> New plan from a setup
           </ButtonLink>
         }
@@ -117,12 +117,12 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
 
       <LifecycleStrip highlight={["plan"]} />
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard label="Open plans" value={open.length} hint="Pending, entry confirmed or active" />
-        <MetricCard label="Awaiting trigger" value={plans.filter((p) => p.status === "pending").length} tone="warn" hint="No entry condition met yet" />
-        <MetricCard label="Planned capital at risk" value={formatInr(openRisk, { decimals: false })} tone="bear" hint="If every open plan hits its stop" />
-        <MetricCard label="Average R:R (open)" value={avgRR ? formatRR(avgRR) : "—"} tone="accent" />
-      </section>
+      <StatGrid label="Plan figures">
+        <Stat label="Open plans" value={open.length} hint="Pending, entry confirmed or active" />
+        <Stat label="Awaiting trigger" value={plans.filter((p) => p.status === "pending").length} hint="No entry condition met yet" />
+        <Stat label="Planned risk" value={formatInr(openRisk, { decimals: false })} hint="Lost if every open plan hits its stop" />
+        <Stat label="Average R:R" value={avgRR ? formatRR(avgRR) : "—"} hint="Across open plans" />
+      </StatGrid>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <Tabs
@@ -135,32 +135,34 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
             ...ORDER.map((s) => ({ value: s, label: PLAN_STATUS[s].label, count: plans.filter((p) => p.status === s).length })),
           ]}
         />
-        <Segmented
+        <ChoiceGroup
           ariaLabel="View mode"
           value={view}
           onChange={setView}
           options={[
-            { value: "cards", label: "Cards" },
-            { value: "table", label: "Table" },
+            { value: "cards", label: "Cards", icon: <LayoutGrid className="size-3.5" aria-hidden /> },
+            { value: "table", label: "Table", icon: <Rows3 className="size-3.5" aria-hidden /> },
           ]}
-          className="self-start sm:self-auto"
         />
       </div>
 
       {visible.length === 0 ? (
-        <Panel>
-          <EmptyState icon={view === "cards" ? LayoutGrid : Rows3} title={`No ${tab === "all" ? "" : PLAN_STATUS[tab].label.toLowerCase() + " "}plans`} description="Plans move between these states as triggers fire, orders are linked, or setups fail." />
-        </Panel>
+        <div data-slot="card" className="rounded-xl border bg-card">
+          <Empty
+            kind="scope"
+            icon={ClipboardList}
+            title={`No ${tab === "all" ? "" : PLAN_STATUS[tab].label.toLowerCase() + " "}plans`}
+            description={tab === "all" ? "Write a plan from a detected setup in the scanner or on a stock's analysis page." : "Plans move between these states as triggers fire, orders are linked, or setups fail. Choose All to see every plan."}
+          />
+        </div>
       ) : view === "cards" ? (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {visible.map((p) => (
             <TradePlanCard key={p.id} plan={p} actions={actions(p)} />
           ))}
         </div>
       ) : (
-        <Panel className="overflow-hidden">
-          <DataTable columns={columns} rows={visible} rowKey={(p) => p.id} caption="Trade plans" />
-        </Panel>
+        <DataTable columns={columns} rows={visible} rowKey={(p) => p.id} caption="Trade plans" />
       )}
 
       <Disclaimer />
@@ -173,9 +175,8 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
         size="sm"
         footer={
           <>
-            <Button size="sm" variant="ghost" onClick={() => setConfirmCancel(null)}>Keep plan</Button>
+            <Button variant="outline" onClick={() => setConfirmCancel(null)}>Keep plan</Button>
             <Button
-              size="sm"
               variant="danger"
               onClick={() => {
                 if (confirmCancel) {
@@ -190,6 +191,6 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
           </>
         }
       />
-    </PageContainer>
+    </PageFrame>
   );
 }

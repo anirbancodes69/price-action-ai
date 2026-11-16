@@ -17,18 +17,19 @@ export function SetupCard({ row, className }: { row: ScannerRow; className?: str
   return (
     <Link
       href={`/analysis/${encodeURIComponent(stock.symbol)}`}
+      data-slot="card"
       className={cn(
-        "group flex flex-col gap-3 rounded-md border border-border bg-surface p-3.5 transition-colors hover:border-border-strong hover:bg-hover/40",
+        "group flex min-w-0 flex-col gap-3 rounded-xl border bg-card px-5 py-4 transition-colors hover:border-input",
         className,
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
+        <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="text-[13px] font-semibold text-fg">{stock.symbol}</span>
+            <span className="text-sm font-medium text-foreground group-hover:underline underline-offset-4">{stock.symbol}</span>
             <ChangeDisplay changePct={stock.changePct} showIcon={false} />
           </div>
-          <p className="truncate text-2xs text-fg-subtle">{SETUP_TYPES[row.setupType].label}</p>
+          <p className="truncate text-xs text-muted-foreground">{SETUP_TYPES[row.setupType].label}</p>
         </div>
         <SignalBadge signal={row.signal} />
       </div>
@@ -36,25 +37,25 @@ export function SetupCard({ row, className }: { row: ScannerRow; className?: str
         <MarketStructureBadge structure={row.structure} />
         <StatusBadge kind="setup" status={row.setupStatus} />
       </div>
-      <dl className="tnum grid grid-cols-3 gap-2 border-t border-border pt-2.5 text-2xs">
-        <div>
-          <dt className="text-fg-subtle">Entry</dt>
-          <dd className="text-xs font-medium text-fg">{formatPrice(levels.entry)}</dd>
+      <dl className="grid grid-cols-3 gap-3 border-t pt-3 tabular-nums">
+        <div className="flex flex-col gap-1">
+          <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Entry</dt>
+          <dd className="text-sm font-medium text-foreground">{formatPrice(levels.entry)}</dd>
         </div>
-        <div>
-          <dt className="text-fg-subtle">Stop</dt>
-          <dd className="text-xs font-medium text-bear">{formatPrice(levels.stopLoss)}</dd>
+        <div className="flex flex-col gap-1">
+          <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Stop</dt>
+          <dd className="text-sm font-medium text-bear">{formatPrice(levels.stopLoss)}</dd>
         </div>
-        <div>
-          <dt className="text-fg-subtle">Target</dt>
-          <dd className="text-xs font-medium text-bull">{formatPrice(levels.target)}</dd>
+        <div className="flex flex-col gap-1">
+          <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Target</dt>
+          <dd className="text-sm font-medium text-bull">{formatPrice(levels.target)}</dd>
         </div>
       </dl>
       <div className="flex items-center justify-between">
         <RiskRewardDisplay levels={levels} variant="compact" />
         <span className="flex items-center gap-2">
           <QualityScoreBar score={row.qualityScore} />
-          <ChevronRight className="size-4 text-fg-subtle transition-transform group-hover:translate-x-0.5" aria-hidden />
+          <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden />
         </span>
       </div>
     </Link>

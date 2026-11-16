@@ -22,7 +22,7 @@ export function AppShell({ children, user, notifications, stocks }: AppShellProp
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   return (
-    <div className="flex min-h-dvh bg-base">
+    <div className="flex min-h-dvh bg-background">
       <AppSidebar
         collapsed={sidebar === "collapsed"}
         onToggle={() => setSidebar(sidebar === "collapsed" ? "expanded" : "collapsed")}

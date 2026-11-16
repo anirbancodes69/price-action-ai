@@ -17,7 +17,7 @@
 | [User Journeys](product/04_USER_JOURNEYS.md) | Specification ready | PRD-03, PRD-05 | — | 2026-11-15 |
 | [Onboarding Specification](product/05_ONBOARDING_SPECIFICATION.md) | Specification ready | PRD-03, ARC-03, ARC-04 | OQ-ONB-01, OQ-ONB-02 | 2026-11-15 |
 | [Feature Catalog](product/06_FEATURE_CATALOG.md) | Specification ready | PRD-03, ENG-01 | — | 2026-11-15 |
-| [UI/UX Specification](product/07_UI_UX_SPECIFICATION.md) | Reflects implemented frontend + additions | ENG-02 | — | 2026-11-15 |
+| [UI/UX Specification](product/07_UI_UX_SPECIFICATION.md) | Reflects implemented frontend + additions | ENG-02, design-standards | — | 2026-11-16 |
 | [System Architecture](architecture/01_SYSTEM_ARCHITECTURE.md) | Specification ready | ADR-001..006 | OQ-ARC-01, OQ-ARC-02, OQ-ARC-03 | 2026-11-15 |
 | [Technology Stack](architecture/02_TECHNOLOGY_STACK.md) | Specification ready (versions pinned in M0) | ARC-01 | — | 2026-11-15 |
 | [Database Design](architecture/03_DATABASE_DESIGN.md) | Specification ready; §4–§7 implemented as migrations (M1), §8 pending | ARC-01, TRD-01..07, ADR-005, ADR-011 | OQ-DB-01, OQ-DB-02, OQ-DB-03 | 2026-11-16 |
@@ -35,7 +35,8 @@
 | [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) | Specification ready | TRD-04..06 | OQ-PT-01, OQ-PT-02, OQ-PT-03 | 2026-11-15 |
 | [Trading Engine Validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Specification ready | TRD-02..06 | — | 2026-11-15 |
 | [Implementation Roadmap](engineering/01_IMPLEMENTATION_ROADMAP.md) | Specification ready (M0 complete; progress in root ROADMAP.md) | All | OQ-RD-01, OQ-RD-02 | 2026-11-16 |
-| [Frontend Architecture](engineering/02_FRONTEND_ARCHITECTURE.md) | Reflects implemented code + plan | PRD-07, ARC-04 | — | 2026-11-15 |
+| [Frontend Architecture](engineering/02_FRONTEND_ARCHITECTURE.md) | Reflects implemented code + plan (§11 design system) | PRD-07, ARC-04, ADR-013 | — | 2026-11-16 |
+| [Design Standards](design-standards.md) | Accepted; implemented across all frontend pages | ADR-013 | — | 2026-11-16 |
 | [Backend Architecture (Laravel)](engineering/03_BACKEND_ARCHITECTURE.md) | Specification ready | ARC-01, ARC-03, ARC-04, ARC-06 | — | 2026-11-15 |
 | [Python Engine Architecture](engineering/04_PYTHON_ENGINE_ARCHITECTURE.md) | Specification ready | TRD-*, ARC-07, ARC-08 | — | 2026-11-15 |
 | [Data Ingestion Specification](engineering/05_DATA_INGESTION_SPECIFICATION.md) | Specification ready | ARC-03, ARC-08 | OQ-ING-01, OQ-ING-02 | 2026-11-15 |
@@ -64,6 +65,7 @@
 | [ADR-010: Manual Trade Execution in MVP](adr/ADR-010-MANUAL-TRADE-EXECUTION-MVP.md) | Accepted | — | — | 2026-11-15 |
 | [ADR-011: Demo, Personal and Licensed Data Modes with Tenant Isolation](adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md) | Accepted | — | — | 2026-11-15 |
 | [ADR-012: GitHub Actions for CI/CD](adr/ADR-012-GITHUB-ACTIONS-CI-CD.md) | Accepted | — | — | 2026-11-15 |
+| [ADR-013: Adopt the Project Design Standards](adr/ADR-013-DESIGN-STANDARDS.md) | Accepted | ADR-001 | — | 2026-11-16 |
 | [Documentation index](README.md) | Current | — | — | 2026-11-15 |
 | [Glossary](GLOSSARY.md) | Current | — | — | 2026-11-15 |
 | [ADR index](adr/README.md) | Current | — | — | 2026-11-15 |

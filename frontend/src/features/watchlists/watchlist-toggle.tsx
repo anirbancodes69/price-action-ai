@@ -8,7 +8,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { useWatchlists } from "./watchlist-store";
 
 /** "Add to watchlist" control — picks one or more lists for a symbol. */
-export function WatchlistToggle({ symbol, size = "sm" }: { symbol: string; size?: "sm" | "md" }) {
+export function WatchlistToggle({ symbol, size = "md" }: { symbol: string; size?: "sm" | "md" }) {
   const { watchlists, add, remove, listsContaining } = useWatchlists();
   const toast = useToast();
   const inLists = listsContaining(symbol);
@@ -24,13 +24,13 @@ export function WatchlistToggle({ symbol, size = "sm" }: { symbol: string; size?
           aria-haspopup="menu"
           aria-expanded={open}
           aria-controls={open ? id : undefined}
-          className={buttonClasses("secondary", size, cn(watched && "border-warn/40 text-warn"))}
+          className={buttonClasses("outline", size)}
         >
-          <Star className={cn(watched && "fill-warn")} />
+          <Star className={cn(watched && "fill-current")} aria-hidden />
           {watched ? `In ${inLists.length} watchlist${inLists.length > 1 ? "s" : ""}` : "Add to watchlist"}
         </button>
       )}
-      header={<p className="border-b border-border px-3 py-2 text-2xs font-medium uppercase tracking-wider text-fg-subtle">Watchlists</p>}
+      header={<p className="border-b px-3 py-2 text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Watchlists</p>}
     >
       <div className="p-1">
         {watchlists.map((l) => {
@@ -46,13 +46,13 @@ export function WatchlistToggle({ symbol, size = "sm" }: { symbol: string; size?
                 else add(l.id, symbol);
                 toast({ title: has ? `Removed ${symbol} from ${l.name}` : `Added ${symbol} to ${l.name}`, tone: has ? "info" : "success" });
               }}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px] text-fg hover:bg-hover focus:bg-hover focus:outline-none"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-foreground hover:bg-accent focus:bg-accent focus-visible:outline-offset-0"
             >
-              <span className={cn("flex size-4 items-center justify-center rounded-sm border", has ? "border-accent bg-accent text-white" : "border-border-strong")}>
+              <span className={cn("flex size-4 items-center justify-center rounded-sm border", has ? "border-primary bg-primary text-primary-foreground" : "border-input")} aria-hidden>
                 {has && <Check className="size-3" />}
               </span>
               <span className="flex-1 truncate">{l.name}</span>
-              <span className="tnum text-2xs text-fg-subtle">{l.symbols.length}</span>
+              <span className="text-xs tabular-nums text-muted-foreground">{l.symbols.length}</span>
             </button>
           );
         })}
