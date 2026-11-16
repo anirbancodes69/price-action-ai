@@ -20,7 +20,7 @@ export function Sparkline({ values, width = 96, height = 28, className, tone }: 
   const d = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   const area = `${d} L${width},${height} L0,${height} Z`;
   const t = tone ?? (values[values.length - 1] >= values[0] ? "bull" : "bear");
-  const color = t === "bull" ? "text-bull" : t === "bear" ? "text-bear" : "text-fg-subtle";
+  const color = t === "bull" ? "text-bull" : t === "bear" ? "text-bear" : "text-muted-foreground";
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}

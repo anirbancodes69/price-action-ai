@@ -17,16 +17,16 @@ import { SignalBadge } from "./signal-badge";
 export function TradePlanCard({ plan, actions, className }: { plan: TradePlan; actions?: ReactNode; className?: string }) {
   const executed = !!plan.linkedOrderId;
   return (
-    <article className={cn("flex flex-col rounded-md border border-border bg-surface", className)}>
-      <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
-        <div className="min-w-0">
+    <article data-slot="card" className={cn("flex min-w-0 flex-col rounded-xl border bg-card", className)}>
+      <header className="flex items-start justify-between gap-3 border-b px-5 py-4">
+        <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-center gap-2">
-            <Link href={`/analysis/${encodeURIComponent(plan.symbol)}`} className="text-[13px] font-semibold text-fg hover:text-accent">
+            <Link href={`/analysis/${encodeURIComponent(plan.symbol)}`} className="rounded-lg text-sm font-medium text-foreground underline-offset-4 hover:underline">
               {plan.symbol}
             </Link>
-            <span className="tnum text-2xs text-fg-subtle">{plan.id}</span>
+            <span className="font-mono text-xs text-muted-foreground">{plan.id}</span>
           </div>
-          <p className="truncate text-2xs text-fg-subtle">
+          <p className="truncate text-xs text-muted-foreground">
             {SETUP_TYPES[plan.setupType].label} · {plan.companyName}
           </p>
         </div>
@@ -36,39 +36,39 @@ export function TradePlanCard({ plan, actions, className }: { plan: TradePlan; a
         </div>
       </header>
 
-      <div className="flex flex-col gap-4 px-4 py-3.5">
+      <div className="flex flex-col gap-4 px-5 py-4">
         <RiskRewardDisplay levels={plan} />
-        <dl className="tnum grid grid-cols-3 gap-2 text-2xs">
-          <div>
-            <dt className="text-fg-subtle">Quantity</dt>
-            <dd className="text-xs font-medium text-fg">{formatInt(plan.quantity)}</dd>
+        <dl className="grid grid-cols-3 gap-3 tabular-nums">
+          <div className="flex flex-col gap-1">
+            <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Quantity</dt>
+            <dd className="text-sm font-medium text-foreground">{formatInt(plan.quantity)}</dd>
           </div>
-          <div>
-            <dt className="text-fg-subtle">Capital at risk</dt>
-            <dd className="text-xs font-medium text-bear">{formatInr(plan.riskAmount, { decimals: false })}</dd>
+          <div className="flex flex-col gap-1">
+            <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Capital at risk</dt>
+            <dd className="text-sm font-medium text-bear">{formatInr(plan.riskAmount, { decimals: false })}</dd>
           </div>
-          <div className="text-right">
-            <dt className="text-fg-subtle">Position value</dt>
-            <dd className="text-xs font-medium text-fg">{formatInr(plan.entry * plan.quantity, { decimals: false })}</dd>
+          <div className="flex flex-col gap-1 items-end">
+            <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Position value</dt>
+            <dd className="text-sm font-medium text-foreground">{formatInr(plan.entry * plan.quantity, { decimals: false })}</dd>
           </div>
         </dl>
-        {plan.note && <p className="text-xs leading-relaxed text-fg-muted">{plan.note}</p>}
+        {plan.note && <p className="text-sm leading-relaxed text-muted-foreground">{plan.note}</p>}
       </div>
 
-      <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-2.5">
+      <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t px-5 py-2.5">
         {executed ? (
-          <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-bull">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success">
             <Receipt className="size-3.5" aria-hidden />
             Executed order · {plan.linkedOrderId}
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-fg-muted">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <FileText className="size-3.5" aria-hidden />
             Proposed plan — not an order
           </span>
         )}
         <div className="flex items-center gap-1.5">
-          <span className="text-2xs text-fg-subtle">Updated {formatDate(plan.updatedAt)}</span>
+          <span className="text-xs text-muted-foreground">Updated {formatDate(plan.updatedAt)}</span>
           {actions}
         </div>
       </footer>
@@ -78,11 +78,11 @@ export function TradePlanCard({ plan, actions, className }: { plan: TradePlan; a
 
 export function PlanLevelsInline({ entry, stopLoss, target }: Pick<TradePlan, "entry" | "stopLoss" | "target">) {
   return (
-    <span className="tnum text-xs">
-      <span className="text-fg">{formatPrice(entry)}</span>
-      <span className="text-fg-subtle"> / </span>
+    <span className="text-sm tabular-nums">
+      <span className="text-foreground">{formatPrice(entry)}</span>
+      <span className="text-muted-foreground"> / </span>
       <span className="text-bear">{formatPrice(stopLoss)}</span>
-      <span className="text-fg-subtle"> / </span>
+      <span className="text-muted-foreground"> / </span>
       <span className="text-bull">{formatPrice(target)}</span>
     </span>
   );

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { OUTCOMES, PLAN_STATUS, SETUP_STATUS, SETUP_TYPES, SIGNAL_STATES, STRUCTURES, TONE_CLASSES } from "./labels";
+import { OUTCOMES, PLAN_STATUS, SETUP_STATUS, SETUP_TYPES, SIGNAL_STATES, STRUCTURES } from "./labels";
+import { TONE_CHIP } from "./colors";
 
 describe("labels", () => {
   it("never shows a bare BUY or SELL signal label", () => {
@@ -19,7 +20,7 @@ describe("labels", () => {
   });
 
   it("uses only defined tones", () => {
-    const tones = new Set(Object.keys(TONE_CLASSES));
+    const tones = new Set(Object.keys(TONE_CHIP));
     const all = [SIGNAL_STATES, SETUP_STATUS, STRUCTURES, PLAN_STATUS, OUTCOMES].flatMap((m) => Object.values(m));
     for (const meta of all) expect(tones.has(meta.tone)).toBe(true);
   });

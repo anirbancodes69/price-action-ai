@@ -13,22 +13,16 @@ interface TabsProps<T extends string> {
   items: TabItem<T>[];
   value: T;
   onChange: (value: T) => void;
-  variant?: "underline" | "pill";
-  size?: "sm" | "md";
   className?: string;
   ariaLabel?: string;
 }
 
-/** Controlled tab list with roving keyboard focus (←/→/Home/End). */
-export function Tabs<T extends string>({
-  items,
-  value,
-  onChange,
-  variant = "underline",
-  size = "md",
-  className,
-  ariaLabel,
-}: TabsProps<T>) {
+/**
+ * Underlined tabs for four or more peer views (design-standards §2, §9).
+ * Up to three views use <ChoiceGroup>. Counts live on the tab.
+ * Roving keyboard focus (←/→/Home/End).
+ */
+export function Tabs<T extends string>({ items, value, onChange, className, ariaLabel }: TabsProps<T>) {
   const id = useId();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -48,11 +42,7 @@ export function Tabs<T extends string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={cn(
-        "no-scrollbar flex items-center overflow-x-auto",
-        variant === "underline" ? "gap-4 border-b border-border" : "gap-0.5 rounded-md border border-border bg-subtle p-0.5",
-        className,
-      )}
+      className={cn("no-scrollbar flex items-center gap-5 overflow-x-auto border-b", className)}
     >
       {items.map((item, i) => {
         const active = item.value === value;
@@ -70,31 +60,12 @@ export function Tabs<T extends string>({
             onClick={() => onChange(item.value)}
             onKeyDown={(e) => onKey(e, i)}
             className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap font-medium transition-colors",
-              size === "sm" ? "text-xs" : "text-[13px]",
-              variant === "underline"
-                ? cn(
-                    "-mb-px border-b-2 pb-2.5 pt-1",
-                    active ? "border-accent text-fg" : "border-transparent text-fg-muted hover:text-fg",
-                  )
-                : cn(
-                    "rounded px-2.5",
-                    size === "sm" ? "h-6" : "h-7",
-                    active ? "bg-raised text-fg shadow-sm" : "text-fg-muted hover:text-fg",
-                  ),
+              "-mb-px inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 text-sm font-medium transition-colors focus-visible:outline-offset-[-2px]",
+              active ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             {item.label}
-            {item.count !== undefined && (
-              <span
-                className={cn(
-                  "tnum rounded-sm px-1 text-2xs",
-                  active ? "bg-accent/15 text-accent" : "bg-hover text-fg-subtle",
-                )}
-              >
-                {item.count}
-              </span>
-            )}
+            {item.count !== undefined && <span className="text-xs text-muted-foreground">{item.count}</span>}
           </button>
         );
       })}

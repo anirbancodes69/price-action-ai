@@ -55,7 +55,7 @@ src/
   hooks/                useSort, usePersistentState, useMarketSession
   types/                Domain types — the contract the backend must satisfy
   mocks/                Sample data + deterministic sample-series generator
-  styles/tokens.css     Design tokens (dark + light)
+  styles/tokens.css     Design tokens (OKLCH, light + dark)
 ```
 
 ### Connecting the backend
@@ -68,7 +68,9 @@ Pages depend only on `DataSource` (`src/lib/data/source.ts`). Implement it with 
 
 ### Design system
 
-- Tokens are CSS variables (`--c-*`, RGB channels) in `src/styles/tokens.css`, mapped to Tailwind utilities in `globals.css` (`bg-surface`, `text-fg-muted`, `text-bull`, `border-border`, …).
-- Theme is switched with `<html data-theme>`. Light is a working preview, applied pre-paint and persisted.
-- Prices use the `tnum` utility (tabular numerals).
+All UI follows [docs/design-standards.md](../docs/design-standards.md). How it is implemented here (PriceAction brand tokens, themes, shared components, deviations) is in [ENG-02 §11](../docs/engineering/02_FRONTEND_ARCHITECTURE.md#11-design-system).
+
+- Tokens are OKLCH CSS variables in `src/styles/tokens.css`, mapped to Tailwind utilities in `globals.css` (`bg-card`, `text-muted-foreground`, `border-input`, `text-bull`, `bg-chart-1`, …). Tone classes come from `src/lib/colors.ts`.
+- Theme preference light / dark / system (default dark) is applied pre-paint to `<html data-theme>` and persisted.
+- Numbers are tabular everywhere; headline figures use `font-stat`.
 - Signal states (BUY WATCH, ENTRY CONFIRMED, HOLD, EXIT, NO TRADE) each have a distinct shape, colour and icon, plus a tooltip explanation. A bare BUY/SELL label is never shown.

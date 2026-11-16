@@ -75,7 +75,7 @@ export function Tooltip({ content, side = "top", enabled = true, children, class
             role="tooltip"
             style={{ top: pos.top, left: pos.left }}
             className={cn(
-              "pointer-events-none fixed z-[100] max-w-xs animate-fade-in rounded border border-border-strong bg-raised px-2 py-1 text-2xs leading-snug text-fg shadow-pop",
+              "pointer-events-none fixed z-[100] max-w-xs animate-fade-in rounded-lg border bg-popover px-2 py-1 text-xs leading-snug text-popover-foreground shadow-float",
               transform[side],
               className,
             )}

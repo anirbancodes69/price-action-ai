@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Document ID | ENG-02 |
-| Version | 0.1.0 |
-| Status | Reflects implemented code (2026-11-15) + integration plan |
+| Version | 0.2.0 |
+| Status | Reflects implemented code (2026-11-16) + integration plan |
 | Owner | Frontend Lead |
-| Last updated | 2026-11-15 |
-| Related | [PRD-07 UI/UX](../product/07_UI_UX_SPECIFICATION.md) · [ARC-04 API](../architecture/04_API_SPECIFICATION.md) · [ADR-001](../adr/ADR-001-FRONTEND-ARCHITECTURE.md) · `frontend/README.md` |
+| Last updated | 2026-11-16 |
+| Related | [PRD-07 UI/UX](../product/07_UI_UX_SPECIFICATION.md) · [ARC-04 API](../architecture/04_API_SPECIFICATION.md) · [ADR-001](../adr/ADR-001-FRONTEND-ARCHITECTURE.md) · [ADR-013](../adr/ADR-013-DESIGN-STANDARDS.md) · [design-standards](../design-standards.md) · `frontend/README.md` |
 
 ## 1. Purpose
 
@@ -15,7 +15,7 @@ Documents the actual Next.js frontend structure, its data boundary, and the plan
 
 ## 2. Stack (existing)
 
-Next.js 16.4.6 (App Router, `cacheComponents`, `partialPrefetching`, standalone output), React 19.3, TypeScript strict, Tailwind CSS 4.3 via `@tailwindcss/turbopack`, Lightweight Charts 5.3, lucide-react, clsx, tailwind-merge. ESLint 9 with `eslint-config-next`. No test framework yet. See `frontend/AGENTS.md`: Next.js 16 conventions differ from older versions — consult `node_modules/next/dist/docs/` before framework-level changes.
+Next.js 16.4.6 (App Router, `cacheComponents`, `partialPrefetching`, standalone output), React 19.3, TypeScript strict, Tailwind CSS 4.3 via `@tailwindcss/turbopack`, Lightweight Charts 5.3, lucide-react, clsx, tailwind-merge; fonts Archivo, Inter and JetBrains Mono via `next/font`. ESLint 10 with `eslint-config-next`; Vitest 5. Design system: §11. See `frontend/AGENTS.md`: Next.js 16 conventions differ from older versions — consult `node_modules/next/dist/docs/` before framework-level changes.
 
 ## 3. Directory structure (existing)
 
@@ -36,13 +36,14 @@ frontend/
     lib/
       data/             DataSource interface (source.ts) + mock adapter (mock-source.ts) + active export (index.ts)
       labels.ts         enum → label/tone/description
+      colors.ts         semantic tone classes and chart slots (§11.1)
       format.ts         en-IN / Asia/Kolkata formatting
       navigation.ts     nav groups, breadcrumbs, DEFAULT_ANALYSIS_SYMBOL
       chart/            chart theme from CSS tokens, timeframe aggregation (daily → weekly/monthly)
     hooks/              useSort, usePersistentState (localStorage), useMarketSession (IST clock)
     types/              domain types (market, analysis, trading, user)
     mocks/              deterministic sample universe, series generator, demo analysis heuristic, trading mocks
-    styles/tokens.css   design tokens
+    styles/tokens.css   design tokens (OKLCH, light + dark; §11)
 ```
 
 ## 4. Rendering and data loading
@@ -85,12 +86,12 @@ Integration plan (M7):
 | Polling (jobs) | — | Small `usePoll(jobId)` hook against `/api/v1/jobs/{id}` |
 | Forms | Controlled inputs + local validators (`features/auth/validation.ts`, inline checks) | Same pattern; map API 422 `field_errors` onto inputs |
 | Toasts | `ToastProvider` | Same; show `request_id` on errors |
-| Errors | `not-found.tsx` only | Add `error.tsx` per route group; typed `ApiError` from adapter |
+| Errors | `not-found.tsx`, `(app)/error.tsx` | Add `error.tsx` for the other route groups; typed `ApiError` from adapter |
 | Auth guard | None | Next.js request interception (middleware/`proxy` per Next 16 docs) calling `/api/v1/me`; redirect rules in PRD-05 §7 |
 
 ## 7. Charts
 
-`components/charts/price-chart.tsx` renders Lightweight Charts with custom primitives (`primitives.ts`) for zones and BOS/CHoCH segments; theme reads CSS tokens (`lib/chart/theme.ts`); weekly/monthly aggregation in `lib/chart/aggregate.ts` (display only). Required additions: unconfirmed-bar marker, wick-breach markers, dashed reference levels for SHORT setups ([PRD-07 §7](../product/07_UI_UX_SPECIFICATION.md#7-chart-annotation-rules)).
+`components/charts/price-chart.tsx` renders Lightweight Charts with custom primitives (`primitives.ts`) for zones and BOS/CHoCH segments; theme reads CSS tokens (`lib/chart/theme.ts`, OKLCH resolved to sRGB); annotation colours come from the `bull`/`bear` and `chart-entry/event/choch/retest` tokens (§11.4); entry solid, stop dashed, target dotted; SHORT / NO TRADE levels drawn long-dashed and titled "(ref)"; weekly/monthly aggregation in `lib/chart/aggregate.ts` (display only). Required additions: unconfirmed-bar marker, wick-breach markers (dashed reference levels for SHORT setups: done 2026-11-16) ([PRD-07 §7](../product/07_UI_UX_SPECIFICATION.md#7-chart-annotation-rules)).
 
 ## 8. Route → feature → API → entity mapping
 
@@ -140,7 +141,7 @@ Differences between the current frontend and the specified product. None is fixe
 | D-17 | Quality factors | Free-form `QualityFactor[]` | Five fixed PAQS components | Adapter maps components | M7 |
 | D-18 | Levels for NO TRADE | `levels` always present | `levels` null when not applicable | Make optional in types; UI hides | M7 |
 | D-19 | Chart events | `breakout`/`retest`/`breakdown` | `BOS`/`CHOCH`/`WICK_BREACH` + setup stage markers | Adapter + new marker types | M7 |
-| D-20 | Error handling | No `error.tsx` | Route error boundaries | Add | M7 |
+| D-20 | Error handling | ~~No `error.tsx`~~ **Partly resolved 2026-11-16:** `app/(app)/error.tsx` (ErrorState + retry, digest only) | Route error boundaries | Add `(auth)` and onboarding boundaries; request id from `ApiError` once the adapter exists | M7 |
 | D-21 | Tooling | ~~No tests, no `typecheck` script~~ **Resolved in M0:** Vitest 5 (`npm test`), `npm run typecheck` | Vitest, `tsc --noEmit` in CI | Done | M0 |
 | D-22 | Scanner exchange filter | NSE/BSE filter | Remove (NSE only) | Remove | M7 |
 | D-23 | Plan sizing input | Risk budget ₹5,000 default in dialog | Risk % from profile (₹ shown as derived) | See D-06 | M7 |
@@ -149,3 +150,64 @@ Differences between the current frontend and the specified product. None is fixe
 ## 10. Testing (frontend)
 
 Unit (Vitest): formatters, labels completeness vs enums, mappers, validators, `applyFilters`, journal stats (until server-side). Component (Testing Library): SignalBadge accessibility labels, plan dialog error rendering. E2E (Playwright, M7): login → onboarding (demo) → analysis → create plan (against a seeded backend in Docker). See [ENG-07](07_TESTING_STRATEGY.md).
+
+## 11. Design system
+
+**Authority:** [docs/design-standards.md](../design-standards.md) (rules) and [ADR-013](../adr/ADR-013-DESIGN-STANDARDS.md) (adoption). This section records only how the standard is implemented in this repo, the PriceAction brand values and the justified deviations. It does not restate the rules.
+
+### 11.1 Tokens and brand configuration
+
+| Item | Where | Notes |
+|---|---|---|
+| Token values (OKLCH) | `src/styles/tokens.css` | The standard's §12 template. Lines marked `BRAND` are PriceAction's: indigo `primary`/`cta`/`ring` (hue 277), chart slot 2 teal (hue 200), slot 3 ink, neutrals tinted navy (chroma 0.012–0.013, hue 265). |
+| Token → utility mapping | `src/app/globals.css` (`@theme inline`) | `bg-card`, `text-muted-foreground`, `border-input`, `bg-chart-3`, `text-bull`, … plus `font-stat`, `text-2xs` (11px micro-label), radius scale from `--radius: 0.625rem`, `shadow-float`. |
+| Semantic colour classes | `src/lib/colors.ts` | `TONE_CHIP/TEXT/FILL/BORDER`, `CHART_SLOTS`, `CHART_STEPS`, `CHART_REST`, `chartSlot()`, `scoreTone()`, `rrTone()`, `signTone()`. Components never compose tone classes themselves. |
+| Enum → label/tone | `src/lib/labels.ts` | Lifecycle states use status tones (`success/warning/destructive/info/neutral`). Structure and bias use market tones (`bull/bear`). The brand accent is never a tone. |
+| Fonts | `src/app/layout.tsx` (`next/font`) | Three roles: Archivo (display, `font-heading`; condensed 92% for `font-stat` figures), Inter (text), JetBrains Mono (identifiers). |
+| Canvas charts | `src/lib/chart/theme.ts` | Resolves OKLCH tokens to sRGB through a 1×1 canvas so Lightweight Charts can parse them, and re-reads them on theme change. |
+
+After changing any `BRAND` value, re-run the contrast check in §11.5.
+
+### 11.2 Themes
+
+- Preference `light | dark | system` is stored in `localStorage` key `pa-theme` (`components/layout/theme.tsx`). The default is **dark** (PRD-07 UX-01). `ThemeScript` resolves it before first paint, and `useTheme()` tracks the OS setting live while "system" is selected.
+- The resolved theme goes on `<html data-theme>`. The `dark:` variant follows that attribute. Token selectors are not `:root`-only, so a nested `[data-theme]` element restates its own surfaces (used by the Settings → Appearance previews).
+- Dark mode restates every token (surfaces climb about 4% L: rail 0.175 → page 0.205 → card 0.245 → popover 0.28; borders are white at 8%; cards are lit from above with `--surface-light`). It is not an inversion of light.
+
+### 11.3 Shared components
+
+| Standard component | Implementation |
+|---|---|
+| `PageFrame` / `PageHeader` | `components/layout/page-frame.tsx`. Every `(app)` page renders through it. |
+| `Panel` (`boxed`, `ink`), `Card`, `RowList`, `PanelLink` | `components/ui/panel.tsx` |
+| `Stat`, `Eyebrow`, `StatGrid` | `components/data/stat.tsx` |
+| `FilterRow`, `ClearButton`, `SearchField` | `components/ui/filter-row.tsx` |
+| `ChoiceGroup`, `PillTabs` | `components/ui/choice-group.tsx` (replaces the former `Segmented`) |
+| Underlined tabs (4+ views) | `components/ui/tabs.tsx` |
+| `SectionLinks` | `components/ui/section-links.tsx` (Settings rail, watchlist rail) |
+| `Empty` (`scope` / `clear` / `none`) | `components/data/empty.tsx` (replaces `EmptyState`) |
+| `ErrorState` | `components/data/error-state.tsx`; route boundary `app/(app)/error.tsx` |
+| Skeletons | `components/data/loading-skeleton.tsx` (`Skeleton`, `StatGridSkeleton`, `TableSkeleton`, `ChartSkeleton`, `PageSkeleton`) |
+| Controls | `components/ui/{button,input,select,checkbox,switch}.tsx`. Button variants are `primary | outline | ghost | danger`, all `rounded-lg`, default `h-8`. |
+
+The removed components (`MetricCard`, `EmptyState`, `Segmented`, `PageContainer`) must not be reintroduced.
+
+### 11.4 Justified deviations
+
+| Deviation from the standard | Justification |
+|---|---|
+| No shadcn/ui, Base UI or Remix Icon. Own primitives and lucide-react are used instead. | ADR-001 / DEC-002 exclude UI libraries; the rules are met with existing primitives. |
+| `bull` / `bear` market-direction tokens beside the status set | Price direction is not a status. Always paired with a sign, label or shape. |
+| Price-action annotation tokens (`chart-entry/event/choch/retest`) | These are a domain legend, not categorical series. They alias chart slots (1, 1, 2, 6) and each also differs by line style or shape (PRD-07 §7). Stop and target use `bear`/`bull`. |
+| Theme on `data-theme` instead of the `.dark` class | Existing pre-paint script and nested previews; `dark:` is mapped to the attribute. |
+| `--input` darker than the template (light L 0.66, dark 35% white) | WCAG 1.4.11: control boundaries reach 3:1 against the card. |
+| Checkbox box, kbd hint and theme-preview miniatures use `rounded-sm` | A 16px square at the control radius reads as a radio; miniatures follow the "skeleton takes the shape it stands in for" rule. |
+| Tooltips `rounded-lg` (not `xl`) | Control-sized floating labels. |
+| No react-hook-form + Zod | Out of scope for a design change; the existing controlled inputs and `features/auth/validation.ts` stay. Revisit with the M7 HTTP adapter (server field errors). |
+| Stock Analysis verdict card scrolls inside itself on desktop (sticky) | A workspace pane, not a dashboard panel; the "no scrolling inside a card" rule (§10) applies to dashboards. |
+
+### 11.5 Verification (2026-11-16)
+
+- WCAG 2.1 AA contrast, computed from the OKLCH tokens in both themes: text, status, market tones and `primary` on background/card/popover ≥ 4.5:1; chip text on its own 10% tint ≥ 4.5:1; `ring` ≥ 4.5:1 on every surface including the sidebar; `*-foreground` on its fill ≥ 4.5:1; `--input` borders ≥ 3:1. No failures.
+- Every route rendered in a production build and checked by headless-Chrome screenshots in light and dark, at 1440, 820 and 390 px wide. No page-level horizontal overflow. Keyboard: visible focus ring, arrow-key roving in `ChoiceGroup`/`Tabs`, dialog focus trap.
+- Lint, typecheck, 25 Vitest tests (including `lib/colors.test.ts`) and `next build` all pass.

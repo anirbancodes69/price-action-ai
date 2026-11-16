@@ -23,7 +23,7 @@ import { chartPalette, onThemeChange, type ChartPalette } from "@/lib/chart/them
 import { formatCompact, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Candle, ChartEvent, PriceZone, StructureBreak, SwingPoint, Timeframe, TradeLevels } from "@/types";
-import { BreaksPrimitive, ZonesPrimitive } from "./primitives";
+import { BreaksPrimitive, ZonesPrimitive, setPrimitiveFont } from "./primitives";
 
 export interface ChartOverlays {
   swings: boolean;
@@ -52,6 +52,11 @@ interface PriceChartProps {
   events?: ChartEvent[];
   levels?: TradeLevels;
   overlays?: ChartOverlays;
+  /**
+   * Levels are informational (SHORT setup or NO TRADE): drawn long-dashed and
+   * titled "(ref)" so they never read as an actionable plan (PRD-07 §7).
+   */
+  referenceLevels?: boolean;
   /** Increment to trigger fit-to-content from the toolbar. */
   fitSignal?: number;
   className?: string;
@@ -81,6 +86,7 @@ export function PriceChart({
   events = [],
   levels,
   overlays = DEFAULT_OVERLAYS,
+  referenceLevels = false,
   fitSignal = 0,
   className,
 }: PriceChartProps) {
@@ -104,12 +110,14 @@ export function PriceChart({
     const el = container.current;
     if (!el) return;
     const p = chartPalette();
+    const fontFamily = getComputedStyle(document.body).fontFamily;
+    setPrimitiveFont(fontFamily);
     const chart = createChart(el, {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: p.background },
         textColor: p.text,
-        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+        fontFamily,
         fontSize: 11,
         attributionLogo: false,
       },
@@ -118,8 +126,8 @@ export function PriceChart({
       timeScale: { borderColor: p.border, rightOffset: 8, barSpacing: 7, minBarSpacing: 2 },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: { color: p.crosshair, labelBackgroundColor: p.accent, style: LineStyle.Dashed },
-        horzLine: { color: p.crosshair, labelBackgroundColor: p.accent, style: LineStyle.Dashed },
+        vertLine: { color: p.crosshair, labelBackgroundColor: p.crosshairLabel, style: LineStyle.Dashed },
+        horzLine: { color: p.crosshair, labelBackgroundColor: p.crosshairLabel, style: LineStyle.Dashed },
       },
       localization: { priceFormatter: (v: number) => formatPrice(v) },
     });
@@ -171,6 +179,10 @@ export function PriceChart({
         grid: { vertLines: { color: np.grid }, horzLines: { color: np.grid } },
         rightPriceScale: { borderColor: np.border },
         timeScale: { borderColor: np.border },
+        crosshair: {
+          vertLine: { color: np.crosshair, labelBackgroundColor: np.crosshairLabel },
+          horzLine: { color: np.crosshair, labelBackgroundColor: np.crosshairLabel },
+        },
       });
       candleSeries.applyOptions({
         upColor: np.bull, downColor: np.bear, borderUpColor: np.bull, borderDownColor: np.bear, wickUpColor: np.bull, wickDownColor: np.bear,
@@ -230,7 +242,7 @@ export function PriceChart({
           position: e.kind === "breakdown" ? "aboveBar" : "belowBar",
           shape: e.kind === "breakout" ? "arrowUp" : e.kind === "breakdown" ? "arrowDown" : "square",
           size: 1,
-          color: e.kind === "retest" ? p.warn : p.accent,
+          color: e.kind === "retest" ? p.retest : p.event,
           text: e.label,
         });
       }
@@ -260,7 +272,8 @@ export function PriceChart({
             to: t(b.toTime),
             level: b.level,
             label: b.kind,
-            color: b.kind === "CHoCH" ? p.warn : b.direction === "bullish" ? p.bull : p.bear,
+            color: b.kind === "CHoCH" ? p.choch : b.direction === "bullish" ? p.bull : p.bear,
+            dash: b.kind === "CHoCH" ? [2, 3] : [5, 3],
           }))
         : [],
       p.labelBg,
@@ -285,23 +298,39 @@ export function PriceChart({
     for (const line of priceLinesRef.current) cs.removePriceLine(line);
     priceLinesRef.current = [];
     if (overlays.levels && levels) {
+      // Entry solid, stop dashed, target dotted: distinguishable without colour.
+      // Reference-only levels are all long-dashed and titled "(ref)".
+      const ref = referenceLevels ? " (ref)" : "";
       const mk = (price: number, color: string, title: string, style: LineStyle) =>
-        cs.createPriceLine({ price, color, title, lineStyle: style, lineWidth: 1, axisLabelVisible: true });
+        cs.createPriceLine({
+          price,
+          color,
+          title: `${title}${ref}`,
+          lineStyle: referenceLevels ? LineStyle.LargeDashed : style,
+          lineWidth: 1,
+          axisLabelVisible: true,
+        });
       priceLinesRef.current = [
-        mk(levels.entry, p.accent, "Entry", LineStyle.Solid),
+        mk(levels.entry, p.entry, "Entry", LineStyle.Solid),
         mk(levels.stopLoss, p.bear, "Stop", LineStyle.Dashed),
-        mk(levels.target, p.bull, "Target", LineStyle.Dashed),
+        mk(levels.target, p.bull, "Target", LineStyle.Dotted),
       ];
     }
-  }, [bars, timeframe, swings, breaks, zones, events, levels, overlays, palette]);
+  }, [bars, timeframe, swings, breaks, zones, events, levels, overlays, palette, referenceLevels]);
 
-  // Show roughly the last 9 months on first render / timeframe change.
+  // Show roughly the last 9 months on first render / timeframe change. Waits
+  // until the palette is ready (the data effect above sets the series in the
+  // same commit), so the range is never applied to an empty series. Keyed on
+  // readiness, not the palette itself, so a theme switch keeps the user's pan.
+  const ready = palette !== null;
   useEffect(() => {
     const chart = chartRef.current;
-    if (!chart || bars.length === 0) return;
-    const visible = timeframe === "1D" ? 170 : bars.length;
+    if (!chart || !ready || bars.length === 0) return;
+    // ~6px per daily bar keeps candle bodies (and their colour) readable on phones.
+    const width = container.current?.clientWidth ?? 1000;
+    const visible = timeframe === "1D" ? Math.min(170, Math.max(45, Math.floor(width / 6))) : bars.length;
     chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, bars.length - visible), to: bars.length + 6 });
-  }, [bars.length, timeframe]);
+  }, [bars.length, timeframe, ready]);
 
   useEffect(() => {
     if (fitSignal > 0) chartRef.current?.timeScale().fitContent();
@@ -313,16 +342,19 @@ export function PriceChart({
     <div className={cn("relative h-full w-full", className)}>
       <div ref={container} className="absolute inset-0" />
       {shown && (
-        <div className="tnum pointer-events-none absolute left-3 top-2 z-10 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-2xs">
-          <span className="text-fg-subtle">{shown.time}</span>
+        <div
+          className="pointer-events-none absolute left-3 top-2 z-10 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-card/80 px-1.5 py-0.5 text-2xs tabular-nums"
+          aria-live="off"
+        >
+          <span className="text-muted-foreground">{shown.time}</span>
           {(["open", "high", "low", "close"] as const).map((k) => (
-            <span key={k} className="text-fg-subtle">
+            <span key={k} className="text-muted-foreground">
               {k[0].toUpperCase()}{" "}
               <span className={up ? "text-bull" : "text-bear"}>{formatPrice(shown[k])}</span>
             </span>
           ))}
-          <span className="text-fg-subtle">
-            Vol <span className="text-fg-muted">{formatCompact(shown.volume)}</span>
+          <span className="text-muted-foreground">
+            Vol <span className="text-foreground">{formatCompact(shown.volume)}</span>
           </span>
         </div>
       )}

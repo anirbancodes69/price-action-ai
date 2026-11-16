@@ -45,12 +45,11 @@ export function CreatePlanDialog({ a, open, onClose }: { a: StockAnalysis; open:
       description="Creates a proposed plan for review. It does not place an order with any broker."
       footer={
         <>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button
             variant="primary"
-            size="sm"
             disabled={!calc.valid || disabled}
             onClick={() => {
               toast({
@@ -66,12 +65,12 @@ export function CreatePlanDialog({ a, open, onClose }: { a: StockAnalysis; open:
       }
     >
       {disabled ? (
-        <p className="text-[13px] text-fg-muted">
+        <p className="text-muted-foreground">
           Structure is bearish. Long trade plans are not created for this setup; short-side levels are shown for reference only.
         </p>
       ) : (
         <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Input label="Entry (₹)" inputMode="decimal" value={entry} onChange={(e) => setEntry(e.target.value)} error={calc.errors.entry} />
             <Input label="Stop-loss (₹)" inputMode="decimal" value={stop} onChange={(e) => setStop(e.target.value)} error={calc.errors.stop} />
             <Input label="Target (₹)" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} error={calc.errors.target} />
@@ -84,18 +83,18 @@ export function CreatePlanDialog({ a, open, onClose }: { a: StockAnalysis; open:
             error={calc.errors.risk}
             hint="Quantity is sized so that a stop-out loses at most this amount."
           />
-          <dl className="tnum grid grid-cols-3 gap-3 rounded border border-border bg-subtle px-3 py-2.5 text-2xs">
-            <div>
-              <dt className="text-fg-subtle">Quantity</dt>
-              <dd className="text-sm font-semibold text-fg">{formatInt(calc.qty)}</dd>
+          <dl className="grid grid-cols-3 gap-3 rounded-lg bg-muted px-4 py-3 tabular-nums" aria-live="polite">
+            <div className="flex flex-col gap-1">
+              <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Quantity</dt>
+              <dd className="font-stat text-2xl leading-none text-foreground">{formatInt(calc.qty)}</dd>
             </div>
-            <div>
-              <dt className="text-fg-subtle">Position value</dt>
-              <dd className="text-sm font-semibold text-fg">{formatInr(calc.value, { decimals: false })}</dd>
+            <div className="flex flex-col gap-1">
+              <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Position value</dt>
+              <dd className="font-stat text-2xl leading-none text-foreground">{formatInr(calc.value, { decimals: false })}</dd>
             </div>
-            <div>
-              <dt className="text-fg-subtle">Risk / reward</dt>
-              <dd className="text-sm font-semibold text-fg">{calc.rr > 0 ? formatRR(calc.rr) : "—"}</dd>
+            <div className="flex flex-col gap-1">
+              <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Risk / reward</dt>
+              <dd className="font-stat text-2xl leading-none text-foreground">{calc.rr > 0 ? formatRR(calc.rr) : "—"}</dd>
             </div>
           </dl>
         </div>

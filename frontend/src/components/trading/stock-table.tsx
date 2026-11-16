@@ -3,6 +3,7 @@
 import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { rrTone, TONE_TEXT } from "@/lib/colors";
 import { formatPrice } from "@/lib/format";
 import { SETUP_TYPES } from "@/lib/labels";
 import type { ScannerRow } from "@/types";
@@ -33,15 +34,16 @@ const ALL: Record<StockColumnKey, Column<ScannerRow>> = {
     key: "symbol",
     header: "Symbol",
     sticky: true,
+    grow: true,
     sortValue: (r) => r.stock.symbol,
     render: (r) => (
       <Link
         href={`/analysis/${encodeURIComponent(r.stock.symbol)}`}
         onClick={(e) => e.stopPropagation()}
-        className="flex flex-col leading-tight"
+        className="flex min-w-24 flex-col rounded-lg leading-tight"
       >
-        <span className="text-[13px] font-semibold text-fg hover:text-accent">{r.stock.symbol}</span>
-        <span className="block max-w-28 truncate text-2xs text-fg-subtle sm:max-w-40 2xl:hidden">{r.stock.name}</span>
+        <span className="text-sm font-medium text-foreground underline-offset-4 hover:underline">{r.stock.symbol}</span>
+        <span className="block truncate text-xs text-muted-foreground 2xl:hidden">{r.stock.name}</span>
       </Link>
     ),
   },
@@ -50,35 +52,36 @@ const ALL: Record<StockColumnKey, Column<ScannerRow>> = {
     header: "Company",
     hideBelow: "2xl",
     sortValue: (r) => r.stock.name,
-    render: (r) => <span className="block max-w-56 truncate text-fg-muted">{r.stock.name}</span>,
+    render: (r) => <span className="block max-w-64 truncate text-muted-foreground">{r.stock.name}</span>,
   },
   price: {
     key: "price",
     header: "Price",
     align: "right",
     sortValue: (r) => r.stock.price,
-    render: (r) => <span className="font-medium text-fg">{formatPrice(r.stock.price)}</span>,
+    render: (r) => <span className="font-medium text-foreground">{formatPrice(r.stock.price)}</span>,
   },
   change: {
     key: "change",
     header: "Chg %",
     align: "right",
+    hideBelow: "sm",
     sortValue: (r) => r.stock.changePct,
     render: (r) => <ChangeDisplay changePct={r.stock.changePct} showIcon={false} />,
   },
   structure: {
     key: "structure",
     header: "Structure",
-    hideBelow: "md",
+    hideBelow: "lg",
     sortValue: (r) => r.structure,
     render: (r) => <MarketStructureBadge structure={r.structure} />,
   },
   setup: {
     key: "setup",
     header: "Setup",
-    hideBelow: "md",
+    hideBelow: "2xl",
     sortValue: (r) => SETUP_TYPES[r.setupType].label,
-    render: (r) => <span className="text-fg-muted">{SETUP_TYPES[r.setupType].label}</span>,
+    render: (r) => <span className="text-muted-foreground">{SETUP_TYPES[r.setupType].label}</span>,
   },
   entry: {
     key: "entry",
@@ -86,13 +89,13 @@ const ALL: Record<StockColumnKey, Column<ScannerRow>> = {
     align: "right",
     hideBelow: "sm",
     sortValue: (r) => r.levels.entry,
-    render: (r) => <span className="text-fg">{formatPrice(r.levels.entry)}</span>,
+    render: (r) => <span className="text-foreground">{formatPrice(r.levels.entry)}</span>,
   },
   stop: {
     key: "stop",
     header: "Stop-loss",
     align: "right",
-    hideBelow: "lg",
+    hideBelow: "xl",
     sortValue: (r) => r.levels.stopLoss,
     render: (r) => <span className="text-bear">{formatPrice(r.levels.stopLoss)}</span>,
   },
@@ -111,7 +114,7 @@ const ALL: Record<StockColumnKey, Column<ScannerRow>> = {
     hideBelow: "sm",
     sortValue: (r) => r.levels.riskReward,
     render: (r) => (
-      <span className={r.levels.riskReward >= 2 ? "text-bull" : r.levels.riskReward >= 1.5 ? "text-warn" : "text-fg-muted"}>
+      <span className={TONE_TEXT[rrTone(r.levels.riskReward)]}>
         1:{r.levels.riskReward.toFixed(1)}
       </span>
     ),
@@ -150,10 +153,12 @@ interface StockTableProps {
   empty?: ReactNode;
   initialSort?: { key: StockColumnKey; dir: "asc" | "desc" };
   caption?: string;
+  /** Show only the first N rows (dashboard panels: 5). */
+  limit?: number;
 }
 
 /** Pre-configured DataTable for stock rows; clicking a row opens the analysis. */
-export function StockTable({ rows, columns = SCANNER_COLUMNS, actions, empty, initialSort, caption }: StockTableProps) {
+export function StockTable({ rows, columns = SCANNER_COLUMNS, actions, empty, initialSort, caption, limit }: StockTableProps) {
   const router = useRouter();
   const cols = useMemo(() => {
     const list = columns.map((k) => ALL[k]);
@@ -172,6 +177,7 @@ export function StockTable({ rows, columns = SCANNER_COLUMNS, actions, empty, in
       empty={empty}
       initialSort={initialSort}
       caption={caption}
+      limit={limit}
     />
   );
 }

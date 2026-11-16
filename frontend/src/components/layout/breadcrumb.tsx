@@ -10,17 +10,17 @@ export interface Crumb {
 export function Breadcrumb({ items, className }: { items: Crumb[]; className?: string }) {
   return (
     <nav aria-label="Breadcrumb" className={cn("min-w-0", className)}>
-      <ol className="flex min-w-0 items-center gap-1 text-xs text-fg-subtle">
+      <ol className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
         {items.map((c, i) => {
           const last = i === items.length - 1;
           return (
             <li key={`${c.label}-${i}`} className={cn("flex min-w-0 items-center gap-1", !last && "hidden sm:flex")}>
               {c.href && !last ? (
-                <Link href={c.href} className="truncate hover:text-fg">
+                <Link href={c.href} className="truncate rounded-lg hover:text-foreground">
                   {c.label}
                 </Link>
               ) : (
-                <span className={cn("truncate", last && "font-medium text-fg")} aria-current={last ? "page" : undefined}>
+                <span className={cn("truncate", last && "font-medium text-foreground")} aria-current={last ? "page" : undefined}>
                   {c.label}
                 </span>
               )}

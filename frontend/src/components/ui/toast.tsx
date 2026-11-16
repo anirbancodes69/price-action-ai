@@ -19,7 +19,7 @@ interface ToastItem extends ToastInput {
 const ToastContext = createContext<((t: ToastInput) => void) | null>(null);
 
 const ICONS = { success: CheckCircle2, info: Info, warn: TriangleAlert, error: XCircle };
-const TONES = { success: "text-bull", info: "text-accent", warn: "text-warn", error: "text-bear" };
+const TONES = { success: "text-success", info: "text-info", warn: "text-warning", error: "text-destructive" };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
@@ -51,17 +51,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <div
               key={t.id}
               role="status"
-              className="pointer-events-auto flex w-full max-w-sm animate-slide-up items-start gap-3 rounded-md border border-border-strong bg-raised px-3.5 py-3 shadow-pop"
+              className="pointer-events-auto flex w-full max-w-sm animate-slide-up items-start gap-3 rounded-xl border bg-popover px-4 py-3 text-popover-foreground shadow-float"
             >
               <Icon className={cn("mt-px size-4 shrink-0", TONES[tone])} />
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-medium text-fg">{t.title}</p>
-                {t.description && <p className="mt-0.5 text-xs text-fg-muted">{t.description}</p>}
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <p className="text-sm font-medium text-foreground">{t.title}</p>
+                {t.description && <p className="text-xs text-muted-foreground">{t.description}</p>}
               </div>
               <button
                 type="button"
                 onClick={() => dismiss(t.id)}
-                className="rounded p-0.5 text-fg-subtle hover:text-fg"
+                className="rounded-lg p-0.5 text-muted-foreground hover:text-foreground"
                 aria-label="Dismiss notification"
               >
                 <X className="size-3.5" />

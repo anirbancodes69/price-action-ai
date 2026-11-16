@@ -1,20 +1,20 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Mail, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { AuthHeading, TextLink } from "./auth-heading";
 import { PasswordInput } from "./password-input";
 import { passwordStrength, validateEmail, validatePassword } from "./validation";
 
 type Field = "name" | "email" | "password" | "confirm" | "terms";
 
 const STRENGTH = ["Too weak", "Weak", "Fair", "Good", "Strong"];
-const STRENGTH_TONE = ["bg-bear", "bg-bear", "bg-warn", "bg-bull", "bg-bull"];
+const STRENGTH_TONE = ["bg-destructive", "bg-destructive", "bg-warning", "bg-success", "bg-success"];
 
 export function RegisterForm() {
   const router = useRouter();
@@ -39,23 +39,22 @@ export function RegisterForm() {
   };
 
   return (
-    <div>
-      <h1 className="text-xl font-semibold tracking-tight text-fg">Create your account</h1>
-      <p className="mt-1 text-[13px] text-fg-muted">Start with sample data. Connect real market data later.</p>
+    <div className="flex flex-col gap-6">
+      <AuthHeading title="Create your account" description="Start with sample data. Connect real market data later." />
 
-      <form onSubmit={submit} noValidate className="mt-7 flex flex-col gap-4">
+      <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         <Input label="Full name" autoComplete="name" inputSize="lg" leading={<UserRound />} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} error={errors.name} />
         <Input label="Email" type="email" autoComplete="email" inputSize="lg" leading={<Mail />} placeholder="you@example.com" value={v.email} onChange={(e) => setV({ ...v, email: e.target.value })} error={errors.email} />
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           <PasswordInput label="Password" autoComplete="new-password" value={v.password} onChange={(e) => setV({ ...v, password: e.target.value })} error={errors.password} />
           {v.password && (
             <div className="flex items-center gap-2" aria-live="polite">
               <div className="flex flex-1 gap-1" aria-hidden>
                 {[0, 1, 2, 3].map((i) => (
-                  <span key={i} className={cn("h-1 flex-1 rounded-full", i < strength ? STRENGTH_TONE[strength] : "bg-hover")} />
+                  <span key={i} className={cn("h-1 flex-1 rounded-full", i < strength ? STRENGTH_TONE[strength] : "bg-muted")} />
                 ))}
               </div>
-              <span className="text-2xs text-fg-subtle">{STRENGTH[strength]}</span>
+              <span className="text-xs text-muted-foreground">Strength: {STRENGTH[strength]}</span>
             </div>
           )}
         </div>
@@ -66,21 +65,18 @@ export function RegisterForm() {
           error={errors.terms}
           label={
             <>
-              I agree to the <span className="text-fg">Terms of Service</span> and <span className="text-fg">Risk Disclosure</span>, and understand
+              I agree to the <span className="font-medium text-foreground">Terms of Service</span> and <span className="font-medium text-foreground">Risk Disclosure</span>, and understand
               that analysis is not investment advice.
             </>
           }
         />
-        <Button type="submit" variant="primary" size="lg" loading={loading} className="mt-2 w-full">
+        <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full">
           Create account {!loading && <ArrowRight />}
         </Button>
       </form>
 
-      <p className="mt-8 text-center text-xs text-fg-muted">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-accent hover:underline">
-          Sign in
-        </Link>
+      <p className="text-center text-sm text-muted-foreground">
+        Already have an account? <TextLink href="/login">Sign in</TextLink>
       </p>
     </div>
   );

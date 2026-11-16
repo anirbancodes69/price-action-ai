@@ -11,8 +11,9 @@ import type {
   TradeOutcome,
   TradePlanStatus,
 } from "@/types";
+import type { Tone } from "./colors";
 
-export type Tone = "bull" | "bear" | "neutral" | "accent" | "warn" | "info";
+export type { Tone };
 
 interface LabelMeta {
   label: string;
@@ -23,13 +24,13 @@ interface LabelMeta {
 export const SIGNAL_STATES: Record<SignalState, LabelMeta> = {
   "buy-watch": {
     label: "BUY WATCH",
-    tone: "warn",
+    tone: "warning",
     description:
       "A setup is forming. Wait for the entry trigger before acting. This is not an entry.",
   },
   "entry-confirmed": {
     label: "ENTRY CONFIRMED",
-    tone: "bull",
+    tone: "success",
     description:
       "The entry conditions of the setup have been met on a closing basis. Evaluate the plan and risk before placing any order.",
   },
@@ -41,7 +42,7 @@ export const SIGNAL_STATES: Record<SignalState, LabelMeta> = {
   },
   exit: {
     label: "EXIT",
-    tone: "bear",
+    tone: "destructive",
     description:
       "An exit condition has been met: the target was reached, the stop was hit, or structure invalidated the trade.",
   },
@@ -65,22 +66,22 @@ export const SETUP_TYPES: Record<SetupType, { label: string; short: string }> = 
 export const SETUP_STATUS: Record<SetupStatus, LabelMeta> = {
   detected: {
     label: "Detected",
-    tone: "accent",
+    tone: "info",
     description: "Pattern identified by the analysis. No trigger yet.",
   },
   "awaiting-confirmation": {
     label: "Awaiting confirmation",
-    tone: "warn",
+    tone: "warning",
     description: "Price is near the trigger level. Waiting for a confirming close.",
   },
   "entry-confirmed": {
     label: "Entry confirmed",
-    tone: "bull",
+    tone: "success",
     description: "Trigger condition met on a closing basis.",
   },
   invalidated: {
     label: "Invalidated",
-    tone: "bear",
+    tone: "destructive",
     description: "Price violated the setup's invalidation level.",
   },
 };
@@ -103,7 +104,7 @@ export const STRUCTURES: Record<MarketStructure, LabelMeta> = {
   },
   transition: {
     label: "Transition",
-    tone: "warn",
+    tone: "warning",
     description: "A change of character has occurred; the new trend is not yet established.",
   },
 };
@@ -117,27 +118,27 @@ export const BIAS: Record<Bias, { label: string; tone: Tone }> = {
 export const PLAN_STATUS: Record<TradePlanStatus, LabelMeta> = {
   pending: {
     label: "Pending",
-    tone: "warn",
+    tone: "warning",
     description: "Proposed plan waiting for its entry trigger.",
   },
   "entry-confirmed": {
     label: "Entry confirmed",
-    tone: "accent",
+    tone: "info",
     description: "Trigger met. No order has been executed yet.",
   },
   active: {
     label: "Active",
-    tone: "bull",
+    tone: "success",
     description: "An order linked to this plan was executed and the position is open.",
   },
   completed: {
     label: "Completed",
-    tone: "info",
+    tone: "neutral",
     description: "Position exited at target or stop.",
   },
   invalidated: {
     label: "Invalidated",
-    tone: "bear",
+    tone: "destructive",
     description: "Setup failed before entry was triggered.",
   },
   cancelled: {
@@ -148,17 +149,8 @@ export const PLAN_STATUS: Record<TradePlanStatus, LabelMeta> = {
 };
 
 export const OUTCOMES: Record<TradeOutcome, { label: string; tone: Tone }> = {
-  win: { label: "Win", tone: "bull" },
-  loss: { label: "Loss", tone: "bear" },
+  win: { label: "Win", tone: "success" },
+  loss: { label: "Loss", tone: "destructive" },
   breakeven: { label: "Breakeven", tone: "neutral" },
 };
 
-/** Tailwind class bundles per tone. Kept static so Tailwind can see them. */
-export const TONE_CLASSES: Record<Tone, { text: string; soft: string; dot: string; border: string }> = {
-  bull: { text: "text-bull", soft: "bg-bull/10 text-bull", dot: "bg-bull", border: "border-bull/30" },
-  bear: { text: "text-bear", soft: "bg-bear/10 text-bear", dot: "bg-bear", border: "border-bear/30" },
-  neutral: { text: "text-fg-muted", soft: "bg-neutral/15 text-fg-muted", dot: "bg-neutral", border: "border-neutral/30" },
-  accent: { text: "text-accent", soft: "bg-accent/12 text-accent", dot: "bg-accent", border: "border-accent/30" },
-  warn: { text: "text-warn", soft: "bg-warn/10 text-warn", dot: "bg-warn", border: "border-warn/30" },
-  info: { text: "text-info", soft: "bg-info/10 text-info", dot: "bg-info", border: "border-info/30" },
-};

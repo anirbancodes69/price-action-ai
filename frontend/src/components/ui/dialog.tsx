@@ -64,7 +64,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
 
   return createPortal(
     <div className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4">
-      <div className="absolute inset-0 animate-fade-in bg-canvas/70 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 animate-fade-in bg-overlay" onClick={onClose} aria-hidden />
       <div
         ref={panel}
         role="dialog"
@@ -72,17 +72,17 @@ export function Dialog({ open, onClose, title, description, children, footer, si
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         className={cn(
-          "relative flex max-h-[90dvh] w-full animate-slide-up flex-col rounded-t-lg border border-border-strong bg-raised shadow-pop sm:rounded-lg",
+          "relative flex max-h-[90dvh] w-full animate-slide-up flex-col rounded-t-xl border bg-popover text-popover-foreground shadow-float sm:rounded-xl",
           SIZES[size],
         )}
       >
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
-          <div className="min-w-0">
-            <h2 id={titleId} className="text-sm font-semibold text-fg">
+          <div className="flex min-w-0 flex-col gap-1">
+            <h2 id={titleId} className="font-heading text-lg leading-tight tracking-tight text-foreground">
               {title}
             </h2>
             {description && (
-              <div id={descId} className="mt-1 text-xs text-fg-muted">
+              <div id={descId} className="text-sm text-muted-foreground">
                 {description}
               </div>
             )}
@@ -90,13 +90,13 @@ export function Dialog({ open, onClose, title, description, children, footer, si
           <button
             type="button"
             onClick={onClose}
-            className="-mr-1 rounded p-1 text-fg-subtle hover:bg-hover hover:text-fg"
+            className="-mr-1 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label="Close dialog"
           >
             <X className="size-4" />
           </button>
         </div>
-        {children && <div className="overflow-y-auto px-5 py-4">{children}</div>}
+        {children && <div className="overflow-y-auto px-5 py-4 text-sm">{children}</div>}
         {footer && <div className="flex justify-end gap-2 border-t border-border px-5 py-3">{footer}</div>}
       </div>
     </div>,

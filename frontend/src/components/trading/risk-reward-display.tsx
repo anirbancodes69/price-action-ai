@@ -1,6 +1,8 @@
+import { rrTone, TONE_TEXT } from "@/lib/colors";
 import { formatPct, formatPrice, formatRR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { TradeLevels } from "@/types";
+import { Eyebrow } from "@/components/data/stat";
 
 interface RiskRewardDisplayProps {
   levels: TradeLevels;
@@ -11,7 +13,8 @@ interface RiskRewardDisplayProps {
 
 /**
  * Visualises risk (entry → stop) against reward (entry → target) as a
- * proportional bar, with the R:R ratio and % distances.
+ * proportional bar, with the R:R ratio and % distances. Stop is bear,
+ * target is bull — the same colours the chart uses for those lines.
  */
 export function RiskRewardDisplay({ levels, direction = "long", variant = "full", className }: RiskRewardDisplayProps) {
   const { entry, stopLoss, target, riskReward } = levels;
@@ -21,47 +24,50 @@ export function RiskRewardDisplay({ levels, direction = "long", variant = "full"
   const rewardPct = (reward / entry) * 100;
   const total = risk + reward || 1;
   const riskShare = Math.max(8, (risk / total) * 100);
-  const rrTone = riskReward >= 2 ? "text-bull" : riskReward >= 1.5 ? "text-warn" : "text-bear";
+  const tone = TONE_TEXT[rrTone(riskReward)];
 
   if (variant === "compact") {
     return (
       <div className={cn("flex items-center gap-2", className)}>
-        <div className="flex h-1.5 w-14 overflow-hidden rounded-full bg-hover" aria-hidden>
-          <span className="h-full bg-bear/80" style={{ width: `${riskShare}%` }} />
-          <span className="h-full flex-1 bg-bull/80" />
+        <div className="flex h-1.5 w-14 overflow-hidden rounded-full bg-muted" aria-hidden>
+          <span className="h-full bg-bear" style={{ width: `${riskShare}%` }} />
+          <span className="h-full flex-1 bg-bull" />
         </div>
-        <span className={cn("tnum text-xs font-medium", rrTone)}>{riskReward.toFixed(1)}R</span>
+        <span className={cn("text-xs font-medium tabular-nums", tone)}>{riskReward.toFixed(1)}R</span>
       </div>
     );
   }
 
   return (
-    <div className={cn("flex flex-col gap-2.5", className)}>
-      <div className="flex items-baseline justify-between">
-        <span className="text-xs text-fg-muted">Risk / reward</span>
-        <span className={cn("tnum text-sm font-semibold", rrTone)}>{formatRR(riskReward)}</span>
+    <div className={cn("flex flex-col gap-3", className)}>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm text-muted-foreground">Risk / reward</span>
+        <span className={cn("text-sm font-medium tabular-nums", tone)}>{formatRR(riskReward)}</span>
       </div>
-      <div className="flex h-2 overflow-hidden rounded-sm" role="img" aria-label={`Risk ${formatPct(riskPct, { signed: false })}, reward ${formatPct(rewardPct, { signed: false })}`}>
-        <span className="h-full bg-bear/70" style={{ width: `${riskShare}%` }} />
-        <span className="w-0.5 bg-fg" />
-        <span className="h-full flex-1 bg-bull/70" />
+      <div
+        className="flex h-2 gap-0.5 overflow-hidden rounded-full"
+        role="img"
+        aria-label={`Risk ${formatPct(riskPct, { signed: false })}, reward ${formatPct(rewardPct, { signed: false })}`}
+      >
+        <span className="h-full rounded-l-full bg-bear/80" style={{ width: `${riskShare}%` }} />
+        <span className="h-full flex-1 rounded-r-full bg-bull/80" />
       </div>
-      <div className="tnum grid grid-cols-3 text-2xs">
-        <div>
-          <p className="text-fg-subtle">Stop {direction === "short" ? "(above)" : ""}</p>
-          <p className="text-[13px] font-medium text-bear">{formatPrice(stopLoss)}</p>
-          <p className="text-fg-subtle">−{riskPct.toFixed(2)}%</p>
+      <dl className="grid grid-cols-3 gap-3 tabular-nums">
+        <div className="flex flex-col gap-1">
+          <dt><Eyebrow>Stop{direction === "short" ? " (above)" : ""}</Eyebrow></dt>
+          <dd className="text-sm font-medium text-bear">{formatPrice(stopLoss)}</dd>
+          <dd className="text-xs text-muted-foreground">−{riskPct.toFixed(2)}%</dd>
         </div>
-        <div className="text-center">
-          <p className="text-fg-subtle">Entry</p>
-          <p className="text-[13px] font-medium text-fg">{formatPrice(entry)}</p>
+        <div className="flex flex-col items-center gap-1">
+          <dt><Eyebrow>Entry</Eyebrow></dt>
+          <dd className="text-sm font-medium text-foreground">{formatPrice(entry)}</dd>
         </div>
-        <div className="text-right">
-          <p className="text-fg-subtle">Target</p>
-          <p className="text-[13px] font-medium text-bull">{formatPrice(target)}</p>
-          <p className="text-fg-subtle">+{rewardPct.toFixed(2)}%</p>
+        <div className="flex flex-col items-end gap-1">
+          <dt><Eyebrow>Target</Eyebrow></dt>
+          <dd className="text-sm font-medium text-bull">{formatPrice(target)}</dd>
+          <dd className="text-xs text-muted-foreground">+{rewardPct.toFixed(2)}%</dd>
         </div>
-      </div>
+      </dl>
     </div>
   );
 }

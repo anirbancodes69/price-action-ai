@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { AreaSeries, ColorType, createChart, LineStyle, type Time } from "lightweight-charts";
-import { chartPalette, onThemeChange, rgba } from "@/lib/chart/theme";
+import { chartPalette, onThemeChange } from "@/lib/chart/theme";
 import { cn } from "@/lib/utils";
 
 interface EquityChartProps {
@@ -23,14 +23,14 @@ export function EquityChart({ points, className }: EquityChartProps) {
       grid: { vertLines: { visible: false }, horzLines: { color: p.grid } },
       rightPriceScale: { borderVisible: false },
       timeScale: { borderVisible: false },
-      crosshair: { vertLine: { style: LineStyle.Dashed, labelBackgroundColor: p.accent }, horzLine: { labelBackgroundColor: p.accent } },
+      crosshair: { vertLine: { style: LineStyle.Dashed, labelBackgroundColor: p.crosshairLabel }, horzLine: { labelBackgroundColor: p.crosshairLabel } },
       handleScroll: false,
       handleScale: false,
     });
     const series = chart.addSeries(AreaSeries, {
-      lineColor: p.accent,
-      topColor: rgba("accent", 0.25),
-      bottomColor: rgba("accent", 0.01),
+      lineColor: p.series,
+      topColor: p.seriesTop,
+      bottomColor: p.seriesBottom,
       lineWidth: 2,
       priceLineVisible: false,
     });
@@ -39,6 +39,7 @@ export function EquityChart({ points, className }: EquityChartProps) {
     const off = onThemeChange(() => {
       const np = chartPalette();
       chart.applyOptions({ layout: { background: { type: ColorType.Solid, color: np.background }, textColor: np.text }, grid: { horzLines: { color: np.grid } } });
+      series.applyOptions({ lineColor: np.series, topColor: np.seriesTop, bottomColor: np.seriesBottom });
     });
     return () => {
       off();

@@ -9,8 +9,9 @@ interface PriceLevelIndicatorProps {
 }
 
 /**
- * Horizontal ladder showing where the current price sits between stop,
- * entry and target. Values outside the band are clamped to the edges.
+ * Horizontal ladder showing where the latest close sits between stop,
+ * entry and target. Uses the chart's level colours (stop = bear, entry =
+ * chart-entry, target = bull) and labels each mark.
  */
 export function PriceLevelIndicator({ price, levels, className }: PriceLevelIndicatorProps) {
   const lo = Math.min(levels.stopLoss, levels.target, price);
@@ -21,18 +22,18 @@ export function PriceLevelIndicator({ price, levels, className }: PriceLevelIndi
   const pos = (v: number) => clamp(((v - min) / span) * 100, 0, 100);
 
   const marks = [
-    { v: levels.stopLoss, label: "SL", cls: "bg-bear", text: "text-bear" },
-    { v: levels.entry, label: "Entry", cls: "bg-fg", text: "text-fg-muted" },
-    { v: levels.target, label: "TGT", cls: "bg-bull", text: "text-bull" },
+    { v: levels.stopLoss, label: "SL", fill: "bg-bear", text: "text-bear" },
+    { v: levels.entry, label: "Entry", fill: "bg-chart-entry", text: "text-muted-foreground" },
+    { v: levels.target, label: "TGT", fill: "bg-bull", text: "text-bull" },
   ];
 
   return (
     <div
-      className={cn("relative pt-5 pb-5", className)}
+      className={cn("relative py-5", className)}
       role="img"
-      aria-label={`Price ${formatPrice(price)} relative to stop ${formatPrice(levels.stopLoss)}, entry ${formatPrice(levels.entry)}, target ${formatPrice(levels.target)}`}
+      aria-label={`Latest close ${formatPrice(price)} relative to stop ${formatPrice(levels.stopLoss)}, entry ${formatPrice(levels.entry)}, target ${formatPrice(levels.target)}`}
     >
-      <div className="relative h-1 rounded-full bg-hover">
+      <div className="relative h-1 rounded-full bg-muted">
         <span
           className="absolute inset-y-0 rounded-full bg-bear/40"
           style={{ left: `${Math.min(pos(levels.stopLoss), pos(levels.entry))}%`, width: `${Math.abs(pos(levels.entry) - pos(levels.stopLoss))}%` }}
@@ -43,15 +44,13 @@ export function PriceLevelIndicator({ price, levels, className }: PriceLevelIndi
         />
         {marks.map((m) => (
           <span key={m.label} className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${pos(m.v)}%` }}>
-            <span className={cn("block h-3 w-0.5 rounded-full", m.cls)} />
-            <span className={cn("tnum absolute top-3 left-1/2 -translate-x-1/2 text-[10px] font-medium whitespace-nowrap", m.text)}>
-              {m.label}
-            </span>
+            <span className={cn("block h-3 w-0.5 rounded-full", m.fill)} />
+            <span className={cn("absolute left-1/2 top-3.5 -translate-x-1/2 whitespace-nowrap text-2xs font-medium", m.text)}>{m.label}</span>
           </span>
         ))}
         <span className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${pos(price)}%` }}>
-          <span className="block size-2.5 rounded-full border-2 border-surface bg-accent ring-1 ring-accent" />
-          <span className="tnum absolute bottom-3.5 left-1/2 -translate-x-1/2 rounded-sm bg-accent px-1 text-[10px] font-semibold whitespace-nowrap text-accent-fg">
+          <span className="block size-2.5 rounded-full border-2 border-card bg-foreground ring-1 ring-foreground" />
+          <span className="absolute bottom-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-foreground px-1.5 text-2xs font-medium text-background">
             {formatPrice(price)}
           </span>
         </span>

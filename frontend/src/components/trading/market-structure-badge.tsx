@@ -1,5 +1,6 @@
 import { ArrowLeftRight, Shuffle, TrendingDown, TrendingUp, type LucideIcon } from "lucide-react";
-import { STRUCTURES, TONE_CLASSES } from "@/lib/labels";
+import { TONE_CHIP, TONE_TEXT } from "@/lib/colors";
+import { STRUCTURES } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { MarketStructure } from "@/types";
 
@@ -10,6 +11,7 @@ const ICONS: Record<MarketStructure, LucideIcon> = {
   transition: Shuffle,
 };
 
+/** Structure chip: icon + word + tone (never colour alone). */
 export function MarketStructureBadge({
   structure,
   className,
@@ -21,13 +23,12 @@ export function MarketStructureBadge({
 }) {
   const meta = STRUCTURES[structure];
   const Icon = ICONS[structure];
-  const tone = TONE_CLASSES[meta.tone];
   return (
     <span
       title={meta.description}
       className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium",
-        variant === "soft" ? cn("h-5 rounded-sm px-1.5 text-2xs", tone.soft) : tone.text,
+        "inline-flex items-center gap-1 whitespace-nowrap font-medium",
+        variant === "soft" ? cn("h-5 rounded-full px-2 text-2xs", TONE_CHIP[meta.tone]) : cn("text-xs", TONE_TEXT[meta.tone]),
         className,
       )}
     >

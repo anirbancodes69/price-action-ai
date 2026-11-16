@@ -17,6 +17,11 @@ export interface Column<T> {
   className?: string;
   /** Pin this column to the left while scrolling horizontally. */
   sticky?: boolean;
+  /**
+   * The one column that grows and truncates (the name or title) so the
+   * table fits the page instead of scrolling sideways (design-standards §9).
+   */
+  grow?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -29,6 +34,8 @@ interface DataTableProps<T> {
   dense?: boolean;
   className?: string;
   caption?: string;
+  /** Rows to show; the rest is reached through the panel's footer link (dashboards: 5). */
+  limit?: number;
 }
 
 const HIDE = {
@@ -41,7 +48,12 @@ const HIDE = {
 
 const ALIGN = { left: "text-left", right: "text-right", center: "text-center" };
 
-/** Dense, sortable financial data table. Scrolls horizontally inside its container only. */
+/**
+ * Sortable financial data table, full width in a bordered `rounded-lg`
+ * container (design-standards §9). Numbers are tabular; secondary columns
+ * hide on narrow screens via `hideBelow`; horizontal scroll stays inside the
+ * container as a last resort only.
+ */
 export function DataTable<T>({
   columns,
   rows,
@@ -52,6 +64,7 @@ export function DataTable<T>({
   dense = true,
   className,
   caption,
+  limit,
 }: DataTableProps<T>) {
   const { sorted, sort, toggle } = useSort<T, string>(
     rows,
@@ -60,11 +73,11 @@ export function DataTable<T>({
   );
 
   return (
-    <div className={cn("relative w-full overflow-x-auto", className)}>
-      <table className="w-full border-collapse text-[13px]">
+    <div className={cn("relative w-full overflow-x-auto rounded-lg border bg-card", className)}>
+      <table className="w-full border-collapse text-sm">
         {caption && <caption className="sr-only">{caption}</caption>}
         <thead>
-          <tr className="border-b border-border">
+          <tr>
             {columns.map((col) => {
               const sortable = !!col.sortValue;
               const active = sort.key === col.key;
@@ -75,10 +88,11 @@ export function DataTable<T>({
                   scope="col"
                   aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}
                   className={cn(
-                    "h-8 whitespace-nowrap bg-surface px-2 text-2xs font-medium uppercase tracking-wider text-fg-subtle first:pl-3 last:pr-3 sm:px-3 sm:first:pl-4 sm:last:pr-4",
+                    "h-9 whitespace-nowrap border-b bg-muted px-2 text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground first:pl-3 last:pr-3 sm:px-3 sm:first:pl-4 sm:last:pr-4",
                     ALIGN[col.align ?? "left"],
                     col.hideBelow && HIDE[col.hideBelow],
                     col.sticky && "sticky left-0 z-10",
+                    col.grow && "w-full",
                     col.className,
                   )}
                 >
@@ -87,8 +101,8 @@ export function DataTable<T>({
                       type="button"
                       onClick={() => toggle(col.key)}
                       className={cn(
-                        "inline-flex items-center gap-1 uppercase tracking-wider transition-colors hover:text-fg",
-                        active && "text-fg-muted",
+                        "inline-flex items-center gap-1 rounded-lg uppercase tracking-[0.14em] transition-colors hover:text-foreground",
+                        active && "text-foreground",
                         col.align === "right" && "flex-row-reverse",
                       )}
                     >
@@ -104,12 +118,12 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {sorted.map((row) => (
+          {(limit ? sorted.slice(0, limit) : sorted).map((row) => (
             <tr
               key={rowKey(row)}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               className={cn(
-                "group border-b border-border/60 transition-colors last:border-0 hover:bg-hover/50",
+                "group border-b transition-colors last:border-0 hover:bg-accent",
                 onRowClick && "cursor-pointer",
               )}
             >
@@ -120,9 +134,10 @@ export function DataTable<T>({
                     "whitespace-nowrap px-2 first:pl-3 last:pr-3 sm:px-3 sm:first:pl-4 sm:last:pr-4",
                     dense ? "h-10" : "h-12",
                     ALIGN[col.align ?? "left"],
-                    col.align === "right" && "tnum",
+                    col.align === "right" && "tabular-nums",
                     col.hideBelow && HIDE[col.hideBelow],
-                    col.sticky && "sticky left-0 z-10 bg-surface group-hover:bg-[color-mix(in_srgb,var(--color-surface)_50%,var(--color-hover))]",
+                    col.sticky && "sticky left-0 z-10 bg-card group-hover:bg-accent",
+                    col.grow && "w-full max-w-0 overflow-hidden",
                     col.className,
                   )}
                 >

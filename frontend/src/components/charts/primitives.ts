@@ -33,6 +33,8 @@ export interface BreakDraw {
   level: number;
   label: string;
   color: string;
+  /** Dash pattern: BOS and CHoCH differ in pattern as well as colour. */
+  dash?: number[];
 }
 
 abstract class BasePrimitive implements ISeriesPrimitive<Time> {
@@ -77,7 +79,12 @@ abstract class BasePrimitive implements ISeriesPrimitive<Time> {
   protected abstract draw(target: CanvasRenderingTarget2D): void;
 }
 
-const FONT = "500 10px Inter, ui-sans-serif, system-ui, sans-serif";
+let FONT = "500 10px ui-sans-serif, system-ui, sans-serif";
+
+/** Use the page's text face on the canvas (next/font hashes the family name). */
+export function setPrimitiveFont(family: string) {
+  FONT = `500 10px ${family}`;
+}
 
 function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color: string, bg: string) {
   ctx.font = FONT;
@@ -153,7 +160,7 @@ export class BreaksPrimitive extends BasePrimitive {
         const yy = Math.round(y) + 0.5;
         ctx.strokeStyle = b.color;
         ctx.lineWidth = 1;
-        ctx.setLineDash([4, 3]);
+        ctx.setLineDash(b.dash ?? [5, 3]);
         ctx.beginPath();
         ctx.moveTo(x1, yy);
         ctx.lineTo(x2, yy);

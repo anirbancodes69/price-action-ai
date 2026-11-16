@@ -20,17 +20,17 @@ export function AppSidebar({ collapsed, onToggle, user }: AppSidebarProps) {
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border bg-subtle transition-[width] duration-200 lg:flex",
+        "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 lg:flex",
         collapsed ? "w-[60px]" : "w-60",
       )}
     >
-      <div className={cn("flex h-14 items-center border-b border-border", collapsed ? "justify-center px-0" : "justify-between px-4")}>
+      <div className={cn("flex h-14 items-center border-b border-sidebar-border", collapsed ? "justify-center px-0" : "justify-between px-4")}>
         <Brand collapsed={collapsed} />
         {!collapsed && (
           <button
             type="button"
             onClick={onToggle}
-            className="rounded p-1 text-fg-subtle hover:bg-hover hover:text-fg"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             aria-label="Collapse sidebar"
           >
             <PanelLeftClose className="size-4" />
@@ -48,7 +48,7 @@ export function AppSidebar({ collapsed, onToggle, user }: AppSidebarProps) {
             <button
               type="button"
               onClick={onToggle}
-              className="rounded p-1.5 text-fg-subtle hover:bg-hover hover:text-fg"
+              className="rounded-lg p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               aria-label="Expand sidebar"
             >
               <PanelLeftOpen className="size-4" />
@@ -57,12 +57,12 @@ export function AppSidebar({ collapsed, onToggle, user }: AppSidebarProps) {
         </div>
       )}
 
-      <div className={cn("border-t border-border", collapsed ? "p-2" : "p-3")}>
+      <div className={cn("border-t border-sidebar-border", collapsed ? "p-2" : "p-3")}>
         <Tooltip content={`${user.name} · ${user.plan}`} side="right" enabled={collapsed} anchorClassName="flex w-full">
           <Link
             href="/settings"
             className={cn(
-              "flex w-full items-center gap-2.5 rounded p-1.5 transition-colors hover:bg-hover",
+              "flex w-full items-center gap-2.5 rounded-lg p-1.5 transition-colors hover:bg-sidebar-accent",
               collapsed && "justify-center",
             )}
             aria-label={collapsed ? `${user.name} — settings` : undefined}
@@ -70,8 +70,8 @@ export function AppSidebar({ collapsed, onToggle, user }: AppSidebarProps) {
             <Avatar name={user.name} />
             {!collapsed && (
               <span className="min-w-0 text-left">
-                <span className="block truncate text-[13px] font-medium text-fg">{user.name}</span>
-                <span className="block truncate text-2xs text-fg-subtle">{user.plan}</span>
+                <span className="block truncate text-sm font-medium">{user.name}</span>
+                <span className="block truncate text-xs text-muted-foreground">{user.plan}</span>
               </span>
             )}
           </Link>
