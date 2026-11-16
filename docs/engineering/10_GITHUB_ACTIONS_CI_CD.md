@@ -183,7 +183,7 @@ Any lint/type/test failure; lockfile drift; stale contracts/schemas; missing TV-
 
 ## 9. Pull request checks
 
-Every PR to `main` must pass `ci-gate` and satisfy the PR template (ENG-12): title in Conventional Commits format (checked by `amannn/action-semantic-pull-request` in ci.yml), linked issue (or `no-issue` label with justification), description, testing evidence, docs updated, migration review, API compatibility review, security review where applicable.
+Every PR to `main` must pass `ci-gate` and satisfy the PR template (ENG-12): title in Conventional Commits format (checked by the `semantic-title` job in ci.yml, which first replaces a branch-name default title with the newest conforming commit subject; the workflow also runs on the `edited` event), linked issue (or `no-issue` label with justification), description, testing evidence, docs updated, migration review, API compatibility review, security review where applicable.
 
 ## 10. CI quality gates
 

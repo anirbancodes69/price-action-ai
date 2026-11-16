@@ -5,6 +5,8 @@ name: ci
 on:
   pull_request:
     branches: [main]
+    # `edited` re-runs the pipeline when a PR title is changed, so a corrected title does not need a close/reopen.
+    types: [opened, reopened, synchronize, edited]
   push:
     branches: [main]
   workflow_dispatch:
@@ -72,32 +74,37 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: read
+      pull-requests: write
+      contents: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
     steps:
-      - uses: amannn/action-semantic-pull-request@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          types: |
-            feat
-            fix
-            docs
-            chore
-            refactor
-            test
-            ci
-            build
-            perf
-          scopes: |
-            frontend
-            backend
-            engine
-            contracts
-            infra
-            docs
-            ruleset
-            deps
-          requireScope: true
+      # Squash merges use the PR title as the commit message, so it must be `type(scope): summary`.
+      # GitHub defaults a multi-commit PR's title to the branch name, which always fails. When that
+      # happens, replace it with the newest conforming commit subject (preferring feat/fix), then validate.
+      # Types and scopes mirror CLAUDE.md §6; keep them in sync.
+      - name: Validate the title (auto-fix a branch-name default)
+        run: |
+          set -euo pipefail
+          PATTERN='^(feat|fix|docs|chore|refactor|test|ci|build|perf)\((frontend|backend|engine|contracts|infra|docs|ruleset|deps)\): .+'
+          title="$(gh pr view "$PR" --repo "$REPO" --json title --jq .title)"
+          if [[ ! "$title" =~ $PATTERN ]]; then
+            subjects="$(gh api "repos/$REPO/pulls/$PR/commits" --paginate --jq '.[].commit.message | split("\n")[0]' | tac)"
+            pick="$(grep -E '^(feat|fix)\(' <<<"$subjects" | grep -E "$PATTERN" | head -n1 || true)"
+            [ -n "$pick" ] || pick="$(grep -E "$PATTERN" <<<"$subjects" | head -n1 || true)"
+            if [ -n "$pick" ]; then
+              echo "::notice::PR title '$title' is not a Conventional Commit; replacing it with '$pick'."
+              gh pr edit "$PR" --repo "$REPO" --title "$pick"
+              title="$pick"
+            fi
+          fi
+          if [[ ! "$title" =~ $PATTERN ]]; then
+            echo "::error::PR title '$title' must look like 'type(scope): summary'. Types: feat fix docs chore refactor test ci build perf. Scopes: frontend backend engine contracts infra docs ruleset deps."
+            exit 1
+          fi
+          echo "PR title OK: $title"
 
   frontend:
     needs: changes
