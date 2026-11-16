@@ -9,7 +9,6 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
-| T-101d | Migrations for ARC-03 §8 trading (watchlists, trade_plans with long-only and stop < entry < target checks, paper/actual trades, journal, backtests, notifications) + per-table writer grants for all tables (ARC-01 §6), including no UPDATE/DELETE on `candle_snapshots` | P0 | M1 | T-101c | Same as T-101b; role-grant test for single-writer tables | NOT STARTED |
 | T-102 | Seeders: ruleset `pa-core 0.1.0`, universes, DEMO data source, demo instruments and candles ported from `frontend/src/mocks` | P0 | M1 | T-101d | Fresh DB migrates and seeds; demo data flagged DEMO | NOT STARTED |
 | T-103 | `contracts/api/openapi.yaml` derived from ARC-04, with OpenAPI lint in CI | P0 | M1 | — | Spec validates in CI; every ARC-04 endpoint ID present | NOT STARTED |
 | T-104 | Engine Pydantic models + exported `contracts/engine/*.json` schemas; SQLAlchemy table definitions (`python-engine/app/db/tables.py`) | P0 | M1 | T-101d | Schemas export reproducibly; schema-diff test (Laravel migrations vs engine tables) passes | NOT STARTED |
@@ -30,6 +29,7 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
 | T-002 | Project Claude Code skills in `.claude/skills/` (8 skills, link-check and docs-impact scripts) + CLAUDE.md §10 index | P2 | — | — | Valid frontmatter (YAML-parsed), names match directories, every referenced file and anchor resolves (link check 0 broken), no application code changed | NEEDS REVIEW |
+| T-101d | Migrations for ARC-03 §8 trading (12 tables) and per-table writer grants (`apply_role_grants()`) | P0 | M1 | T-101c | `make test-backend` green (60 tests, 19 new; 2 mutations caught by the intended tests); full rollback and re-migrate clean; Pint clean. **Verified locally 2026-11-16; awaiting PR + CI.** | NEEDS REVIEW |
 
 ## Blocked
 
