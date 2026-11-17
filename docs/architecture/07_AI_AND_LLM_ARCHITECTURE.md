@@ -7,7 +7,7 @@
 | Status | Specification ready (provider/model selection pending — OQ-AI-01) |
 | Owner | Solution Architect + Product Manager |
 | Last updated | 2026-11-15 |
-| Related | [ADR-009](../adr/ADR-009-LLM-EXPLANATION-ONLY.md) · [ADR-008](../adr/ADR-008-DETERMINISTIC-TRADING-ENGINE.md) · [TRD-04 Evidence](../trading/04_SETUP_DETECTION_RULES.md#9-evidence) · [ARC-05 §6](05_DATA_FLOW.md#6-llm-explanation-generation) |
+| Related | [ADR-009](../adr/ADR-009-LLM-EXPLANATION-ONLY.md) · [ADR-008](../adr/ADR-008-DETERMINISTIC-TRADING-ENGINE.md) · [TRD-04 Evidence](../trading/04_SETUP_DETECTION_RULES.md#9-evidence) · [ARC-05 §6](05_DATA_FLOW.md#9-llm-explanations) |
 
 ## 1. Purpose
 

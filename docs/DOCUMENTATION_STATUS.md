@@ -23,8 +23,8 @@
 | [ARC-03 Database](architecture/03_DATABASE_DESIGN.md), [ARC-04 API](architecture/04_API_SPECIFICATION.md), [ENG-05 Ingestion](engineering/05_DATA_INGESTION_SPECIFICATION.md) | Date-based time model, payload snapshots, daily ingestion | Spec and code done: ARC-03 §2.2 implemented (as-built notes), ARC-04 shared schemas, R1/R2/X11, M5/M7/N1/N3/N5/P3/P4 revised; ENG-05 §12 code follows in I2. Remaining daily-shaped ARC-04 payloads (portfolio X10, journal, backtests) are revised with I6–I8 | T-I02, T-I09 |
 | [Product vision](product/01_PRODUCT_VISION.md), [BRD](product/02_BRD.md), [PRD](product/03_PRD.md), [User journeys](product/04_USER_JOURNEYS.md), [Onboarding](product/05_ONBOARDING_SPECIFICATION.md), [PRD-06 Feature catalog](product/06_FEATURE_CATALOG.md), [PRD-07 UI/UX](product/07_UI_UX_SPECIFICATION.md) | Swing/positional users, NIFTY 500, SaaS-first | Done (vision, BRD, PRD, journeys v0.2.0; onboarding marked deferred; feature catalog and UI/UX revised) | T-I08 |
 
-| [ARC-05 Data flow](architecture/05_DATA_FLOW.md), [ARC-01 System architecture](architecture/01_SYSTEM_ARCHITECTURE.md) §9–10 (scheduling, scaling) | End-of-day pipeline | Pending: banner added; revised with I1/I2 (the intraday flows are in ENG-05 §12 and TRD-07 §4) | T-I09 / I2 |
-| [ENG-02 Frontend architecture](engineering/02_FRONTEND_ARCHITECTURE.md) | Daily time model in the frontend | Discrepancies D-25..D-28 recorded; fixed in I6 | I6 |
+| [ARC-05 Data flow](architecture/05_DATA_FLOW.md), [ARC-01 System architecture](architecture/01_SYSTEM_ARCHITECTURE.md) §9–10 (scheduling, scaling) | End-of-day pipeline | Done: ARC-05 v0.2.0 (session timeline, bar-close pipeline, current prices, reconciliation, plans with account limits, frontend polling, lineage); ARC-01 component, ownership and scaling rows revised | T-I09 / I2 |
+| [ENG-02 Frontend architecture](engineering/02_FRONTEND_ARCHITECTURE.md) | Daily time model in the frontend | Mostly done on the restructuring branch: D-25 and D-27 resolved on mock data, D-26 and D-28 partly (calendar API and engine-backed setups remain) | I6 |
 
 ## 1. Document status
 
@@ -37,11 +37,11 @@
 | [Onboarding Specification](product/05_ONBOARDING_SPECIFICATION.md) | Deferred (ADR-014) | PRD-03, ARC-03, ARC-04 | OQ-ONB-01, OQ-ONB-02 | 2026-11-17 |
 | [Feature Catalog](product/06_FEATURE_CATALOG.md) | Revised for intraday (v0.2.0) | PRD-03, ENG-01 | — | 2026-11-17 |
 | [UI/UX Specification](product/07_UI_UX_SPECIFICATION.md) | Reflects implemented frontend + additions, revised for intraday (v0.3.0) | ENG-02, design-standards | — | 2026-11-17 |
-| [System Architecture](architecture/01_SYSTEM_ARCHITECTURE.md) | Specification ready | ADR-001..006 | OQ-ARC-01, OQ-ARC-02, OQ-ARC-03 | 2026-11-15 |
+| [System Architecture](architecture/01_SYSTEM_ARCHITECTURE.md) | Specification ready (intraday rows revised, ADR-014) | ADR-001..006 | OQ-ARC-01, OQ-ARC-02, OQ-ARC-03 | 2026-11-17 |
 | [Technology Stack](architecture/02_TECHNOLOGY_STACK.md) | Specification ready (versions pinned in M0) | ARC-01 | — | 2026-11-15 |
 | [Database Design](architecture/03_DATABASE_DESIGN.md) | Specification ready; §4–§8 implemented as migrations and §12 seeders (M1) | ARC-01, TRD-01..07, ADR-005, ADR-011 | OQ-DB-01, OQ-DB-02, OQ-DB-03 | 2026-11-17 |
 | [API Specification (Public REST API v1)](architecture/04_API_SPECIFICATION.md) | Specification ready; OpenAPI 3.1 file in `contracts/api/openapi.yaml` (M1) | ARC-03, ARC-06, TRD-05 | OQ-API-01, OQ-API-02, OQ-API-03 | 2026-11-17 |
-| [Data Flow](architecture/05_DATA_FLOW.md) | Daily flows; intraday revision pending (I1/I2) | ARC-01, ARC-08, TRD-07 | — | 2026-11-17 |
+| [Data Flow](architecture/05_DATA_FLOW.md) | Specification ready for intraday (v0.2.0) | ARC-01, ARC-08, TRD-07 | — | 2026-11-17 |
 | [Security Architecture](architecture/06_SECURITY_ARCHITECTURE.md) | Specification ready | ARC-01, ARC-03, ARC-08 | OQ-SEC-01, OQ-SEC-02, OQ-SEC-03 | 2026-11-15 |
 | [AI and LLM Architecture](architecture/07_AI_AND_LLM_ARCHITECTURE.md) | Specification ready (provider pending) | TRD-04, ADR-009 | OQ-AI-01, OQ-AI-02, OQ-AI-03 | 2026-11-15 |
 | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) | Specification ready (Kite facts to verify) | ADR-007, ADR-011 | OQ-INT-01, OQ-INT-02, OQ-INT-03, OQ-INT-04 | 2026-11-17 |

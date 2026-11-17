@@ -7,7 +7,7 @@
 | Status | Specification ready (provider limits to verify in M2) |
 | Owner | Trading Engine Lead |
 | Last updated | 2026-11-15 |
-| Related | [ARC-08 Integration](../architecture/08_INTEGRATION_ARCHITECTURE.md) · [ARC-03 §6 Market data](../architecture/03_DATABASE_DESIGN.md#6-market-data) · [ARC-05 §3](../architecture/05_DATA_FLOW.md#3-broker-data-retrieval-and-normalisation) · [TRD-06 §3, §7–8](../trading/06_BACKTESTING_METHODOLOGY.md) |
+| Related | [ARC-08 Integration](../architecture/08_INTEGRATION_ARCHITECTURE.md) · [ARC-03 §6 Market data](../architecture/03_DATABASE_DESIGN.md#6-market-data) · [ARC-05 §3](../architecture/05_DATA_FLOW.md#3-bar-close-pipeline) · [TRD-06 §3, §7–8](../trading/06_BACKTESTING_METHODOLOGY.md) |
 
 ## 1. Purpose
 

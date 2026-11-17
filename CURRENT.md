@@ -11,7 +11,7 @@ Update this file at the end of every substantial task, based only on verified st
 |---|---|
 | Phase | Foundation and M1 complete. **Direction changed to a personal intraday workstation** ([ADR-014](docs/adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md)); specifications being restructured (I0) |
 | Last completed milestone | **M1** — database and contracts (PRs #13–#15, #17, #19–#21; 2026-11-17) |
-| Current milestone | **Restructuring** (one branch, merged together): I0 specs and I1 schema/contracts done (`NEEDS REVIEW`); frontend restructuring to intraday on mock data next |
+| Current milestone | **Intraday restructuring complete on branch** `docs/intraday-direction-and-specs` (one PR): I0 specs, I1 schema/contracts and the frontend restructure (part of I6) — `NEEDS REVIEW`. Next after merge: I2 market data (needs the provider decision) or I3 engine core |
 | Detailed plan | [ROADMAP.md](ROADMAP.md) → [ENG-01](docs/engineering/01_IMPLEMENTATION_ROADMAP.md) |
 
 ## Component status
@@ -20,7 +20,7 @@ Update this file at the end of every substantial task, based only on verified st
 |---|---|---|
 | Frontend UI | `COMPLETED` (Phase 1, mock data) | Next.js 16.4.6, React 19, Tailwind v4, Lightweight Charts v5. Routes: auth (login/register/forgot-password), onboarding, dashboard, market-scanner, analysis, watchlists, trade-plans, portfolio, journal, backtesting, settings. Vitest unit tests for format, labels, colours, auth validation and scanner filters (25). |
 | Frontend design system | `COMPLETED` (PR #18) | [docs/design-standards.md](docs/design-standards.md) adopted ([ADR-013](docs/adr/ADR-013-DESIGN-STANDARDS.md)): OKLCH tokens with PriceAction brand values, light/dark/system themes (dark default), shared components and `lib/colors.ts`, every screen refactored, `(app)/error.tsx`. Verified locally (lint, typecheck, tests, build, screenshots in both themes at three widths, WCAG AA contrast). Implementation and deviations: [ENG-02 §11](docs/engineering/02_FRONTEND_ARCHITECTURE.md#11-design-system). |
-| Frontend data | **Mock only** | Every page reads the `DataSource` mock adapter (`frontend/src/lib/data`). Analysis overlays come from a demo heuristic (`src/mocks/demo-analysis.ts`), **not** the specified trading rules. Login accepts any well-formed email and password. There is no mutation client yet. |
+| Frontend data | **Mock only** (intraday model) | Every page reads the `DataSource` mock adapter (`frontend/src/lib/data`). Restructured for intraday (T-I10): 5m/15m sample bars equal to the seeded DEMO bars (parity test), a 14:00 IST sample snapshot, session levels, 15m context, signal validity, today's risk per book. Setups still come from a daily demo heuristic (`src/mocks/demo-analysis.ts`), **not** the trading rules. Login accepts any well-formed email and password. No mutation client yet. |
 | Frontend ↔ spec | `NEEDS REVIEW` | 24 known discrepancies (D-01..D-24) in [ENG-02 §9](docs/engineering/02_FRONTEND_ARCHITECTURE.md#9-discrepancy-register), to be resolved in M7 (D-20 partly resolved by the design-standards work, PR #18). |
 | Claude Code skills | `COMPLETED` (PR #16) | 8 project skills in `.claude/skills/` (price-action-domain, quant-engine, market-data, schema-and-contracts, frontend-ui, security-guardrails, quality-gate, docs-sync). They are workflows that link to the specs, plus two stdlib scripts (docs impact mapping, relative link and anchor check). Indexed in CLAUDE.md §10. No agents and no `.claude/settings.json`. |
 | Documentation | `NEEDS REVIEW` (intraday restructuring done on branch) | 58 spec files, the design standards and 15 ADRs. The trading specs (TRD-01..08) and product documents describe the intraday direction; ARC-05, parts of ARC-01, the remaining ARC-03 §4–§8 text and ARC-04 endpoint shapes are revised with I1/I2 (DOCUMENTATION_STATUS §0). Most of the target system is **not implemented**. |
@@ -42,12 +42,12 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Work in progress
 
-- Branch `docs/intraday-direction-and-specs` (whole restructuring, one PR at the end): I0 specs (ADR-014/015, TRD-01..08, product docs) and I1 (T-I09: intraday migration, seeders, engine contracts, read model, OpenAPI 0.2.0). Next: frontend restructuring to the intraday model on mock data.
+- Branch `docs/intraday-direction-and-specs` (whole restructuring, one PR at the end): I0 specs (ADR-014/015, TRD-01..08, product docs, ARC-05/ARC-01), I1 (T-I09: intraday migration, seeders, engine contracts, read model, OpenAPI 0.2.0) and the frontend restructure on sample data (T-I10).
 - Local dev databases created before PR #13 must be recreated (`make reset`), because the stock Laravel `users` migration was replaced (UUID ids, no `name`, no sessions table). After that, `make migrate` then `make seed`. Note: `make migrate` runs the prebuilt image, so run `make build` (or use the dev overlay) after pulling new migrations.
 
 ## Immediate next task
 
-Open the I0 PR. Then **I1 / T-I09**: expand migrations per ADR-015 and ARC-03 §2.2, seed `pa-intraday 0.1.0` and the NSE calendar, update the OpenAPI file, engine contracts (risk shape of TRD-05 §11) and `app/db/tables.py`. Owner decisions that help: OQ-TRD-04 (risk defaults) and the provider choice (T-201/T-203) before I2.
+Open and merge the restructuring PR (title in the last hand-off). Then: owner decisions OQ-TRD-04 (risk defaults) and the provider (T-201/T-203); load the NSE holiday list into `backend/database/seeders/data/nse-market-calendar.json`; start **I3** (engine core on fixtures) or **I2** (market data, once the provider is chosen).
 
 ## Known blockers
 

@@ -7,7 +7,7 @@ description: Market-data engineering workflow for PriceAction AI - the MarketDat
 
 Keeps every candle trustworthy, attributable to a data source, and legally usable. Authority: [ADR-007](../../../docs/adr/ADR-007-MARKET-DATA-PROVIDER-ABSTRACTION.md), [ADR-011](../../../docs/adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md), [ARC-08 §2–§4](../../../docs/architecture/08_INTEGRATION_ARCHITECTURE.md), [ENG-05](../../../docs/engineering/05_DATA_INGESTION_SPECIFICATION.md), [ARC-03 §6](../../../docs/architecture/03_DATABASE_DESIGN.md#6-market-data).
 
-> Current state: the market-data **tables** exist (ARC-03 §6, migrated in PR #14). There is **no provider, ingestion job or seeder code** yet. The DEMO seeder is T-102 (M1). Providers and ingestion are M2, and Kite verification is blocked on OQ-INT-01/02 and OQ-SEC-01 (T-201). Every Kite limit in ARC-08 §4 is an unverified placeholder.
+> Current state (intraday direction, ADR-014/015): the market-data tables use the intraday time model (bars keyed by `bar_start`, 1m/5m/15m/1D, `candle_revisions` trigger; migration `2026_11_17_000001`). Seeders provide DEMO daily and 5m/15m bars and a calendar mechanism whose NSE holiday list is **not loaded** (labelled unverified). There is **no provider or ingestion code** yet: the bar-close market-data process is milestone I2 (ENG-05 §12, ARC-05 §3), blocked on the provider choice and verification (T-201/T-203, OQ-INT-01/04). Every provider limit in ARC-08 §4 is an unverified placeholder.
 
 ## Required context
 
