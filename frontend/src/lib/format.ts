@@ -108,6 +108,13 @@ export function formatShortDate(value: string) {
   return shortDateFmt.format(toDate(value));
 }
 
+const timeFmt = new Intl.DateTimeFormat(LOCALE, { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: TZ });
+
+/** Clock time in IST, e.g. "14:45". */
+export function formatTime(value: string) {
+  return timeFmt.format(toDate(value));
+}
+
 export function formatDateTime(value: string) {
   return `${dateTimeFmt.format(toDate(value))} IST`;
 }

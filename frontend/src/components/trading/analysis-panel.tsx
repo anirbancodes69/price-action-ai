@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { CircleDot, OctagonX } from "lucide-react";
 import { scoreTone, TONE_FILL } from "@/lib/colors";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatTime } from "@/lib/format";
 import { BIAS, SETUP_STATUS, SETUP_TYPES } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { SetupStatus, StockAnalysis } from "@/types";
@@ -67,13 +67,28 @@ export function AnalysisPanel({ a, className }: { a: StockAnalysis; className?: 
     <div className={cn("flex flex-col", className)}>
       <Block title="Active setup" aside={<span className="text-xs text-muted-foreground">{SETUP_TYPES[a.setup.type].label}</span>}>
         <SignalExplainer signal={a.setup.signal} />
+        {a.signalAt && (
+          <p className="text-xs tabular-nums text-muted-foreground">
+            Signal at the {formatTime(a.signalAt)} close
+            {a.validUntil && <> · valid until {formatTime(a.validUntil)} IST</>}
+          </p>
+        )}
         <p className="text-sm leading-relaxed text-foreground">{a.setup.headline}</p>
         <SetupLifecycle status={a.setup.status} />
       </Block>
 
       <Block title="Market structure">
+        <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 text-xs">
+          <dt className="text-muted-foreground">15m context</dt>
+          <dd>
+            <MarketStructureBadge structure={a.htfStructure} />
+          </dd>
+          <dt className="text-muted-foreground">5m structure</dt>
+          <dd>
+            <MarketStructureBadge structure={a.structure} />
+          </dd>
+        </dl>
         <div className="flex flex-wrap items-center gap-2">
-          <MarketStructureBadge structure={a.structure} />
           <Badge tone={bias.tone} variant="outline">
             {bias.label} bias
           </Badge>
@@ -153,6 +168,27 @@ export function AnalysisPanel({ a, className }: { a: StockAnalysis; className?: 
             </li>
           ))}
         </ul>
+      </Block>
+
+      <Block title="Session" aside={<span className="text-xs tabular-nums text-muted-foreground">cutoff {formatTime(a.session.entryCutoffAt)} · exit {formatTime(a.session.sessionEndExitAt)}</span>}>
+        <RowList className="text-sm tabular-nums">
+          {[
+            ["Previous-day high", formatPrice(a.session.pdh)],
+            ["Previous-day low", formatPrice(a.session.pdl)],
+            ["Previous-day close", formatPrice(a.session.pdc)],
+            [
+              "Opening range",
+              a.session.orHigh !== null && a.session.orLow !== null ? `${formatPrice(a.session.orLow)}–${formatPrice(a.session.orHigh)}` : "Forming",
+            ],
+            ["Session range", `${formatPrice(a.session.sessionLow)}–${formatPrice(a.session.sessionHigh)}`],
+          ].map(([label, value]) => (
+            <li key={label} className="flex items-center justify-between gap-2 px-3 py-2">
+              <span className="truncate text-muted-foreground">{label}</span>
+              <span className="shrink-0 text-foreground">{value}</span>
+            </li>
+          ))}
+        </RowList>
+        <p className="text-xs text-muted-foreground">No new entries after the cutoff; open positions are flattened by the session-end exit.</p>
       </Block>
 
       <Block title="Key support & resistance">

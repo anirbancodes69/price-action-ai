@@ -16,6 +16,9 @@ const rows: ScannerRow[] = allDemoSymbols()
     signal: a.setup.signal,
     levels: a.levels,
     qualityScore: a.qualityScore,
+    htfStructure: a.htfStructure,
+    signalAt: a.signalAt,
+    validUntil: a.validUntil,
   }));
 
 describe("scanner filters", () => {

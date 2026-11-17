@@ -2,6 +2,7 @@
  * Custom lightweight-charts series primitives for price-action overlays:
  *  - ZonesPrimitive: shaded support/resistance bands extending to the right edge.
  *  - BreaksPrimitive: dashed BOS / CHoCH segments with labels.
+ *  - SessionSeparatorsPrimitive: dashed vertical lines where a new session starts (intraday).
  */
 import type {
   IChartApi,
@@ -171,6 +172,40 @@ export class BreaksPrimitive extends BasePrimitive {
         const mid = (x1 + x2) / 2 - tw / 2;
         label(ctx, b.label, mid, yy - 9, b.color, this.labelBg);
       }
+    });
+  }
+}
+
+/** Vertical dashed lines at the first bar of each session (intraday views, PRD-07 §7 "Time axis"). */
+export class SessionSeparatorsPrimitive extends BasePrimitive {
+  private times: Time[] = [];
+  private color = "rgba(127,127,127,0.35)";
+
+  constructor() {
+    super("bottom");
+  }
+
+  setData(times: Time[], color: string) {
+    this.times = times;
+    this.color = color;
+    this.update();
+  }
+
+  protected draw(target: CanvasRenderingTarget2D) {
+    target.useMediaCoordinateSpace(({ context: ctx, mediaSize }) => {
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      for (const t of this.times) {
+        const x = this.x(t);
+        if (x === null) continue;
+        const xx = Math.round(x) - 0.5;
+        ctx.beginPath();
+        ctx.moveTo(xx, 0);
+        ctx.lineTo(xx, mediaSize.height);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
     });
   }
 }

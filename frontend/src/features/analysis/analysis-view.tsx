@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatTime } from "@/lib/format";
 import { ClipboardPlus } from "lucide-react";
 import type { StockAnalysis, Timeframe } from "@/types";
 import { DEFAULT_OVERLAYS, PriceChart, type ChartOverlays } from "@/components/charts/price-chart";
@@ -22,7 +23,7 @@ import { SetupEvidence } from "./setup-evidence";
  * chart → verdict → evidence.
  */
 export function AnalysisView({ a }: { a: StockAnalysis }) {
-  const [timeframe, setTimeframe] = useState<Timeframe>("1D");
+  const [timeframe, setTimeframe] = useState<Timeframe>("5m");
   const [overlays, setOverlays] = useState<ChartOverlays>(DEFAULT_OVERLAYS);
   const [fit, setFit] = useState(0);
   const [planOpen, setPlanOpen] = useState(false);
@@ -46,7 +47,7 @@ export function AnalysisView({ a }: { a: StockAnalysis }) {
           <>
             <div className="flex flex-col items-end gap-1 pr-2">
               <PriceDisplay price={stock.price} change={stock.change} changePct={stock.changePct} size="lg" />
-              <span className="text-xs text-muted-foreground">Latest available close · daily analysis</span>
+              <span className="text-xs tabular-nums text-muted-foreground">Last 5m close {formatTime(a.asOf)} IST · intraday analysis</span>
             </div>
             <WatchlistToggle symbol={stock.symbol} />
             <Button variant="primary" onClick={() => setPlanOpen(true)} disabled={a.setup.direction === "short"}>
@@ -71,8 +72,9 @@ export function AnalysisView({ a }: { a: StockAnalysis }) {
           />
           <div className="h-[380px] sm:h-[460px] lg:h-[calc(100dvh-280px)] lg:max-h-[820px] lg:min-h-[520px]">
             <PriceChart
-              candles={a.candles}
+              candles={timeframe === "1D" ? a.candles : a.intraday[timeframe]}
               timeframe={timeframe}
+              session={a.session}
               swings={a.swings}
               breaks={a.breaks}
               zones={a.zones}

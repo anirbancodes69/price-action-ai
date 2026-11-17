@@ -34,6 +34,7 @@ export interface DashboardSummary {
 export interface DataSource {
   /** "sample" until a real market-data provider is connected. */
   readonly kind: "sample" | "live";
+  /** End of the last completed bar the data reflects (ISO timestamp, IST offset). */
   readonly asOf: string;
 
   getIndices(): Promise<MarketIndex[]>;

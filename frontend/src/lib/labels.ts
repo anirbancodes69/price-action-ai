@@ -55,6 +55,9 @@ export const SIGNAL_STATES: Record<SignalState, LabelMeta> = {
 };
 
 export const SETUP_TYPES: Record<SetupType, { label: string; short: string }> = {
+  "opening-range-breakout": { label: "Opening Range Breakout", short: "ORB" },
+  "prev-day-high-break": { label: "Previous-Day High Break", short: "PDH Break" },
+  "prev-day-low-break": { label: "Previous-Day Low Break", short: "PDL Break" },
   "breakout-retest": { label: "Breakout & Retest", short: "BO-Retest" },
   "pullback-to-support": { label: "Pullback to Support", short: "Pullback" },
   "range-breakout": { label: "Range Breakout", short: "Range BO" },

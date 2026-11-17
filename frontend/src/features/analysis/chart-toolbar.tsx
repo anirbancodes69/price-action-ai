@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Activity, BarChart3, Crosshair, GitCommitHorizontal, Layers, Maximize2, Target, type LucideIcon } from "lucide-react";
+import { Activity, BarChart3, Clock, Crosshair, GitCommitHorizontal, Layers, Maximize2, Target, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Timeframe } from "@/types";
 import type { ChartOverlays } from "@/components/charts/price-chart";
@@ -9,10 +9,11 @@ import { ChoiceGroup } from "@/components/ui/choice-group";
 import { Tooltip } from "@/components/ui/tooltip";
 
 const TOGGLES: { key: keyof ChartOverlays; label: string; icon: LucideIcon; hint: string }[] = [
-  { key: "swings", label: "Swings", icon: GitCommitHorizontal, hint: "HH / HL / LH / LL swing labels (daily only)" },
+  { key: "session", label: "Session", icon: Clock, hint: "Previous-day high/low/close, opening range and session breaks (5m, 15m)" },
+  { key: "swings", label: "Swings", icon: GitCommitHorizontal, hint: "HH / HL / LH / LL swing labels (daily view in sample data)" },
   { key: "zones", label: "Zones", icon: Layers, hint: "Support and resistance zones" },
-  { key: "breaks", label: "BOS/CHoCH", icon: Activity, hint: "Break of structure and change of character (daily only)" },
-  { key: "events", label: "Events", icon: Crosshair, hint: "Breakout, breakdown and retest markers" },
+  { key: "breaks", label: "BOS/CHoCH", icon: Activity, hint: "Break of structure and change of character (daily view in sample data)" },
+  { key: "events", label: "Events", icon: Crosshair, hint: "Breakout, breakdown and retest markers (daily view in sample data)" },
   { key: "levels", label: "Levels", icon: Target, hint: "Entry, stop-loss and target lines" },
   { key: "volume", label: "Volume", icon: BarChart3, hint: "Volume histogram" },
 ];
@@ -36,9 +37,9 @@ export function ChartToolbar({ timeframe, onTimeframe, overlays, onToggle, onFit
         onChange={onTimeframe}
         className="flex-nowrap"
         options={[
+          { value: "5m", label: "5m" },
+          { value: "15m", label: "15m" },
           { value: "1D", label: "1D" },
-          { value: "1W", label: "1W" },
-          { value: "1M", label: "1M" },
         ]}
       />
       <span className="h-5 w-px shrink-0 bg-border" aria-hidden />
@@ -109,6 +110,9 @@ export function ChartLegend({ reference = false }: { reference?: boolean }) {
       <Item swatch={line(reference ? "border-dashed border-chart-entry" : "border-solid border-chart-entry")} label={reference ? "Entry (reference)" : "Entry"} />
       <Item swatch={line("border-dashed border-bear")} label="Stop-loss" />
       <Item swatch={line("border-dotted border-bull")} label="Target" />
+      <Item swatch={line("border-dotted border-muted-foreground")} label="PDH / PDL / PDC" />
+      <Item swatch={<span className="h-2.5 w-4 rounded-sm border border-chart-event/60 bg-chart-event/10" aria-hidden />} label="Opening range" />
+      <Item swatch={<span className="h-3 border-l border-dashed border-muted-foreground" aria-hidden />} label="New session" />
     </ul>
   );
 }

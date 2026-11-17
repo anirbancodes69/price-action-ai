@@ -43,9 +43,16 @@ export interface MarketIndex {
   trend: number[];
 }
 
-export type Timeframe = "1D" | "1W" | "1M";
+/**
+ * Chart/analysis timeframe (ADR-014): 5m is primary, 15m is context, 1D is context and display only.
+ * 1m is reserved and not used yet.
+ */
+export type Timeframe = "5m" | "15m" | "1D";
 
-/** Daily bar. `time` is an ISO business day, e.g. "2026-11-13". */
+/**
+ * One completed bar. `time` is the bar start: an ISO-8601 timestamp with the IST offset for intraday bars
+ * (e.g. "2026-11-13T10:35:00+05:30") or the session date for daily bars (e.g. "2026-11-13") (ARC-04 §2.9).
+ */
 export interface Candle {
   time: string;
   open: number;
