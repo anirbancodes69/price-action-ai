@@ -15,6 +15,7 @@ import {
   buildAllocation,
   buildHoldings,
   buildPortfolioSummary,
+  buildRiskToday,
   buildTradePlans,
   buildTriggers,
 } from "@/mocks/trading";
@@ -96,6 +97,9 @@ export const mockSource: DataSource = {
   },
   async getPortfolioSummary() {
     return buildPortfolioSummary(buildHoldings(), JOURNAL);
+  },
+  async getRiskToday(book) {
+    return buildRiskToday(book);
   },
   async getAllocation() {
     const summary = buildPortfolioSummary(buildHoldings(), JOURNAL);

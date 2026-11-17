@@ -1,6 +1,6 @@
 import { ScanSearch } from "lucide-react";
 import type { DashboardSummary } from "@/lib/data";
-import type { ActivityItem, MarketIndex, ScannerRow, StockAnalysis, TriggerAlert, Watchlist } from "@/types";
+import type { ActivityItem, MarketIndex, RiskToday, ScannerRow, StockAnalysis, TriggerAlert, Watchlist } from "@/types";
 import { PageFrame, PageHeader } from "@/components/layout/page-frame";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel, PanelLink } from "@/components/ui/panel";
@@ -11,6 +11,7 @@ import { SetupCard } from "@/components/trading/setup-card";
 import { StockTable } from "@/components/trading/stock-table";
 import { MarketPanel } from "./index-strip";
 import { RecentActivity, RecentAnalyses, UpcomingTriggers } from "./side-panels";
+import { RiskTodayPanel } from "./risk-today";
 
 export interface DashboardData {
   asOf: string;
@@ -22,6 +23,7 @@ export interface DashboardData {
   triggers: TriggerAlert[];
   recentAnalyses: StockAnalysis[];
   activity: ActivityItem[];
+  riskToday: RiskToday[];
 }
 
 /**
@@ -35,7 +37,7 @@ export function DashboardView({ d }: { d: DashboardData }) {
     <PageFrame>
       <PageHeader
         title="Dashboard"
-        description="Market context, detected setups and your trade plans at a glance."
+        description="Today's session: setups near their trigger, your risk budget and open plans."
         meta={<SampleDataBadge asOf={d.asOf} />}
         actions={
           <>
@@ -90,7 +92,8 @@ export function DashboardView({ d }: { d: DashboardData }) {
           )}
         </div>
 
-        <aside className="flex min-w-0 flex-col gap-4" aria-label="Market and history">
+        <aside className="flex min-w-0 flex-col gap-4" aria-label="Risk, market and history">
+          <RiskTodayPanel books={d.riskToday} />
           <MarketPanel indices={d.indices} />
           {d.recentAnalyses.length > 0 && <RecentAnalyses analyses={d.recentAnalyses} />}
           {d.activity.length > 0 && <RecentActivity items={d.activity} />}

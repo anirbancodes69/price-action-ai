@@ -43,7 +43,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Trading",
     items: [
       { label: "Trade Plans", href: "/trade-plans", icon: ClipboardList },
-      { label: "Portfolio", href: "/portfolio", icon: Wallet },
+      { label: "Active trades", href: "/portfolio", icon: Wallet },
       { label: "Trading Journal", href: "/journal", icon: BookOpenText },
       { label: "Backtesting", href: "/backtesting", icon: FlaskConical },
     ],

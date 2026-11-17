@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { data } from "@/lib/data";
 import { PortfolioView } from "@/features/portfolio/portfolio-view";
 
-export const metadata: Metadata = { title: "Portfolio" };
+export const metadata: Metadata = { title: "Active trades" };
 
 export default async function PortfolioPage() {
   const [holdings, summary, allocation, orders] = await Promise.all([

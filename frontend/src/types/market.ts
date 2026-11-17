@@ -61,5 +61,3 @@ export interface Candle {
   close: number;
   volume: number;
 }
-
-export type MarketSession = "pre-open" | "open" | "closed";

@@ -7,13 +7,15 @@ export const metadata: Metadata = { title: "Dashboard" };
 const RECENT = ["RELIANCE", "MARUTI", "HDFCBANK", "HINDUNILVR"];
 
 export default async function DashboardPage() {
-  const [indices, summary, rows, watchlists, triggers, activity] = await Promise.all([
+  const [indices, summary, rows, watchlists, triggers, activity, paperRisk, actualRisk] = await Promise.all([
     data.getIndices(),
     data.getDashboardSummary(),
     data.getScannerRows(),
     data.getWatchlists(),
     data.getTriggers(),
     data.getActivity(),
+    data.getRiskToday("paper"),
+    data.getRiskToday("actual"),
   ]);
   const recentAnalyses = (await Promise.all(RECENT.map((s) => data.getAnalysis(s)))).filter(
     (a): a is NonNullable<typeof a> => a !== null,
@@ -36,6 +38,7 @@ export default async function DashboardPage() {
         triggers,
         recentAnalyses,
         activity,
+        riskToday: [paperRisk, actualRisk],
       }}
     />
   );
