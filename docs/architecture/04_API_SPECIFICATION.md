@@ -116,32 +116,40 @@ For the intraday direction ([ADR-014](../adr/ADR-014-PERSONAL-INTRADAY-WORKSTATI
 ```text
 Money        = string  "12345.67"
 Price        = string  "1495.50"
+Timestamp    = string  ISO-8601 with the +05:30 offset (§2.9)
 Instrument   = { id, symbol, name, exchange: "NSE", segment: "EQ"|"INDEX", sector|null, isin|null, status, tick_size: Price, lot_size: int }
-Candle       = { date, open, high, low, close: Price, volume: int }
-SwingPoint   = { id, kind: "HIGH"|"LOW", date, price, label, confirmed_at_date }
-StructureEvt = { id, type: "BOS"|"CHOCH"|"WICK_BREACH", direction: "UP"|"DOWN", level, level_date, break_date, break_close, close_inside_buffer }
-Zone         = { id, role: "SUPPORT"|"RESISTANCE", low, high, touches, strength_score, strength_bucket, status, role_reversed, formed_at_date, distance_pct }
-LiquidityEvt = { id, type, level, first_date, last_date }
-Setup        = { id, setup_key, type, direction: "LONG"|"SHORT", informational, status, detected_at_date,
+Candle       = { start, end: Timestamp, open, high, low, close: Price, volume: int }
+SwingPoint   = { id, timeframe: "5m"|"15m", kind: "HIGH"|"LOW", bar_start, price, label, confirmed_at: Timestamp }
+StructureEvt = { id, timeframe, type: "BOS"|"CHOCH"|"WICK_BREACH", direction: "UP"|"DOWN", level, level_bar_start, break_bar_start, break_close, close_inside_buffer }
+Zone         = { id, role: "SUPPORT"|"RESISTANCE", low, high, touches, strength_score, strength_bucket, status, role_reversed, formed_at, distance_pct }
+LiquidityEvt = { id, type, level, first_bar_start, last_bar_start }
+SessionLevels= { pdh, pdl, pdc, or_high|null, or_low|null, session_high, session_low: Price; entry_cutoff_at, session_end_exit_at: Timestamp }
+Setup        = { id, setup_key, type, direction: "LONG"|"SHORT", informational, status, detected_at, signal_at|null, valid_until|null,
                  levels: { trigger, entry, stop, target, rr, target_source } | null,
                  rr_below_min, entry_window_open,
                  quality: { score, version, components: [{ key, label, points, max, missing, reason }] },
                  evidence: [{ code, tone: "SUPPORTING"|"CAUTION", title, detail, refs }],
                  reason_codes: [string] }
-AnalysisRun  = { id, instrument: Instrument, as_of, status, timeframe: "1D",
-                 ruleset: { code, version, validation_status }, engine_version, candle_snapshot_id,
+AnalysisRun  = { id, instrument: Instrument, as_of: Timestamp, status, timeframe: "5m",
+                 ruleset: { code, version, validation_status }, engine_version,
+                 inputs: [{ role: "PRIMARY_5M"|"CONTEXT_15M"|"DAILY_CONTEXT", candle_snapshot_id }],
+                 context: { htf_state, htf_transition_direction|null, session: SessionLevels },
                  structure: { state, transition_direction|null, protected_low|null, protected_high|null, summary_text },
-                 signal: { state, reason_codes },
+                 signal: { state, reason_codes, signal_at|null, valid_until|null },
                  primary_setup_id|null, setups: [Setup], swings: [SwingPoint], events: [StructureEvt],
                  zones: [Zone], liquidity: [LiquidityEvt], candles: [Candle] (only when ?include=candles) }
-ScannerRow   = { instrument: Instrument, last_close, change, change_pct, volume, analysis_run_id,
-                 structure_state, signal_state, primary_setup: { type, direction, status, levels, quality_score } | null }
+ScannerRow   = { instrument: Instrument, last_close, change, change_pct, volume, analysis_run_id, as_of,
+                 htf_state, structure_state, signal_state, signal_at|null, valid_until|null,
+                 primary_setup: { type, direction, status, levels, quality_score } | null }
 TradePlan    = { id, plan_number: "TP-1042", instrument, status, status_reason, source, direction: "LONG",
                  entry, stop, target, engine_levels|null, levels_overridden, quantity, risk_budget, risk_amount,
                  position_value, rr, binding_constraint, paper_tracking, note, analysis_run_id, setup_id|null,
+                 triggered_at|null, valid_until|null,
                  ruleset_version, created_at, updated_at, lock_version, linked: { paper_trade_id|null, actual_trade_ids: [] } }
 RiskResult   = see §8.1
 ```
+
+The shapes above are the intraday versions (ADR-014/015, revised in T-I09). The daily versions (dates instead of timestamps, a single `candle_snapshot_id`) are retired.
 
 ## 4. Authentication and account
 
@@ -186,8 +194,8 @@ Step payloads (`{step}` lower-case id):
 |---|---|---|---|---|---|
 | P1 | `GET /api/v1/preferences/trading` | session | — | `{trading_styles, default_timeframe, universe_code, direction_preference, notification_settings}` | — |
 | P2 | `PUT /api/v1/preferences/trading` | session | same shape | 200 | `default_timeframe` must be `1D` in MVP (`TIMEFRAME_NOT_SUPPORTED`); direction enum |
-| P3 | `GET /api/v1/risk-profile` | session | — | `{version, trading_capital, risk_per_trade_pct, max_open_positions, max_portfolio_heat_pct, max_position_pct, min_rr, max_entry_gap_pct, ruleset_bounds: {...}}` | — |
-| P4 | `PUT /api/v1/risk-profile` | session | same fields (all required) | 201 new version | ranges from TRD-01 §6; `min_rr` ≥ ruleset (`MIN_RR_BELOW_RULESET`); `max_entry_gap_pct` ≤ ruleset |
+| P3 | `GET /api/v1/risk-profile` | session | — | `{version, trading_capital, risk_per_trade_pct, max_position_value, daily_loss_limit_pct, max_consecutive_losses, max_open_positions, max_open_risk_pct, min_rr, max_entry_gap_pct, ruleset_bounds: {...}}` | — |
+| P4 | `PUT /api/v1/risk-profile` | session | same fields (all required except the two overrides) | 201 new version | ranges from TRD-01 §6 (`pa-intraday`); `min_rr` ≥ ruleset (`MIN_RR_BELOW_RULESET`); `max_entry_gap_pct` ≤ ruleset |
 | P5 | `GET /api/v1/data-sources` | session | — | `[{id, mode, provider, name, status, selectable, reason_if_not}]` (global entitled sources + own personal sources) | — |
 | P6 | `PUT /api/v1/data-source-selection` | session (OWNER/ADMIN) | `{data_source_id}` | 200 | 403 `ENTITLEMENT_REQUIRED`; 404 for other tenant's personal source; 422 `DATA_SOURCE_NOT_READY` if personal source has no completed ingestion |
 | P7 | `GET /api/v1/entitlements` | session | — | `{plan_code, status, valid_to, features, usage_today: {ai_explanations, backtests}}` | — |
@@ -200,9 +208,9 @@ Step payloads (`{step}` lower-case id):
 | M2 | `GET /api/v1/instruments/{symbol}` | session | — | `Instrument` + `{universes: [code]}` | 404 |
 | M3 | `GET /api/v1/universes` | session | — | `[{code, name, member_count, is_demo}]` | — |
 | M4 | `GET /api/v1/universes/{code}/members` | session | `?as_of=YYYY-MM-DD&limit&cursor` | `[Instrument]` point-in-time | default `as_of` = latest trading day |
-| M5 | `GET /api/v1/instruments/{symbol}/candles` | session | `?timeframe=1D&from&to` (max 2,000 bars) | `{candles: [Candle], adjusted: true}` + `meta.data_mode/as_of` | from selected data source; 422 `RANGE_TOO_LARGE`; weekly/monthly aggregation is done client-side from daily (as today) or future `timeframe=1W` |
+| M5 | `GET /api/v1/instruments/{symbol}/candles` | session | `?interval=5m|15m|1D&from&to` (timestamps or dates; max 2,000 bars) | `{candles: [Candle], interval, adjusted: bool}` + `meta.data_mode/as_of/next_bar_close` | from selected data source; only completed bars; 422 `RANGE_TOO_LARGE`; `1m` reserved |
 | M6 | `GET /api/v1/market/indices` | session | — | `[{symbol, name, value, change, change_pct, trend: [Price] (last 30 closes)}]` | requires index candles in data source |
-| M7 | `GET /api/v1/market/session` | session | — | `{exchange: "NSE", state: "PRE_OPEN"|"OPEN"|"CLOSED", is_trading_day, next_open, last_trading_day, last_ingested_date}` | from `market_calendar` |
+| M7 | `GET /api/v1/market/session` | session | — | `{exchange: "NSE", state: "PRE_OPEN"|"OPEN"|"CLOSED", is_trading_day, session_open, session_close, entry_cutoff_at, session_end_exit_at, next_open, last_trading_day, last_bar_close, calendar_verified}` | from `market_calendar`; `calendar_verified = false` while the holiday list is not loaded |
 | M8 | `POST /api/v1/market-data/sync` | session (OWNER), PERSONAL source only | `{kind: "DAILY_CANDLES"|"BACKFILL", from?, to?}` | 202 `{ingestion_run_id}` | 409 `INGESTION_IN_PROGRESS`; 409 `PROVIDER_NOT_CONNECTED`; 403 for DEMO/LICENSED (system-managed) |
 | M9 | `GET /api/v1/market-data/ingestion-runs` | session | `?limit&cursor` | `[{id, kind, status, trade_date, range, counts, quality_issue_count, started_at, finished_at}]` for the selected source | — |
 | M10 | `GET /api/v1/market-data/ingestion-runs/{id}` | session | — | run + `quality_issues: [...]` (first 100) | — |
@@ -211,11 +219,11 @@ Step payloads (`{step}` lower-case id):
 
 | # | Method & path | Auth | Request | Response | Notes / errors |
 |---|---|---|---|---|---|
-| N1 | `GET /api/v1/scanner` | session | `?universe=NIFTY500&q=&structure=BULLISH&signal=BUY_WATCH&setup_type=&setup_status=&direction=LONG&min_rr=2&min_score=60&near=SUPPORT&sort=-quality_score&limit&cursor` | `[ScannerRow]` + `meta: {batch: {id, as_of, status, instruments_total, instruments_completed}, data_mode}` | Reads latest completed analysis batch for selected source; 409 `NO_ANALYSIS_AVAILABLE` when none |
+| N1 | `GET /api/v1/scanner` | session | `?universe=NIFTY50&watchlist=&q=&htf_state=BULLISH&structure=BULLISH&signal=BUY_WATCH&setup_type=&setup_status=&direction=LONG&min_rr=2&min_score=60&near=SUPPORT&sort=-quality_score&limit&cursor` | `[ScannerRow]` + `meta: {batch: {id, as_of, status, instruments_total, instruments_completed, instruments_late}, data_mode, next_bar_close}` | Reads latest completed analysis batch for selected source; 409 `NO_ANALYSIS_AVAILABLE` when none |
 | N2 | `GET /api/v1/scanner/export` | session | same filters | `text/csv` | Respects data licensing: disabled (403 `EXPORT_NOT_PERMITTED`) for LICENSED sources unless entitlement allows |
-| N3 | `GET /api/v1/dashboard/summary` | session | — | `{stocks_scanned, active_setups, awaiting_confirmation, active_trade_plans, top_setups: [ScannerRow] (6), upcoming_triggers: [{symbol, setup_id, condition, trigger, distance_pct, signal}], recent_analyses: [{symbol, analysis_run_id, viewed_at, signal}]}` | `active_setups` = LONG setups with status ∈ {FORMING, AWAITING_CONFIRMATION, ENTRY_CONFIRMED-on-as_of} |
+| N3 | `GET /api/v1/dashboard/summary` | session | — | `{session: {state, entry_cutoff_at, session_end_exit_at, last_bar_close}, books: {PAPER: RiskToday, ACTUAL: RiskToday}, open_positions, stocks_scanned, active_setups, awaiting_confirmation, active_trade_plans, top_setups: [ScannerRow] (6), upcoming_triggers: [{symbol, setup_id, condition, trigger, distance_pct, signal, valid_until}], recent_signals: [{symbol, analysis_run_id, signal, signal_at}]}` (RiskToday = R2 shape) | `active_setups` = LONG setups with status ∈ {FORMING, AWAITING_CONFIRMATION, ENTRY_CONFIRMED-on-as_of} |
 | N4 | `GET /api/v1/activity` | session | `?limit&cursor` | `[{id, kind: "SETUP"|"PLAN"|"TRIGGER"|"INVALIDATED"|"JOURNAL"|"WATCHLIST", title, detail, at, entity}]` | Derived from notifications + audit log (user-facing subset) |
-| N5 | `GET /api/v1/analysis/{symbol}` | session | `?as_of=&include=candles` | `AnalysisRun` (latest for selected source; or the run as of a date) | 404 `NO_ANALYSIS_AVAILABLE`; status `INSUFFICIENT_HISTORY` returned as 200 with empty setups and `signal.state = NO_TRADE` |
+| N5 | `GET /api/v1/analysis/{symbol}` | session | `?as_of=<timestamp>&include=candles` | `AnalysisRun` (latest for the selected source, or the run at that 5m close) | 404 `NO_ANALYSIS_AVAILABLE`; status `INSUFFICIENT_HISTORY` returned as 200 with empty setups and `signal.state = NO_TRADE` |
 | N6 | `POST /api/v1/analysis/{symbol}/refresh` | session (rate `analysis-refresh`) | — | 200 `AnalysisRun` if snapshot unchanged (idempotent) or computed within 2 s; else 202 `{job_id}` | Uses latest ingested candles; never fetches intraday |
 | N7 | `GET /api/v1/analysis-runs/{id}` | session | `?include=candles` | `AnalysisRun` (immutable) | 404 if run's data source not accessible |
 | N8 | `GET /api/v1/analysis-runs/{id}/structure` | session | — | `{state, transition_direction, protected_low, protected_high, swings, events}` | |
@@ -234,27 +242,33 @@ Step payloads (`{step}` lower-case id):
 
 **R1** `POST /api/v1/risk/calculate` — Auth: session. Pure calculation, persists nothing.
 
-Request:
+Request (the TRD-05 §3.1 example):
 
 ```json
 { "instrument": "RELIANCE", "direction": "LONG", "book": "PAPER",
-  "entry": "1495.50", "stop": "1477.00", "target": "1560.00",
-  "risk_per_trade_pct": "1.0" }
+  "entry": "1498.10", "stop": "1485.25", "target": "1529.00",
+  "risk_per_trade_pct": "0.5" }
 ```
 
-`risk_per_trade_pct` optional (defaults to current risk profile). Response 200:
+`risk_per_trade_pct` optional (defaults to the current risk profile). Laravel adds the risk profile, the book's account state (TRD-05 §8.1) and the session clock before calling the engine. Response 200:
 
 ```json
 { "data": {
-  "quantity": 167, "risk_budget": "10000.00", "risk_per_share": "18.50",
-  "actual_risk": "3089.50", "actual_risk_pct": "0.3090", "position_value": "249748.50",
-  "rr": "3.4865", "binding_constraint": "POSITION_CAP",
-  "constraints": { "qty_risk": 540, "qty_capital": 668, "qty_position_cap": 167, "qty_heat": 2702 },
-  "rounding": { "entry": "1495.50", "stop": "1477.00", "target": "1560.00" },
-  "warnings": [], "errors": [], "ruleset_version": "pa-core 0.1.0" } }
+  "quantity": 33, "risk_budget": "500.00", "risk_per_share": "12.85",
+  "actual_risk": "424.05", "actual_risk_pct": "0.4241", "position_value": "49437.30",
+  "rr": "2.4047", "rr_after_costs": "2.2800", "est_round_trip_costs": "53.08",
+  "binding_constraint": "POSITION_CAP",
+  "constraints": { "qty_risk": 38, "qty_capital": 66, "qty_position_cap": 33, "qty_open_risk": 77, "qty_daily_loss": 116 },
+  "account_state": { "realised_net_pnl_today": "0.00", "open_risk": "0.00", "losing_streak": 0,
+                     "remaining_daily_loss": "1500.00", "blocked_reason": null },
+  "rounding": { "entry": "1498.10", "stop": "1485.25", "target": "1529.00" },
+  "warnings": [], "errors": [], "ruleset_version": "pa-intraday 0.1.0" },
+  "meta": { "request_id": "01JD…" } }
 ```
 
-Errors (422, codes from [TRD-05](../trading/05_RISK_MANAGEMENT_RULES.md)): `SHORT_NOT_SUPPORTED`, `STOP_NOT_BELOW_ENTRY`, `STOP_TOO_TIGHT`, `STOP_TOO_WIDE`, `TARGET_NOT_ABOVE_ENTRY`, `RR_BELOW_MINIMUM`, `RISK_BUDGET_TOO_SMALL`, `INSUFFICIENT_CAPITAL`, `PORTFOLIO_HEAT_EXCEEDED`, `MAX_POSITIONS_REACHED`. 503 `ENGINE_UNAVAILABLE`.
+Errors (422, codes from [TRD-05](../trading/05_RISK_MANAGEMENT_RULES.md)): `SHORT_NOT_SUPPORTED`, `STOP_NOT_BELOW_ENTRY`, `STOP_TOO_TIGHT`, `STOP_TOO_WIDE`, `TARGET_NOT_ABOVE_ENTRY`, `RR_BELOW_MINIMUM`, `RISK_BUDGET_TOO_SMALL`, `INSUFFICIENT_CAPITAL`, `POSITION_CAP`, `OPEN_RISK_LIMIT_REACHED`, `DAILY_LOSS_LIMIT_REACHED`, `MAX_CONSECUTIVE_LOSSES_REACHED`, `MAX_POSITIONS_REACHED`, `ENTRY_CUTOFF_PASSED`, `SESSION_CLOSED`. 503 `ENGINE_UNAVAILABLE`.
+
+**R2** `GET /api/v1/risk/today` — Auth: session. `?book=PAPER|ACTUAL` (required). Account state of the book for the current session (TRD-05 §8.1), computed from the trade tables: `{book, session_date, realised_net_pnl_today, open_risk, losing_streak, open_positions, daily_loss_limit, remaining_daily_loss, max_consecutive_losses, max_open_positions, blocked_reason|null, entry_cutoff_at, session_end_exit_at}`. 422 `BOOK_REQUIRED`.
 
 ### 8.2 Trade plans
 
@@ -294,6 +308,7 @@ Watchlist rows with analysis are obtained via `GET /api/v1/scanner?watchlist={id
 | X7 | `GET /api/v1/actual-trades` | session | `?status&limit&cursor` | `[ActualTrade]` | — |
 | X8 | `POST /api/v1/actual-trades` | session, `Idempotency-Key` | `{instrument, trade_plan_id?, fill: {side: "BUY", quantity, price, executed_at, broker_order_id?, fees?}, notes?}` | 201 | price > 0; executed_at ≤ now and on a trading day (warning only); `trade_plan_id` must be the user's |
 | X9 | `POST /api/v1/actual-trades/{id}/fills` | session, `Idempotency-Key` | `{side, quantity, price, executed_at, broker_order_id?, broker_trade_id?, fees?}` | 201 | `OVERSELL_NOT_ALLOWED` |
+| X11 | `GET /api/v1/positions/live` | session | `?book=PAPER|ACTUAL` (required) | `[{position_id, symbol, quantity, entry_price, entry_at, current_price, price_at, unrealised_pnl, stop, target, distance_to_stop_pct, distance_to_target_pct, signal: "HOLD"|"EXIT"}]` + `meta.data_mode` | Current prices come from the current-price cache (ENG-05 §12) and are labelled with `price_at`; they never change analysis. 422 `BOOK_REQUIRED` |
 | X10 | `GET /api/v1/portfolio` | session | `?book=PAPER|ACTUAL` (required) | `{summary: {capital, invested, cash, unrealized_pnl, realized_pnl, open_risk, max_risk_per_trade_pct}, positions: [{symbol, quantity, avg_price, ltp, stop, plan_id, signal: "HOLD"|"EXIT", unrealized_pnl}], allocation: [{label, value}], exposure: {...}}` + `meta.data_mode` | 422 `BOOK_REQUIRED` — books are never mixed |
 
 `PaperTrade = {id, trade_plan_id, instrument, status, entry_date, entry_price, quantity, initial_stop, current_stop, target, exit_date, exit_price, exit_reason, gross_pnl, charges, net_pnl, r_multiple, signal}`. `ActualTrade = {id, instrument, trade_plan_id, status, quantity_open, avg_entry_price, avg_exit_price, realized_pnl, charges, fills: [...]}`.
