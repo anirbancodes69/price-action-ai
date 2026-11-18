@@ -3,28 +3,27 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 from app.domain.params import RulesetParams
 
 RULESETS_DIR = Path(__file__).resolve().parent.parent / "rulesets"
-_CODE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
-_VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+
+
+def available_rulesets(root: Path = RULESETS_DIR) -> dict[tuple[str, str], Path]:
+    """Every `<root>/<code>/<version>.json` on disk, keyed by `(code, version)`."""
+    return {(p.parent.name, p.stem): p for p in sorted(root.glob("*/*.json"))}
 
 
 def load_ruleset(code: str, version: str, root: Path = RULESETS_DIR) -> RulesetParams:
-    """Load `<root>/<code>/<version>.json`.
+    """Load a ruleset by looking `(code, version)` up in the files that exist.
 
-    `code` and `version` can come from a request or a setting, so they are validated here instead of being
-    trusted: a malformed one is a `FileNotFoundError` (the API turns that into 422), never a path outside
-    `root`.
+    `code` and `version` can come from a request or a setting. They are used only as a lookup key into the
+    listing of the rulesets directory, never to build a path, so a malformed or hostile value is simply
+    unknown (`FileNotFoundError`; the API turns that into 422).
     """
-    if not _CODE.fullmatch(code) or not _VERSION.fullmatch(version):
-        raise FileNotFoundError(f"unknown ruleset {code!r} {version!r}")
-    base = root.resolve()
-    path = (base / code / f"{version}.json").resolve()
-    if not path.is_relative_to(base):  # defence in depth; the patterns above already exclude separators
+    path = available_rulesets(root).get((code, version))
+    if path is None:
         raise FileNotFoundError(f"unknown ruleset {code!r} {version!r}")
     values = json.loads(path.read_text(encoding="utf-8"))
     return RulesetParams(code=code, version=version, values=values)
