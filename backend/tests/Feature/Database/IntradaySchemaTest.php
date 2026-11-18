@@ -60,6 +60,21 @@ class IntradaySchemaTest extends TestCase
         $this->assertSame(4, DB::table('candles')->count());
     }
 
+    public function test_intraday_quality_issue_types_are_accepted(): void
+    {
+        $in = $this->base();
+        foreach (['MISSING_BAR', 'LATE_BAR', 'MISALIGNED_BAR', 'OUTSIDE_SESSION', 'AGGREGATE_MISMATCH', 'OHLC_INVALID', 'DUPLICATE'] as $type) {
+            DB::table('data_quality_issues')->insert([
+                'id' => $this->id(), 'ingestion_run_id' => $in['run'], 'instrument_id' => $in['instrument'],
+                'trade_date' => '2026-01-05', 'issue_type' => $type, 'severity' => 'WARN',
+            ]);
+        }
+        $this->assertSame(7, DB::table('data_quality_issues')->count());
+        $this->assertRejected(fn () => DB::table('data_quality_issues')->insert([
+            'id' => $this->id(), 'ingestion_run_id' => $in['run'], 'issue_type' => 'INVALID_OHLC', 'severity' => 'WARN',
+        ]));
+    }
+
     public function test_correcting_a_bar_archives_the_old_values_and_bumps_the_revision(): void
     {
         $in = $this->base();

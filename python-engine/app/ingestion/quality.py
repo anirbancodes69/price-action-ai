@@ -19,7 +19,7 @@ VOLUME_TOLERANCE = Decimal("0.01")
 
 @dataclass(frozen=True, slots=True)
 class QualityIssue:
-    type: str  # MISSING_BAR, MISALIGNED_BAR, OUTSIDE_SESSION, INVALID_OHLC, DUPLICATE, AGGREGATE_MISMATCH
+    type: str  # MISSING_BAR, MISALIGNED_BAR, OUTSIDE_SESSION, OHLC_INVALID, DUPLICATE, AGGREGATE_MISMATCH
     bar_start: datetime | None
     detail: str
 
@@ -68,7 +68,7 @@ def check_session_bars(
         elif (ts - open_).total_seconds() % (step * 60) != 0:
             issues.append(QualityIssue("MISALIGNED_BAR", ts, f"not on the {timeframe} grid"))
         elif not _valid_ohlc(b):
-            issues.append(QualityIssue("INVALID_OHLC", ts, "OHLC invalid"))
+            issues.append(QualityIssue("OHLC_INVALID", ts, "OHLC invalid"))
         else:
             if ts in kept:
                 issues.append(QualityIssue("DUPLICATE", ts, "later bar replaces earlier"))
