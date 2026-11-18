@@ -77,7 +77,7 @@ Legend: **S** = secret (never committed; `.env.example` holds placeholder only).
 | `KITE_HISTORICAL_RPS` | `3` | | Assumption, verify (ARC-08) |
 | `LLM_ENABLED`, `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_DAILY_BUDGET_USD` | — | S (key) | ARC-07 |
 | `WORKER_CONCURRENCY_ANALYSIS` etc. | — | | ENG-04 §7 |
-| `ACTIVE_RULESET` | `pa-core@0.1.0` | | |
+| `ACTIVE_RULESET` | `pa-intraday@0.1.0` | | |
 
 ## 3. Rules
 

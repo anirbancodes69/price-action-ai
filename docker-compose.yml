@@ -37,7 +37,7 @@ x-engine-env: &engine-env
   DATABASE_URL: postgresql://app_engine:${DB_ENGINE_PASSWORD:?run ./scripts/setup-env.sh}@postgres:5432/${POSTGRES_DB:-priceaction}
   REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/2
   ENGINE_SERVICE_TOKEN: ${ENGINE_SERVICE_TOKEN}
-  ACTIVE_RULESET: pa-core@0.1.0
+  ACTIVE_RULESET: pa-intraday@0.1.0
 
 services:
   frontend:
