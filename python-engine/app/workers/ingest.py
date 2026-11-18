@@ -13,6 +13,8 @@ from typing import Any
 
 from sqlalchemy import create_engine
 
+from app.ingestion.reconcile import run_maintenance
+from app.ingestion.repository import IngestionRepository
 from app.ingestion.schedule import run_due_bars
 from app.ingestion.session import IST
 from app.ingestion.universe import universe_refs
@@ -57,6 +59,16 @@ def ingest_once(
             except ProviderAuthExpired:
                 log.warning("ingest_auth_expired")  # the owner must run scripts/kite_login.py
                 return -1
+            ids = IngestionRepository(conn, source, provider.provider_code).resolve_instruments(refs, now())
+            conn.rollback()
+            stale, rec = run_maintenance(conn, source, provider, ctx, refs, ids, now(), sleep)
+            if stale:
+                log.warning("ingest_stale_runs_recovered", extra={"count": stale})
+            if rec is not None:
+                log.info(
+                    "ingest_reconciled",
+                    extra={"day": str(rec.day), "gaps_before": rec.gaps_before, "gaps_after": rec.gaps_after},
+                )
             return len(reports)
     finally:
         engine.dispose()
