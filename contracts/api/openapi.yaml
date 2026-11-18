@@ -1263,7 +1263,7 @@ paths:
         - "Scanner"
       summary: "Scanner"
       x-arc04-id: "N1"
-      description: "409 NO_ANALYSIS_AVAILABLE when there is no completed batch."
+      description: "Served live from the engine (ADR-016): every request analyses the universe on the latest closed bars. 503 ENGINE_UNAVAILABLE when the engine is down, 409 NO_DATA_SOURCE / RULESET_UNAVAILABLE for configuration problems. `near` and `watchlist` are not available in live mode and are rejected with 422."
       parameters:
         - name: "universe"
           in: "query"
@@ -1274,7 +1274,7 @@ paths:
           schema:
             type: "string"
             format: "uuid"
-          description: "Restrict to a watchlist (ARC-04 §9)."
+          description: "Not available in live mode (ADR-016): rejected with 422."
         - name: "q"
           in: "query"
           schema:
@@ -1332,7 +1332,7 @@ paths:
         - sessionCookie: []
       responses:
         "200":
-          description: "Rows from the latest completed analysis batch. meta.batch carries {id, as_of, status, instruments_total, instruments_completed}."
+          description: "Rows from a live analysis of the universe. meta also carries total, ruleset and notice (decision support only)."
           content:
             "application/json":
               schema:
@@ -1357,6 +1357,10 @@ paths:
           "$ref": "#/components/responses/ValidationFailed"
         "429":
           "$ref": "#/components/responses/RateLimited"
+        "502":
+          "$ref": "#/components/responses/EngineContractError"
+        "503":
+          "$ref": "#/components/responses/Unavailable"
   "/api/v1/scanner/export":
     get:
       operationId: "exportScanner"
@@ -4156,7 +4160,7 @@ components:
           "$ref": "#/components/schemas/OnboardingSummary"
       required:
         - "user"
-        - "onboarding"
+      description: "Personal mode returns only `user`; onboarding and tenant are deferred (ADR-014)."
       additionalProperties: false
     Backtest:
       type: "object"
@@ -5602,10 +5606,7 @@ components:
           "$ref": "#/components/schemas/DataSourceSummary"
       required:
         - "user"
-        - "tenant"
-        - "entitlement"
-        - "onboarding"
-        - "data_source"
+      description: "Personal mode (ADR-014, ADR-016) returns only `user`; tenant, entitlement, onboarding and data_source are deferred and omitted."
       additionalProperties: false
     Meta:
       type: "object"
@@ -6450,15 +6451,26 @@ components:
         last_close:
           "$ref": "#/components/schemas/Price"
         change:
-          "$ref": "#/components/schemas/Money"
+          oneOf:
+            - "$ref": "#/components/schemas/Money"
+            - type: "null"
+          description: "Last close minus the previous session close; null when that is unknown."
         change_pct:
-          "$ref": "#/components/schemas/Ratio"
+          oneOf:
+            - "$ref": "#/components/schemas/Ratio"
+            - type: "null"
         volume:
-          type: "integer"
-          minimum: 0
+          oneOf:
+            - type: "integer"
+              minimum: 0
+            - type: "null"
+          description: "Not supplied in live mode (null)."
         analysis_run_id:
-          type: "string"
-          format: "uuid"
+          oneOf:
+            - type: "string"
+              format: "uuid"
+            - type: "null"
+          description: "Null in live mode: nothing is persisted (ADR-016)."
         as_of:
           type: "string"
           format: "date-time"
@@ -6468,7 +6480,10 @@ components:
             - "$ref": "#/components/schemas/StructureState"
             - type: "null"
         structure_state:
-          "$ref": "#/components/schemas/StructureState"
+          oneOf:
+            - "$ref": "#/components/schemas/StructureState"
+            - type: "null"
+          description: "5m structure state; null when there is not enough history to analyse."
         signal_state:
           "$ref": "#/components/schemas/SignalState"
         signal_at:
@@ -6960,6 +6975,11 @@ components:
         - "ZONE"
         - "SWING_HIGH"
         - "MEASURED_MOVE"
+        - "MEASURED_OPENING_RANGE"
+        - "PDH"
+        - "SESSION_HIGH"
+        - "OR_HIGH"
+        - "HTF_SWING_HIGH"
     TenantRole:
       type: "string"
       enum:
