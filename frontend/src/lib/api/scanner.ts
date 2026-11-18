@@ -99,7 +99,7 @@ export function mapScannerRow(r: ApiScannerRow): ScannerRow {
     // No primary setup is a valid result (NO_TRADE), shown as range-bound / no edge (TRD-04 §13).
     setupType: p ? (SETUP_TYPE[p.type] ?? "range-bound") : "range-bound",
     direction: long ? "long" : "short",
-    setupStatus: p ? (SETUP_STATUS[p.status] ?? "detected") : "detected",
+    setupStatus: p ? (SETUP_STATUS[p.status] ?? "detected") : null,
     signal: SIGNAL[r.signal_state] ?? "no-trade",
     levels,
     qualityScore: p?.quality_score ?? 0,

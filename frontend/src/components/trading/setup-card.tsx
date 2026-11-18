@@ -35,7 +35,7 @@ export function SetupCard({ row, className }: { row: ScannerRow; className?: str
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
         <MarketStructureBadge structure={row.structure} />
-        <StatusBadge kind="setup" status={row.setupStatus} />
+        {row.setupStatus && <StatusBadge kind="setup" status={row.setupStatus} />}
       </div>
       <dl className="grid grid-cols-3 gap-3 border-t pt-3 tabular-nums">
         <div className="flex flex-col gap-1">

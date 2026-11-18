@@ -52,6 +52,7 @@ describe("mapScannerRow", () => {
       change_pct: null,
     });
     expect(r.levels).toBeNull();
+    expect(r.setupStatus).toBeNull(); // no "Detected" badge for a row that has no setup
     expect(r.setupType).toBe("range-bound");
     expect(r.signal).toBe("no-trade");
     expect([r.structure, r.bias, r.htfStructure]).toEqual(["range", "neutral", "range"]);
