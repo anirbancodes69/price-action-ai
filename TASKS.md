@@ -14,7 +14,7 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
-| T-201 | Kite Connect verification spike for intraday: minute-bar history depth per request and overall, rate limits, quote/ticker access, token expiry, personal-use terms | P0 | I2 | Kite developer app | Findings recorded in ARC-08; OQ-INT-01/02 resolved or re-scoped | BLOCKED (needs Kite app) |
+| T-201 | Kite Connect verification spike for intraday: minute-bar history depth per request and overall, rate limits, quote/ticker access, token expiry, personal-use terms | P0 | I2 | Kite developer app | Findings recorded in ARC-08; OQ-INT-01/02 resolved or re-scoped | IN PROGRESS (limits, depth, shapes and 15:15 cutoff verified 2026-11-18, ARC-08 §4.0; rate limit, forming bar, token expiry, terms open) |
 | T-203 | Compare Groww API with Kite as first real data provider: historical daily candles, instrument master, rate limits, cost, terms (OQ-INT-04) | P0 | I2 | Groww API access (owner) | Findings in ARC-08; owner picks provider; ADR-007 note or new ADR per CLAUDE.md §8; OQ-INT-04 closed | NOT STARTED |
 | T-202 | Owner decision on Kite app model (platform app vs bring-your-own key) | P0 | I2 | T-201 | Decision recorded as an ADR + DECISIONS.md row; OQ-SEC-01 closed | NOT STARTED |
 | T-903 | Error boundaries for `(auth)` and `onboarding`; request id on `ErrorState` from the typed `ApiError` (ENG-02 D-20 remainder) | P2 | M7 | HTTP adapter | Every route group has `error.tsx`; request id shown | NOT STARTED |
@@ -22,11 +22,11 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 ## In Progress
 
-None.
+T-201 (see Backlog row): remaining checks need a market-hours run.
 
 ## Blocked
 
-See T-201 (needs a Kite developer app).
+None.
 
 ## Completed
 

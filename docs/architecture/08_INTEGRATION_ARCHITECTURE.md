@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | ARC-08 |
-| Version | 0.1.0 |
-| Status | Specification ready (Kite limits and terms to be verified in M2) |
+| Version | 0.2.0 |
+| Status | Specification ready; Kite limits partly verified (T-201, §4.0) |
 | Owner | Solution Architect |
-| Last updated | 2026-11-15 |
+| Last updated | 2026-11-18 |
 | Related | [ADR-007 Provider abstraction](../adr/ADR-007-MARKET-DATA-PROVIDER-ABSTRACTION.md) · [ADR-011 Data modes](../adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md) · [ENG-05 Ingestion](../engineering/05_DATA_INGESTION_SPECIFICATION.md) · [ARC-06 §5](06_SECURITY_ARCHITECTURE.md#5-broker-credential-protection-zerodha) |
 
 ## 1. Purpose
@@ -51,7 +51,27 @@ Laravel side: a smaller `BrokerConnector` interface for the **connection flow on
 
 ## 4. Zerodha Kite Connect adapter
 
-> **ASSUMPTION — verify in M2 against current Kite Connect documentation and terms:** endpoint names, daily token expiry, historical API date-range limits per interval, rate limits, and whether historical data requires an add-on subscription. Values below are design placeholders, not verified facts.
+> Values below that are not in §4.0 are still design placeholders. §4.0 lists what has been measured against the live API.
+
+### 4.0 Verified behaviour (T-201, 2026-11-18)
+
+Measured with the owner's Kite **Connect** app (the free Personal type has no historical or quote APIs) by `python-engine/scripts/kite_spike.py`, on 2026-11-18 at 16:30 IST, after the close. Read-only calls; no orders.
+
+| Item | Finding | Status |
+|---|---|---|
+| App type | **Connect** is required: Personal offers no historical chart data, live quotes or WebSockets. Connect showed "500 credits for 30 days" at creation | Verified; cost after 30 days open |
+| Login | `kite.zerodha.com/connect/login?v=3&api_key=…` → redirect with `request_token`, `status=success`; exchanged at `POST /session/token` with `sha256(api_key + request_token + api_secret)`. The redirect URL may be a local address. Logging in with an account other than the app's registered Client ID fails with `InputException: The user is not enabled for the app.` | Verified |
+| Instrument master | `GET /instruments/NSE`, CSV, columns `instrument_token, exchange_token, tradingsymbol, name, last_price, expiry, strike, tick_size, lot_size, instrument_type, segment, exchange`; 10,455 rows (10,319 `EQ`, 136 `INDICES`). RELIANCE `738561`, NIFTY 50 `256265` | Verified |
+| History per request | 5m: **100 days** max; 15m: **200 days** max. Longer ranges fail with HTTP 400 `InputException: interval exceeds max limit: N days` | Verified |
+| History depth | 5m bars available back to at least **2018-11** (8 years) when fetched in ≤100-day windows | Verified (sampled) |
+| Bar shape | `data.candles[]` = `[ "YYYY-MM-DDTHH:MM:SS+0530", o, h, l, c, v ]`, bar start time in IST | Verified |
+| **Equity session cutoff** | Equity 5m bars end with the **15:10** bar (72 per session) and 15m bars with the **15:00** bar (24); index bars run to 15:25 / 15:15 (75 / 25). Same on 2026-11-17 and 2026-11-18. The reason is not known. **Decision (owner, 2026-11-18):** Kite intraday bars are ingested and checked up to **15:15** for every instrument, including indices for consistency (`ProviderCapabilities.intraday_close`) | Verified; decision recorded |
+| Index volume | NIFTY 50 bars carry volume `0` | Verified |
+| Quotes | `GET /quote/ltp?i=NSE:RELIANCE&i=NSE:NIFTY 50` → `data["NSE:SYM"].last_price` | Verified |
+| Rate limit | 15 back-to-back historical requests in 1.2 s all returned 200; the limit was not reached. The adapter keeps 3 req/s | Open |
+| Forming bar | Not testable after the close; rerun during the session | Open |
+| Token expiry | Assumed ~06:00 IST next day; not yet observed | Open |
+| Price adjustment | Not measured (OQ-INT-02) | Open |
 
 ### 4.1 Authentication flow
 
@@ -137,7 +157,7 @@ Engine → Laravel internal endpoints (header `Authorization: Bearer ${BACKEND_I
 
 | ID | Question |
 |---|---|
-| OQ-INT-01 | Verify Kite Connect historical limits, rate limits, token expiry, subscription requirements, and terms of use for personal vs multi-user apps. |
+| OQ-INT-01 | **Partly resolved (T-201, 2026-11-18, see §4.0):** per-request limits, overall 5m depth, response shapes and the equity 15:15 cutoff are verified. **Still open:** the real rate limit (no 429 seen at ~12 req/s), whether the forming bar is returned during the session, token expiry time, the Connect plan's cost after the first 30 days, and the terms of use for personal vs multi-user apps. |
 | OQ-INT-02 | Are Kite daily candles adjusted for splits/bonuses? Determines whether the adjustment step is applied or skipped for this provider. |
 | OQ-INT-03 | Licensed vendor selection for SaaS mode (coverage of delisted symbols, corporate actions, historical index constituents). |
-| OQ-INT-04 | Should Groww (the owner's broker) be the first real market-data adapter instead of, or alongside, Kite? Deferred to M2: compare Groww API historical daily candles, instrument master, rate limits, cost and terms against Kite in T-203. Needs no change to ADR-007 (a new adapter behind `MarketDataProvider`); choosing it as first provider changes the "Kite first" plan and goes through CLAUDE.md §8. |
+| OQ-INT-04 | Should Groww (the owner's broker) be the first real market-data adapter instead of, or alongside, Kite? Deferred to M2: compare Groww API historical daily candles, instrument master, rate limits, cost and terms against Kite in T-203. Needs no change to ADR-007 (a new adapter behind `MarketDataProvider`); choosing it as first provider changes the "Kite first" plan and goes through CLAUDE.md §8. **Owner direction 2026-11-18:** use Kite for now; the Groww comparison (T-203) is deferred, not cancelled. |

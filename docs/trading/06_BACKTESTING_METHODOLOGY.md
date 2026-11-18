@@ -37,7 +37,7 @@ Defines how a ruleset version is replayed over intraday history to produce trade
 | Universe | NIFTY 50, point-in-time where membership history is available (§8) |
 | Data source | Recorded per run; personal-mode data is usable only by the owning tenant ([ADR-011](../adr/ADR-011-DATA-MODES-AND-TENANT-ISOLATION.md)) |
 
-> **ASSUMPTION:** broker historical APIs limit intraday history per request and overall. Whether two years of 5m and 15m bars for NIFTY 50 can be obtained is **unverified** (OQ-INT-01, OQ-BT-06). Results on shorter history carry a `short_history` flag.
+> **ASSUMPTION:** broker historical APIs limit intraday history per request and overall. Kite serves 5m bars back to at least 2018 in ≤100-day requests (15m: ≤200 days), verified for RELIANCE ([ARC-08 §4.0](../architecture/08_INTEGRATION_ARCHITECTURE.md#40-verified-behaviour-t-201-2026-11-18)); coverage for every NIFTY 50 member is not yet checked (OQ-BT-06). Kite equity bars end at 15:15, so the last 15 minutes of each session are not available to backtests. Results on shorter history carry a `short_history` flag.
 
 ## 4. Execution model
 

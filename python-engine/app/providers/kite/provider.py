@@ -1,8 +1,7 @@
 """Zerodha Kite Connect adapter (REST, read-only market data).
 
-ASSUMPTION - unverified until T-201 (needs a Kite developer app): endpoint shapes follow the
-public Kite Connect v3 documentation as remembered; history depth and rate limits are placeholders.
-Never place orders: ADR-010.
+Endpoint shapes and per-request history limits verified against the live API (T-201, ARC-08 §4.0).
+The rate limit and the daily-bar limit are still placeholders. Never place orders: ADR-010.
 """
 
 from __future__ import annotations
@@ -58,8 +57,8 @@ class KiteProvider:
     def capabilities(self) -> ProviderCapabilities:
         return ProviderCapabilities(
             timeframes=("5m", "15m", "1D"),
-            max_days_per_request={"5m": 100, "15m": 200, "1D": 2000},  # placeholders
-            requests_per_second=3.0,  # placeholder
+            max_days_per_request={"5m": 100, "15m": 200, "1D": 2000},  # 5m/15m verified; 1D placeholder
+            requests_per_second=3.0,  # placeholder: no 429 seen at ~12 req/s (ARC-08 §4.0)
             adjusted=False,
             verified=False,
         )
