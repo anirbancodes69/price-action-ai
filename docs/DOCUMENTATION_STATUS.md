@@ -47,7 +47,7 @@
 | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) | Specification ready (Kite partly verified, §4.0) | ADR-007, ADR-011 | OQ-INT-01, OQ-INT-02, OQ-INT-03, OQ-INT-04 | 2026-11-17 |
 | [Trading Methodology](trading/01_TRADING_METHODOLOGY.md) | Specification ready for intraday (v0.2.0, ADR-014; parameters = hypotheses) | ADR-008 | OQ-TRD-01..OQ-TRD-06 | 2026-11-17 |
 | [Market Structure Rules](trading/02_MARKET_STRUCTURE_RULES.md) | Specification ready | TRD-01 | OQ-STR-01, OQ-STR-02, OQ-STR-03 | 2026-11-15 |
-| [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) | Specification ready | TRD-01, TRD-02 | OQ-SR-01, OQ-SR-02, OQ-SR-03 | 2026-11-15 |
+| [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) | Specification ready | TRD-01, TRD-02 | OQ-SR-01, OQ-SR-02, OQ-SR-03, OQ-SR-04 | 2026-11-15 |
 | [Setup Detection Rules and Price Action Quality Score](trading/04_SETUP_DETECTION_RULES.md) | Specification ready | TRD-01..03, TRD-05 | OQ-SD-01, OQ-SD-02, OQ-SD-03, OQ-SD-04 | 2026-11-15 |
 | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) | Specification ready for intraday (v0.2.0, ADR-014) | TRD-01, TRD-04 | OQ-RM-01, OQ-RM-02, OQ-RM-03, OQ-RM-05, OQ-RM-06 | 2026-11-15 |
 | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) | Specification ready for intraday (v0.2.0; costs and history depth to verify) | TRD-01..05 | OQ-BT-01, OQ-BT-02, OQ-BT-03, OQ-BT-05, OQ-BT-06, OQ-BT-07 | 2026-11-17 |
@@ -133,6 +133,7 @@ All unresolved decisions, aggregated from each document's "Open questions" secti
 | OQ-SR-01 | Should zone breaks require 1 close (consistent with BOS) or 2 closes (current)? | [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) |
 | OQ-SR-02 | Should higher-timeframe (weekly) pivots be merged into daily zones with a weight? Future scope. | [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) |
 | OQ-SR-03 | Should touch counting decay with age instead of the recency bonus? | [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) |
+| OQ-SR-04 | Implementation choices where TRD-03 §3-§6 are silent (formation index, touch edge cases, reaction window, constants, equal-level pairs, width basis). | [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) |
 | OQ-SD-01 | Should a separate `RANGE_BREAKOUT` type be reinstated to match the existing UI/backtest strategy list? | [Setup Detection Rules and Price Action Quality Score](trading/04_SETUP_DETECTION_RULES.md) |
 | OQ-SD-02 | Entry convention: close-confirmation + next open (chosen) vs. buy-stop above trigger intraday. The latter needs intraday data and is deferred. | [Setup Detection Rules and Price Action Quality Score](trading/04_SETUP_DETECTION_RULES.md) |
 | OQ-SD-03 | Is `entry_window_bars = 1` too strict for end-of-day users who review the next evening? | [Setup Detection Rules and Price Action Quality Score](trading/04_SETUP_DETECTION_RULES.md) |

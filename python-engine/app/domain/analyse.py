@@ -8,15 +8,19 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 
 from app.domain.candles import candles_hash
 from app.domain.htf import HtfContext, align_htf
+from app.domain.liquidity import LiquidityPool, equal_levels
 from app.domain.params import RulesetParams
 from app.domain.pivots import detect_pivots, label_pivots
 from app.domain.session import DailyLevels, SessionLevels, session_levels
 from app.domain.snapshot import SnapshotCheck, SnapshotStatus, check_snapshot
 from app.domain.structure import run_structure
 from app.domain.types import Bar, StructureResult, Timeframe
+from app.domain.zone_build import build_zones
+from app.domain.zones import Zone
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +34,8 @@ class AnalysisResult:
     structure_15m: StructureResult | None
     htf: HtfContext | None  # 15m context at the last 5m bar
     levels: SessionLevels | None
+    zones: tuple[Zone, ...] | None = None
+    pools: tuple[LiquidityPool, ...] | None = None
 
 
 def _structure(bars: Sequence[Bar], tf: Timeframe, params: RulesetParams) -> StructureResult:
@@ -45,6 +51,8 @@ def analyse(
     session_open: datetime,
     prev_day: DailyLevels | None,
     params: RulesetParams,
+    previous_session_open: datetime | None = None,
+    tick: Decimal | None = None,
 ) -> AnalysisResult:
     """Pure function of closed bars and the ruleset (bars span `analysis.lookback_sessions` sessions)."""
     check = check_snapshot(bars_5m, bars_15m, params)
@@ -55,4 +63,9 @@ def analyse(
     s15 = _structure(bars_15m, "15m", params)
     htf = align_htf([bars_5m[-1].end], bars_15m, s15)[0]
     levels = session_levels(bars_5m, session_open, prev_day, params.int_("session.opening_range_minutes"))
-    return AnalysisResult(params.code, params.version, check, h5, h15, s5, s15, htf, levels)
+    t = len(bars_5m) - 1
+    zones = build_zones(bars_5m, s5.pivots, s15.pivots, t, params, session_open, previous_session_open, tick)
+    pools = equal_levels(bars_5m, s5.pivots, t, params.equal_tolerance())
+    return AnalysisResult(
+        params.code, params.version, check, h5, h15, s5, s15, htf, levels, tuple(zones), tuple(pools)
+    )

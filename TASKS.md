@@ -32,6 +32,12 @@ None.
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-I39 | Zones and equal-level pools wired into `analyse` and its canonical hash (`AnalysisResult.zones`, `pools`; `previous_session_open` and `tick` inputs) | I4 | 2026-11-18 (existing analyse tests; 128 engine tests pass, 2 DB tests skipped; ruff, mypy strict clean) |
+| T-I38 | Equal highs/lows liquidity pools (`app/domain/liquidity.py`, TRD-03 §6); TV-ZON-07 | I4 | 2026-11-18 (2 tests incl. ±0.10% boundary, 3-bar gap, confirmation time). Consecutive same-kind 5m pivots only (OQ-SR-04) |
+| T-I37 | `build_zones` at bar `t` and proximity (`zone_build.py`: 5m and 15m pivot visibility, TV-ZON-09; role, `distance_pct`, nearest, `is_near`); TV-ZON-08/09 | I4 | 2026-11-18 (3 tests) |
+| T-I36 | Zone touches and strength score (`zone_strength.py`, TRD-03 §4); TV-ZON-06/10 | I4 | 2026-11-18 (6 tests incl. bucket boundaries 39/40/69/70). Weights are code constants, not registry keys (OQ-SR-04) |
+| T-I35 | Zone break, flip and retire (`zone_break.py`, TRD-03 §5); TV-ZON-03/04/05 plus 2-close confirmation | I4 | 2026-11-18 (4 tests incl. exactly-at-buffer and failed break) |
+| T-I34 | Zone clustering (`zones.py`, TRD-03 §3: greedy clustering anchored at the cluster low, minimum width, optional tick rounding with 2-tick minimum, overlap merge); TV-ZON-01/02; `RulesetParams.decimal`/`pct` | I4 | 2026-11-18 (5 tests incl. the spec example 1480/1481.2/1482/1490) |
 | T-I33 | Tests for the ruleset loader and `RulesetParams` accessors (closes the T-I22 gap) and for the whole batch below | I3 | 2026-11-18 (`tests/test_rulesets.py`, `tests/trading/test_session.py`) |
 | T-I32 | Canonical `AnalysisResult` and `analysis_hash` (`serialise.py`) | I3 | 2026-11-18 (determinism, sensitivity; ruff, mypy clean) |
 | T-I31 | `analyse` orchestration for structure (`app/domain/analyse.py`: snapshot check, 5m and 15m structure, 15m context at the last 5m bar, session levels; non-VALID snapshots return no analysis). No zones, setups or risk yet | I3 | 2026-11-18 (2 tests; ruff, mypy strict clean) |
