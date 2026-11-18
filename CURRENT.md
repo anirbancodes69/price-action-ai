@@ -53,7 +53,7 @@ Open and merge the restructuring PR (title in the last hand-off). Then: owner de
 
 | Blocks | Item |
 |---|---|
-| I2 | OQ-INT-01/02 — Kite intraday history depth, rate limits, token expiry and terms not verified; OQ-INT-04 — Groww vs Kite (T-203); OQ-SEC-01 — Kite app model. A broker data subscription is needed. |
+| I2 | Kite Connect app active (owner, 2026-11-18); per-request limits and depth verified (ARC-08 §4.0). Still open: OQ-INT-01 rate limit, forming bar, token expiry and terms; OQ-INT-02 price adjustment; OQ-SEC-01 app model. OQ-INT-04: Kite chosen for now, Groww comparison deferred. |
 | (deferred) | OQ-AI-01 — LLM provider/model not chosen; AI explanations are deferred by ADR-014. |
 | I8 | Intraday history depth and quality for NIFTY 50; corporate-action source (OQ-BT-03). Point-in-time NIFTY 500 membership (OQ-BT-01) no longer blocks the MVP. |
 

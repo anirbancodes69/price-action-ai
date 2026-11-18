@@ -44,7 +44,7 @@
 | [Data Flow](architecture/05_DATA_FLOW.md) | Specification ready for intraday (v0.2.0) | ARC-01, ARC-08, TRD-07 | — | 2026-11-17 |
 | [Security Architecture](architecture/06_SECURITY_ARCHITECTURE.md) | Specification ready | ARC-01, ARC-03, ARC-08 | OQ-SEC-01, OQ-SEC-02, OQ-SEC-03 | 2026-11-15 |
 | [AI and LLM Architecture](architecture/07_AI_AND_LLM_ARCHITECTURE.md) | Specification ready (provider pending) | TRD-04, ADR-009 | OQ-AI-01, OQ-AI-02, OQ-AI-03 | 2026-11-15 |
-| [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) | Specification ready (Kite facts to verify) | ADR-007, ADR-011 | OQ-INT-01, OQ-INT-02, OQ-INT-03, OQ-INT-04 | 2026-11-17 |
+| [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) | Specification ready (Kite partly verified, §4.0) | ADR-007, ADR-011 | OQ-INT-01, OQ-INT-02, OQ-INT-03, OQ-INT-04 | 2026-11-17 |
 | [Trading Methodology](trading/01_TRADING_METHODOLOGY.md) | Specification ready for intraday (v0.2.0, ADR-014; parameters = hypotheses) | ADR-008 | OQ-TRD-01..OQ-TRD-06 | 2026-11-17 |
 | [Market Structure Rules](trading/02_MARKET_STRUCTURE_RULES.md) | Specification ready | TRD-01 | OQ-STR-01, OQ-STR-02, OQ-STR-03 | 2026-11-15 |
 | [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) | Specification ready | TRD-01, TRD-02 | OQ-SR-01, OQ-SR-02, OQ-SR-03 | 2026-11-15 |
@@ -117,10 +117,10 @@ All unresolved decisions, aggregated from each document's "Open questions" secti
 | OQ-AI-01 | LLM provider and model choice; contract with provider (data retention, region). | [AI and LLM Architecture](architecture/07_AI_AND_LLM_ARCHITECTURE.md) |
 | OQ-AI-02 | Should Q&A history (multi-turn) be supported, or single-turn only (current spec)? | [AI and LLM Architecture](architecture/07_AI_AND_LLM_ARCHITECTURE.md) |
 | OQ-AI-03 | Hindi/regional language explanations (future). | [AI and LLM Architecture](architecture/07_AI_AND_LLM_ARCHITECTURE.md) |
-| OQ-INT-01 | Verify Kite Connect historical limits, rate limits, token expiry, subscription requirements, and terms of use for personal vs multi-user apps. | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) |
+| OQ-INT-01 | **Partly resolved (T-201, 2026-11-18, see §4.0):** per-request limits, overall 5m depth, response shapes and the equity 15:15 cutoff are verified. **Still open:** the real rate limit (no 429 seen at ~12 req/s), whether the forming bar is returned during the session, token expiry time, the Connect plan's cost after the first 30 days, and the terms of use for personal vs multi-user apps. | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) |
 | OQ-INT-02 | Are Kite daily candles adjusted for splits/bonuses? Determines whether the adjustment step is applied or skipped for this provider. | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) |
 | OQ-INT-03 | Licensed vendor selection for SaaS mode (coverage of delisted symbols, corporate actions, historical index constituents). | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) |
-| OQ-INT-04 | Should Groww (the owner's broker) be the first real market-data adapter instead of, or alongside, Kite? Deferred to M2: compare Groww API historical daily candles, instrument master, rate limits, cost and terms against Kite in T-203. Needs no change to ADR-007 (a new adapter behind `MarketDataProvider`); choosing it as first provider changes the "Kite first" plan and goes through CLAUDE.md §8. | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) |
+| OQ-INT-04 | Should Groww (the owner's broker) be the first real market-data adapter instead of, or alongside, Kite? Deferred to M2: compare Groww API historical daily candles, instrument master, rate limits, cost and terms against Kite in T-203. Needs no change to ADR-007 (a new adapter behind `MarketDataProvider`); choosing it as first provider changes the "Kite first" plan and goes through CLAUDE.md §8. **Owner direction 2026-11-18:** use Kite for now; the Groww comparison (T-203) is deferred, not cancelled. | [Integration Architecture](architecture/08_INTEGRATION_ARCHITECTURE.md) |
 | OQ-TRD-01 | Should the daily structure state filter intraday longs (e.g. no long when daily is `BEARISH`)? | [Trading Methodology](trading/01_TRADING_METHODOLOGY.md) |
 | OQ-TRD-02 | Should volume confirmation become a scored component? It is currently evidence-only to stay "pure price action". | [Trading Methodology](trading/01_TRADING_METHODOLOGY.md) |
 | OQ-TRD-03 | Which backtest result thresholds promote a parameter from `HYPOTHESIS` to `VALIDATED`? Proposed in TRD-08 §6, needs sign-off. | [Trading Methodology](trading/01_TRADING_METHODOLOGY.md) |
@@ -167,10 +167,10 @@ All unresolved decisions, aggregated from each document's "Open questions" secti
 | ID | Blocks | Why |
 |---|---|---|
 | OQ-TRD-04 | I0 (T-I06) | Intraday risk defaults (daily loss, streak, open positions, open risk) need owner confirmation. |
-| OQ-INT-04 | M2 | Groww vs Kite as first real provider; decide after the T-203 comparison, before the adapter is built. |
-| OQ-INT-01 / OQ-INT-02 | M2 | Kite historical limits, rate limits, token expiry, terms and price adjustment must be verified before the adapter is finalised. |
+| OQ-INT-04 | I2 | Owner chose Kite for now (2026-11-18); the Groww comparison (T-203) is deferred. |
+| OQ-INT-01 / OQ-INT-02 | I2 | Per-request limits and depth verified (ARC-08 §4.0); rate limit, forming bar, token expiry, terms and price adjustment still open. |
 | OQ-SEC-01 | M2 / G2 | Kite app model (platform app vs bring-your-own key) affects token custody and terms compliance. |
 | OQ-AI-01 | M8 | LLM provider/model. |
-| OQ-BT-06 / OQ-INT-01 | I8 | Intraday history depth for NIFTY 50 limits the achievable backtest span. |
+| OQ-BT-06 / OQ-INT-01 | I8 | Kite 5m depth reaches back to at least 2018 in 100-day windows (ARC-08 §4.0); full NIFTY 50 coverage and quality not yet checked. |
 | OQ-TRD-03 | M10 | Parameter promotion criteria sign-off. |
 | OQ-CMP-01 | G2 | Legal counsel engagement. |

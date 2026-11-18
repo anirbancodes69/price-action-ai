@@ -14,7 +14,7 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
-| T-201 | Kite Connect verification spike for intraday: minute-bar history depth per request and overall, rate limits, quote/ticker access, token expiry, personal-use terms | P0 | I2 | Kite developer app | Findings recorded in ARC-08; OQ-INT-01/02 resolved or re-scoped | BLOCKED (needs Kite app) |
+| T-201 | Kite Connect verification spike for intraday: minute-bar history depth per request and overall, rate limits, quote/ticker access, token expiry, personal-use terms | P0 | I2 | Kite developer app | Findings recorded in ARC-08; OQ-INT-01/02 resolved or re-scoped | IN PROGRESS (limits, depth, shapes and 15:15 cutoff verified 2026-11-18, ARC-08 §4.0; rate limit, forming bar, token expiry, terms open) |
 | T-203 | Compare Groww API with Kite as first real data provider: historical daily candles, instrument master, rate limits, cost, terms (OQ-INT-04) | P0 | I2 | Groww API access (owner) | Findings in ARC-08; owner picks provider; ADR-007 note or new ADR per CLAUDE.md §8; OQ-INT-04 closed | NOT STARTED |
 | T-202 | Owner decision on Kite app model (platform app vs bring-your-own key) | P0 | I2 | T-201 | Decision recorded as an ADR + DECISIONS.md row; OQ-SEC-01 closed | NOT STARTED |
 | T-903 | Error boundaries for `(auth)` and `onboarding`; request id on `ErrorState` from the typed `ApiError` (ENG-02 D-20 remainder) | P2 | M7 | HTTP adapter | Every route group has `error.tsx`; request id shown | NOT STARTED |
@@ -22,16 +22,17 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 ## In Progress
 
-None.
+T-201 (see Backlog row): remaining checks need a market-hours run.
 
 ## Blocked
 
-See T-201 (needs a Kite developer app).
+None.
 
 ## Completed
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-I21 | Kite 15:15 intraday cutoff (owner decision, Option A): `ProviderCapabilities.intraday_close` (Kite 15:15), session grid, quality checks and scheduler end there (72 5m / 24 15m bars); measured limits in the adapter; ENG-05 §12 updated | I2 | 2026-11-18 (4 new tests; 74 engine tests with DB, ruff, mypy clean; link check clean) |
 | T-I20 | Bar-close scheduler core (`app/ingestion/schedule.py`: pure `due_bars` from the session and last processed bar, 5m before 15m, catch-up capped at 3 bars; `trading_session` from `market_calendar`; `last_processed` per day; `run_due_bars` skips bars another process is running) | I2 | 2026-11-18 (6 unit tests + 1 integration test on the dev DB; 10 consecutive full-suite runs green; ruff, mypy clean). Not wired to an arq cron job: needs the NIFTY 50 universe loader and the Kite token supplier (ARC-06 §5). Stale `RUNNING` runs after a crash still block that bar until reconciliation exists |
 | T-I19 | Postgres writer for intraday ingestion (`app/ingestion/repository.py`: provider token → `instrument_id` on the bar date, `INTRADAY_BARS` run lifecycle, idempotent candle upsert with trigger-archived revisions, `data_quality_issues` rows incl. `PROVIDER_GAP` for unmapped instruments, run counters/status/error summary, `ingest_bar_close`) | I2 | 2026-11-18 (3 integration tests against the migrated dev DB, 12 consecutive full-suite runs green; skipped locally without `SCHEMA_DIFF_DATABASE_URL`; the CI schema-diff job runs `tests/integration`, so they run there too but have not yet run in CI; ruff, mypy clean) |
 | T-I18 | Migration `2026_11_18_000001`: intraday `data_quality_issues` types (MISSING_BAR, LATE_BAR, MISALIGNED_BAR, OUTSIDE_SESSION, AGGREGATE_MISMATCH); engine uses the schema's `OHLC_INVALID` name; ARC-03 §6.8 updated | I2 | 2026-11-18 (76 backend tests incl. new accept/reject test, Pint clean, applied to the dev DB; engine tests pass) |

@@ -114,5 +114,8 @@ def test_instrument_master_filters_equities_and_indices() -> None:
     assert out[0].tick_size == Decimal("0.05")
 
 
-def test_capabilities_are_marked_unverified() -> None:
-    assert make(lambda r: httpx.Response(200)).capabilities().verified is False
+def test_capabilities_carry_the_verified_limits_and_cutoff() -> None:
+    caps = make(lambda r: httpx.Response(200)).capabilities()
+    assert caps.max_days_per_request["5m"] == 100 and caps.max_days_per_request["15m"] == 200
+    assert caps.intraday_close is not None and caps.intraday_close.strftime("%H:%M") == "15:15"
+    assert caps.verified is False  # rate limit and forming bar still open (ARC-08 §4.0)

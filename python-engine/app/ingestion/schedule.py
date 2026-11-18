@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Callable, Sequence
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 
 from sqlalchemy import Connection, func, select
 from sqlalchemy.exc import IntegrityError
@@ -32,14 +32,18 @@ def due_bars(
     session: tuple[datetime, datetime] | None,
     last: dict[Timeframe, datetime | None],
     max_catchup: int = MAX_CATCHUP,
+    provider_close: time | None = None,
 ) -> list[tuple[Timeframe, datetime]]:
     """Bars of today's session that have closed by ``now`` and are newer than ``last``.
 
     Ordered by bar close, 5m before 15m. At most ``max_catchup`` most recent bars per timeframe.
+    ``provider_close`` ends the grid early when the provider serves no later bars (Kite: 15:15).
     """
     if session is None:
         return []
     open_, close = session
+    if provider_close is not None:
+        close = min(close, datetime.combine(open_.date(), provider_close, open_.tzinfo))
     out: list[tuple[Timeframe, datetime]] = []
     for tf in TIMEFRAMES:
         step = timedelta(minutes=bar_minutes(tf))
@@ -101,7 +105,8 @@ def run_due_bars(
     conn.rollback()  # end the read transaction; the repository commits its own units of work
     repo = IngestionRepository(conn, data_source_id, provider.provider_code)
     reports: list[FetchReport] = []
-    for tf, start in due_bars(t, trading_session(conn, exchange, day), last):
+    cutoff = provider.capabilities().intraday_close
+    for tf, start in due_bars(t, trading_session(conn, exchange, day), last, provider_close=cutoff):
         try:
             reports.append(ingest_bar_close(repo, provider, ctx, refs, tf, start, now, sleep))
         except IntegrityError:

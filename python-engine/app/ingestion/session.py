@@ -22,16 +22,18 @@ def bar_minutes(timeframe: Timeframe) -> int:
     return _MINUTES[timeframe]
 
 
-def session_bounds(day: date) -> tuple[datetime, datetime]:
-    return datetime.combine(day, SESSION_OPEN, IST), datetime.combine(day, SESSION_CLOSE, IST)
+def session_bounds(day: date, close: time | None = None) -> tuple[datetime, datetime]:
+    """Session open and close in IST. ``close`` overrides the end (a provider's intraday cutoff)."""
+    end = min(SESSION_CLOSE, close) if close is not None else SESSION_CLOSE
+    return datetime.combine(day, SESSION_OPEN, IST), datetime.combine(day, end, IST)
 
 
-def session_bar_starts(day: date, timeframe: Timeframe) -> list[datetime]:
-    """Every expected ``bar_start`` of a normal session."""
+def session_bar_starts(day: date, timeframe: Timeframe, close: time | None = None) -> list[datetime]:
+    """Every expected ``bar_start`` of a normal session, ending at ``close`` if given."""
     step = timedelta(minutes=bar_minutes(timeframe))
-    cur, close = session_bounds(day)
+    cur, close_at = session_bounds(day, close)
     out: list[datetime] = []
-    while cur + step <= close:
+    while cur + step <= close_at:
         out.append(cur)
         cur += step
     return out

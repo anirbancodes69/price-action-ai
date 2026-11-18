@@ -105,7 +105,7 @@ For the intraday direction ([ADR-014](../adr/ADR-014-PERSONAL-INTRADAY-WORKSTATI
 
 | Check | Rule | Action |
 |---|---|---|
-| Completeness | A normal session has 75 5m and 25 15m bars per active instrument (special sessions per calendar) | `MISSING_BAR` issue; the analysis for that bar uses what exists and marks the run inputs incomplete |
+| Completeness | A normal session has 75 5m and 25 15m bars per active instrument (special sessions per calendar). A provider with an earlier intraday cutoff ends the grid there: Kite serves equity bars only to 15:15, so 72 5m and 24 15m bars ([ARC-08 §4.0](../architecture/08_INTEGRATION_ARCHITECTURE.md#40-verified-behaviour-t-201-2026-11-18), `ProviderCapabilities.intraday_close`) | `MISSING_BAR` issue; the analysis for that bar uses what exists and marks the run inputs incomplete |
 | Late bar | Bar not available by the per-bar deadline | Retry with backoff until the next bar close, then `LATE_BAR` issue |
 | Alignment | `bar_start` on the 09:15 grid for the timeframe | Reject the bar, `MISALIGNED_BAR` issue |
 | Consistency | 15m bar equals the aggregate of its three 5m bars (OHLC exactly, volume within tolerance) | `AGGREGATE_MISMATCH` issue; provider's 15m bar is kept |

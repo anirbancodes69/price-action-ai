@@ -1,5 +1,5 @@
 from dataclasses import replace
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 from app.ingestion.quality import check_aggregate, check_session_bars
@@ -66,3 +66,18 @@ def test_aggregate_ok_and_mismatch() -> None:
     near = replace(FIFTEEN[0], volume=FIFTEEN[0].volume + 1)  # within 1%
     assert check_aggregate(FIVE, [near]) == []
     assert check_aggregate(FIVE[1:], FIFTEEN[:1]) == []  # incomplete group is skipped
+
+
+def test_kite_cutoff_grid_is_72_and_24_bars() -> None:
+    cut = time(15, 15)
+    five, fifteen = session_bar_starts(DAY, "5m", cut), session_bar_starts(DAY, "15m", cut)
+    assert (len(five), five[-1].strftime("%H:%M")) == (72, "15:10")
+    assert (len(fifteen), fifteen[-1].strftime("%H:%M")) == (24, "15:00")
+
+
+def test_cutoff_session_is_complete_without_the_last_bars_and_rejects_later_ones() -> None:
+    cut = time(15, 15)
+    r = check_session_bars(DAY, "5m", FIVE[:72], close=cut)
+    assert r.issues == [] and r.complete and len(r.accepted) == 72
+    late = check_session_bars(DAY, "5m", FIVE, close=cut)
+    assert [i.type for i in late.issues] == ["OUTSIDE_SESSION"] * 3 and len(late.accepted) == 72
