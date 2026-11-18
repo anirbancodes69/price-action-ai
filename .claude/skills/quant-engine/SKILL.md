@@ -7,7 +7,7 @@ description: Implementation and review workflow for the PriceAction AI determini
 
 Workflow for building the trading engine so that its output is deterministic, reproducible and free of look-ahead. **What** the rules are is owned by `docs/trading/` (see the `price-action-domain` skill). **How** the code is laid out and tested is owned by [ENG-04](../../../docs/engineering/04_PYTHON_ENGINE_ARCHITECTURE.md). This skill applies both.
 
-> Current state: `python-engine/app/domain/` has types, `RulesetParams`, pivots, structure, alignment, session levels, zones, equal-level pools, the long intraday setups (opening range, previous-day high/low, breakout-retest), levels, PAQS, signal mapping and `analyse` (I3 done; I4 mostly done; risk sizing is I5).
+> Current state: `python-engine/app/domain/` has types, `RulesetParams`, pivots, structure, alignment, session levels, zones, equal-level pools, the long intraday setups, levels, PAQS, signal mapping, `analyse` and intraday risk (`risk/`: sizing, account limits, fills, exits). Backtest (I8) and the API come next.
 
 ## Required context
 
