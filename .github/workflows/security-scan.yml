@@ -34,9 +34,17 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 26
-      - name: npm audit (frontend, high+)
+      # High/critical npm advisories fail the job unless they have an unexpired entry in
+      # .github/security-exceptions.json (ENG-10 §4.6). npm's own exit code is ignored; the script decides.
+      - name: npm audit (frontend, high+, with documented exceptions)
         working-directory: frontend
-        run: npm audit --audit-level=high
+        run: npm audit --json > "$RUNNER_TEMP/npm-audit.json" || true
+
+      - name: Check the audit against the exceptions file
+        run: python3 -I .github/scripts/check_npm_audit.py "$RUNNER_TEMP/npm-audit.json" .github/security-exceptions.json
+
+      - name: Exception checker tests
+        run: python3 -I -m unittest discover -s .github/scripts -p "test_*.py"
 
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0
         with:

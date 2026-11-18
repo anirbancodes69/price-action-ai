@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- Dependency-audit exceptions (ENG-10 §4.6): `.github/security-exceptions.json` and `.github/scripts/check_npm_audit.py` (tested). A high/critical npm advisory fails CI unless it has a complete, unexpired exception. First entry: picomatch ReDoS `GHSA-fc5q-39xc-vjpf`, which affects every published version and reaches only dev tooling (production audit is clean); expires 2026-12-18.
 - Frontend intraday screens on sample data (restructuring): session clock with phases and countdowns (entry cutoff, session-end exit), "Today's risk" per book on the dashboard, intraday "Risk and limits" settings, scanner "Valid until" column, `/portfolio` framed as Active trades.
 - Frontend intraday data model (restructuring): `Candle` timestamps, `Timeframe` 5m/15m/1D, `StockAnalysis` intraday series, session levels, 15m context and signal validity; sample 5m/15m bars from a TypeScript port of the seeder (parity-tested); the price chart reads IST, draws session separators, previous-day levels and the opening range; the analysis panel shows signal timing, 15m context and a Session block. Sample data is a 14:00 IST snapshot with no forming or future bars.
 - OpenAPI 0.2.0 (T-I09): intraday shared schemas (timestamps with +05:30, 15m context, session levels, signal validity), TRD-05 risk response, new endpoints R2 `GET /api/v1/risk/today` and X11 `GET /api/v1/positions/live`; 90 operations, coverage-checked against ARC-04.
