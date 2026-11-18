@@ -48,3 +48,14 @@ class RulesetParams:
     def equal_tolerance(self) -> Decimal:
         """`structure.equal_level_tolerance_pct` as a fraction."""
         return _pct(self.get("structure.equal_level_tolerance_pct"))
+
+    def decimal(self, key: str) -> Decimal:
+        """Any numeric parameter as an exact `Decimal` (percent values are NOT converted)."""
+        v = self.get(key)
+        if isinstance(v, bool) or not isinstance(v, int | float | str):
+            raise TypeError(f"parameter {key!r} is not numeric: {v!r}")
+        return Decimal(str(v))
+
+    def pct(self, key: str) -> Decimal:
+        """A `*_pct` parameter as a fraction (0.15 -> 0.0015)."""
+        return _pct(self.get(key))
