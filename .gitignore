@@ -46,3 +46,6 @@ npm-debug.log*
 
 # Backup of the create-next-app nested repo (moved during M0)
 .git-backups/
+
+# Kite access token (daily, written by python-engine/scripts/kite_login.py)
+.kite_token
