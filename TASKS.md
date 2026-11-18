@@ -32,6 +32,12 @@ None.
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-I75 | Scan CLI `scripts/scan.py` (universe, optional account file, `--as-of` replay, `--watch`, `--all`, JSON output; labels DEMO data as sample, never live) | I6 | 2026-11-18 (`--help`; the pieces it composes are tested; the script has not run on real bars) |
+| T-I74 | Scan output (`app/analysis/format.py`: table with entry, stop, target, R:R, quantity, risk, validity, reasons; stale-data and "decision support only" notices; JSON) | I6 | 2026-11-18 (3 tests) |
+| T-I73 | Owner-supplied account state (`app/analysis/account.py`: capital, today's closed trades, open positions from a JSON file, since the engine stores no trades yet) | I5 | 2026-11-18 (test incl. losing streak, open risk) |
+| T-I72 | Universe scan with sizing (`app/analysis/scan.py`: analyse each symbol, size the plan with the account limits, staleness flag at more than two bar lengths, order confirmed → watch → rest by PAQS) | I6 | 2026-11-18 (6 tests: hand-computed 500 shares / ₹500 risk, blocked plans with reasons, short-history row, ordering) |
+| T-I71 | Snapshot builder from stored candles as of a moment (`app/analysis/snapshot.py`: latest session plus lookback, only bars that ended by `as_of`, previous-day levels, tick and lot) | I6 | 2026-11-18 (integration test on the dev Postgres incl. a past `as_of`) |
+| T-I70 | Loader's `session_spec` made public for reuse | I6 | 2026-11-18 |
 | T-I69 | Backtest runner `scripts/run_backtest.py` (universe, date range, capital, sizing mode, IS/OOS/holdout split, text report and optional JSON) and `history-check` in `scripts/market_data_cli.py` | I8 | 2026-11-18 (`--help` and the report/loader paths it uses are tested; the script itself has not run on real data) |
 | T-I68 | Backtest report (`app/backtest/report.py`: text report with the BT-06 disclaimer, unverified-cost warning, flags and breakdowns; JSON-serialisable result) | I8 | 2026-11-18 (3 tests) |
 | T-I67 | `universe_members` (point-in-time symbol → instrument id) | I8 | 2026-11-18 (integration test) |

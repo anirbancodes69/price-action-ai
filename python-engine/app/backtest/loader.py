@@ -55,7 +55,7 @@ def previous_day_levels(session_bars: Sequence[Bar]) -> DailyLevels | None:
     )
 
 
-def _session_spec(conn: Connection, day: date, previous: date | None) -> SessionSpec:
+def session_spec(conn: Connection, day: date, previous: date | None) -> SessionSpec:
     s = trading_session(conn, "NSE", day)
     open_, close = (
         s if s else (datetime.combine(day, NORMAL_OPEN, IST), datetime.combine(day, NORMAL_CLOSE, IST))
@@ -112,7 +112,7 @@ def load_backtest_inputs(
         idx = ordered_all.index(day)
         window = ordered_all[max(0, idx - lookback_sessions) : idx + 1]
         previous = ordered_all[idx - 1] if idx > 0 else None
-        spec = _session_spec(conn, day, previous)
+        spec = session_spec(conn, day, previous)
         symbols: list[SymbolData] = []
         for sym, by_day in sessions_by_symbol.items():
             if day not in by_day:

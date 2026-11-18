@@ -392,3 +392,31 @@ def test_history_report_stale_recovery_and_reconcile(fx: Fx) -> None:
         ).all()
     )
     assert st == {old: "FAILED", fresh: "RUNNING"}
+
+
+def test_symbol_snapshot_as_of(fx: Fx) -> None:
+    from app.analysis.snapshot import latest_bar_end, load_symbol_snapshot
+
+    sync_instruments(fx.conn, fx.provider, CTX, fx.symbols[:2], DAYS[0] - timedelta(days=5))
+    refs = [ProviderInstrumentRef(f"{fx.suffix}0", fx.symbols[0])]
+    fx.run_ids.append(
+        backfill(fx.conn, fx.source, fx.provider, CTX, refs, "5m", DAYS[0], DAYS[2], lambda _: None).run_id
+    )
+    ids = fx.instrument_ids()
+    a, b = ids[fx.symbols[0]], ids[fx.symbols[1]]
+    assert load_symbol_snapshot(fx.conn, fx.source, b, fx.symbols[1], 1) is None  # no bars stored
+    sym, spec = load_symbol_snapshot(fx.conn, fx.source, a, fx.symbols[0], 1)  # type: ignore[misc]
+    assert spec.session_date == DAYS[2] and len(sym.bars_5m) == 150  # Tuesday + Wednesday
+    # Tuesday's bars sit at 100 + 1 x 10 = 110 (high 111, low 109, close 110)
+    assert sym.prev_day is not None and (sym.prev_day.high, sym.prev_day.low, sym.prev_day.close) == (
+        D(111),
+        D(109),
+        D(110),
+    )
+    # as of Tuesday 10:00 IST: only bars that ended by then, previous session is Monday (level 100)
+    asof = datetime(DAYS[1].year, DAYS[1].month, DAYS[1].day, 10, 0, tzinfo=IST)
+    assert latest_bar_end(fx.conn, fx.source, a, asof) == asof
+    past, pspec = load_symbol_snapshot(fx.conn, fx.source, a, fx.symbols[0], 1, asof)  # type: ignore[misc]
+    assert pspec.session_date == DAYS[1] and len(past.bars_5m) == 75 + 9
+    assert past.bars_5m[-1].end == asof
+    assert past.prev_day is not None and (past.prev_day.high, past.prev_day.low) == (D(101), D(99))
