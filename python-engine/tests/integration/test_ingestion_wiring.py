@@ -314,3 +314,81 @@ def test_backtest_loader_builds_sessions_with_previous_day_levels(fx: Fx) -> Non
         tue.spec.session_close.astimezone(IST).time().hour,
     ) == (9, 15)
     assert UTC is not None
+
+
+def test_history_report_stale_recovery_and_reconcile(fx: Fx) -> None:
+    from datetime import time as dtime
+
+    from app.ingestion.history_check import history_report
+    from app.ingestion.reconcile import already_reconciled, reconcile_day, recover_stale_runs
+    from app.ingestion.universe import universe_members
+
+    sync_instruments(fx.conn, fx.provider, CTX, fx.symbols[:2], DAYS[0] - timedelta(days=5))
+    load_universe(fx.conn, fx.universe_code, fx.symbols[:2], DAYS[0] - timedelta(days=5))
+    refs = [ProviderInstrumentRef(f"{fx.suffix}{n}", s) for n, s in enumerate(fx.symbols[:2])]
+    ids = fx.instrument_ids()
+    members = universe_members(fx.conn, fx.universe_code, DAYS[0])
+    assert set(members) == set(fx.symbols[:2])
+    # store Monday fully for A, and for B only a part of Monday; Tuesday only for A
+    fx.run_ids.append(
+        backfill(
+            fx.conn, fx.source, fx.provider, CTX, refs[:1], "5m", DAYS[0], DAYS[1], lambda _: None
+        ).run_id
+    )
+    part = backfill(fx.conn, fx.source, fx.provider, CTX, refs[1:], "5m", DAYS[0], DAYS[0], lambda _: None)
+    fx.run_ids.append(part.run_id)
+    fx.conn.execute(
+        delete(candles).where(
+            candles.c.instrument_id == ids[fx.symbols[1]],
+            candles.c.bar_start >= datetime.combine(DAYS[0], dtime(14, 0), IST),
+        )
+    )
+    fx.conn.commit()
+    rep = history_report(fx.conn, fx.source, members, "5m", DAYS[0], DAYS[1])
+    by = {s.symbol: s for s in rep.symbols}
+    assert rep.sessions == 2 and not rep.clean
+    a, b = by[fx.symbols[0]], by[fx.symbols[1]]
+    assert (a.missing_bars, a.missing_sessions) == (0, ())
+    assert (
+        b.missing_sessions == (DAYS[1],) and b.missing_bars == 18
+    )  # 14:00 .. 15:25 on the full 75-bar grid (no provider cutoff given)
+    # reconcile Monday: B is refetched from the provider and healed
+    rec = reconcile_day(fx.conn, fx.source, fx.provider, CTX, refs, ids, DAYS[0], lambda _: None)
+    fx.run_ids += [
+        r
+        for (r,) in fx.conn.execute(
+            select(ingestion_runs.c.id).where(
+                ingestion_runs.c.kind == "BACKFILL", ingestion_runs.c.range_from == DAYS[0]
+            )
+        ).all()
+        if r not in fx.run_ids
+    ]
+    assert rec.refetched and rec.gaps_before > 0
+    # the fake provider serves a full 09:15-15:10 grid, the Kite-style close is 15:15; 75 bars include 15:15-15:25
+    assert already_reconciled(fx.conn, fx.source, DAYS[0])
+    # stale RUNNING runs are failed, fresh ones are not
+    old, fresh = uuid.uuid4(), uuid.uuid4()
+    now = datetime.now(UTC)
+    for rid, started in ((old, now - timedelta(hours=2)), (fresh, now)):
+        fx.conn.execute(
+            insert(ingestion_runs).values(
+                id=rid,
+                data_source_id=fx.source,
+                kind="BACKFILL",
+                status="RUNNING",
+                range_from=DAYS[2],
+                range_to=DAYS[2],
+                timeframe="5m",
+                instruments_total=1,
+                started_at=started,
+            )
+        )
+        fx.run_ids.append(rid)
+    fx.conn.commit()
+    assert recover_stale_runs(fx.conn, fx.source, now) >= 1
+    st = dict(
+        fx.conn.execute(
+            select(ingestion_runs.c.id, ingestion_runs.c.status).where(ingestion_runs.c.id.in_([old, fresh]))
+        ).all()
+    )
+    assert st == {old: "FAILED", fresh: "RUNNING"}
