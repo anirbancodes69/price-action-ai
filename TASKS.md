@@ -32,6 +32,7 @@ See T-201 (needs a Kite developer app).
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-I14 | Intraday bar quality checks (`app/ingestion/quality.py`: MISSING_BAR, MISALIGNED_BAR, OUTSIDE_SESSION, INVALID_OHLC, DUPLICATE, 5m→15m AGGREGATE_MISMATCH; special-session grid override) | I2 | 2026-11-18 (7 tests; ruff, mypy clean; 1% volume tolerance is a HYPOTHESIS; LATE_BAR belongs to the fetcher, not built) |
 | T-I13 | DEMO intraday provider (`app/providers/demo.py`, deterministic SHA-256-seeded sample 5m/15m bars, 75/25 per session, 15m = exact aggregate) and the NSE session bar grid (`app/ingestion/session.py`) | I2 | 2026-11-18 (5 tests; ruff, mypy clean; not bar-for-bar equal to the PHP/TS demo bars, which are tied to the daily series) |
 | T-I12 | Provider abstraction and Kite adapter (`app/providers`: protocol, normalised bars/instruments/errors, JIT token, instrument master, 5m/15m/1D bars); `httpx` moved to runtime deps | I2 | 2026-11-18 (11 offline tests on mocked HTTP; ruff, mypy clean; endpoint shapes and limits unverified until T-201; no rate limiter or retries yet) |
 | T-901 | Pin third-party GitHub Actions by commit SHA: `shivammathur/setup-php`, `astral-sh/setup-uv`, `gitleaks/gitleaks-action`, `dorny/paths-filter`, `docker/setup-buildx-action` (GitHub-owned `actions/*` stay on tags per ENG-09 §6) | M0 | 2026-11-17 (every SHA resolved from its release tag through the GitHub API; all workflows parse; Dependabot `github-actions` keeps them current; CI pending) |
