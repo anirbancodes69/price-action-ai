@@ -16,6 +16,7 @@ from app.providers.base import (
     ProviderNotSupported,
     ProviderRateLimited,
     ProviderUnavailable,
+    QuoteProvider,
     Timeframe,
 )
 
@@ -32,5 +33,6 @@ __all__ = [
     "ProviderNotSupported",
     "ProviderRateLimited",
     "ProviderUnavailable",
+    "QuoteProvider",
     "Timeframe",
 ]

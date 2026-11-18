@@ -37,6 +37,7 @@ IST = ZoneInfo("Asia/Kolkata")
 BASE_URL = "https://api.kite.trade"
 _INTERVALS: dict[str, str] = {"5m": "5minute", "15m": "15minute", "1D": "day"}
 _PRICE_QUANTUM = Decimal("0.01")
+_LTP_CHUNK = 200  # conservative; the documented per-call limit is higher (unverified)
 
 
 class KiteProvider:
@@ -85,6 +86,18 @@ class KiteProvider:
                 )
             except (KeyError, ValueError, InvalidOperation) as exc:
                 raise ProviderDataError("malformed instrument row") from exc
+        return out
+
+    def fetch_ltp(self, ctx: ProviderContext, symbols: list[str]) -> dict[str, Decimal]:
+        out: dict[str, Decimal] = {}
+        for i in range(0, len(symbols), _LTP_CHUNK):
+            params = [("i", f"NSE:{s}") for s in symbols[i : i + _LTP_CHUNK]]
+            payload = self._get(ctx, "/quote/ltp", params).json()
+            try:
+                for key, row in payload["data"].items():
+                    out[key.split(":", 1)[1]] = Decimal(str(row["last_price"])).quantize(_PRICE_QUANTUM)
+            except (KeyError, IndexError, AttributeError, TypeError, InvalidOperation) as exc:
+                raise ProviderDataError("malformed quote payload") from exc
         return out
 
     def fetch_bars(

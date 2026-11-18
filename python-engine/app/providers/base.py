@@ -102,3 +102,9 @@ class MarketDataProvider(Protocol):
     ) -> list[ProviderBar]: ...
 
     def capabilities(self) -> ProviderCapabilities: ...
+
+
+class QuoteProvider(Protocol):
+    """Last traded prices for display only: never stored as candles, never used by analysis."""
+
+    def fetch_ltp(self, ctx: ProviderContext, symbols: list[str]) -> dict[str, Decimal]: ...
