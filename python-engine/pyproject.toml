@@ -13,12 +13,12 @@ dependencies = [
     "redis>=5.2",
     "psycopg[binary]>=3.2",
     "sqlalchemy>=2.0",
+    "httpx>=0.28",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=8.3",
-    "httpx>=0.28",
     "ruff>=0.8",
     "mypy>=1.13",
 ]
