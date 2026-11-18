@@ -131,3 +131,23 @@ def universe_refs(conn: Connection, code: str, provider_code: str, on: date) -> 
         .order_by(instruments.c.trading_symbol)
     ).all()
     return [ProviderInstrumentRef(token=tok, symbol=sym) for sym, tok in rows]
+
+
+def universe_members(conn: Connection, code: str, on: date) -> dict[str, uuid.UUID]:
+    """Symbol -> instrument id of the members valid on `on` (point in time, effective-dated)."""
+    m = universe_memberships
+    rows = conn.execute(
+        select(instruments.c.trading_symbol, instruments.c.id)
+        .select_from(
+            universes.join(m, m.c.universe_id == universes.c.id).join(
+                instruments, instruments.c.id == m.c.instrument_id
+            )
+        )
+        .where(
+            universes.c.code == code,
+            m.c.effective_from <= on,
+            (m.c.effective_to.is_(None)) | (m.c.effective_to > on),
+        )
+        .order_by(instruments.c.trading_symbol)
+    ).all()
+    return dict(rows)
