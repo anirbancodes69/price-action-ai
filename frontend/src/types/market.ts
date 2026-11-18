@@ -18,7 +18,9 @@ export type Sector =
   | "Telecom"
   | "Capital Goods"
   | "Cement"
-  | "Utilities";
+  | "Utilities"
+  /** Live data without a sector classification. */
+  | "Unclassified";
 
 export interface Stock {
   symbol: string;

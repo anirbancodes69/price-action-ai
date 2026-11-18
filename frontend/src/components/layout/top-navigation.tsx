@@ -14,6 +14,8 @@ import { Breadcrumb } from "./breadcrumb";
 import { GlobalSearch, type SearchableStock } from "./global-search";
 import { useTheme } from "./theme";
 import { Avatar } from "./user-badge";
+import { logout } from "@/lib/api/auth";
+import { USE_HTTP } from "@/lib/api/config";
 
 interface TopNavigationProps {
   user: UserProfile;
@@ -144,8 +146,13 @@ function UserMenu({ user }: { user: UserProfile }) {
           icon: LogOut,
           tone: "danger",
           onSelect: () => {
-            toast({ title: "Signed out of demo workspace", tone: "info" });
-            router.push("/login");
+            if (!USE_HTTP) {
+              toast({ title: "Signed out of demo workspace", tone: "info" });
+              router.push("/login");
+              return;
+            }
+            // The session is ended server-side; go to sign in even if the request fails (the cookie expires anyway).
+            void logout().finally(() => router.push("/login"));
           },
         },
       ]}

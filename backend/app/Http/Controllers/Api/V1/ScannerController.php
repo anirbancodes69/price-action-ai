@@ -22,7 +22,7 @@ class ScannerController extends Controller
     {
         $scan = $engine->scan([
             'data_source_id' => $sources->id(),
-            'universe_code' => $request->input('universe', 'NIFTY50'),
+            'universe_code' => $request->input('universe', (string) config('trading.universe')),
             'account' => ['capital' => (string) config('trading.capital')],
             'include_no_trade' => true,
         ]);

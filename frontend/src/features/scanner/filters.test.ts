@@ -35,7 +35,7 @@ describe("scanner filters", () => {
 
   it("enforces minimum risk/reward", () => {
     const out = applyFilters(rows, { ...DEFAULT_FILTERS, minRR: 2 });
-    expect(out.every((r) => r.levels.riskReward >= 2)).toBe(true);
+    expect(out.every((r) => (r.levels?.riskReward ?? 0) >= 2)).toBe(true);
   });
 
   it("counts active filters excluding the text query", () => {

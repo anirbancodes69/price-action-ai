@@ -165,7 +165,8 @@ export interface ScannerRow {
   direction: "long" | "short";
   setupStatus: SetupStatus;
   signal: SignalState;
-  levels: TradeLevels;
+  /** `null` when there is no setup with levels (a NO_TRADE row from the live API). */
+  levels: TradeLevels | null;
   qualityScore: number;
   htfStructure: MarketStructure;
   signalAt: string | null;

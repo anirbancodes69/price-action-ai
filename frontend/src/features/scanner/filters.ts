@@ -32,7 +32,7 @@ export function applyFilters(rows: ScannerRow[], f: ScannerFilters) {
     if (f.setup !== "all" && r.setupType !== f.setup) return false;
     if (f.structure !== "all" && r.structure !== f.structure) return false;
     if (f.status !== "all" && r.setupStatus !== f.status) return false;
-    if (r.levels.riskReward < f.minRR) return false;
+    if (f.minRR > 0 && (r.levels?.riskReward ?? 0) < f.minRR) return false;
     return true;
   });
 }

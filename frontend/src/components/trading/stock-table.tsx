@@ -14,6 +14,9 @@ import { MarketStructureBadge } from "./market-structure-badge";
 import { QualityScoreBar } from "./quality-score";
 import { SignalBadge } from "./signal-badge";
 
+/** A row without a setup has no levels: no-trade is a valid result, not a missing value. */
+const NO_LEVEL = <span className="text-muted-foreground" aria-label="No levels">–</span>;
+
 export type StockColumnKey =
   | "symbol"
   | "company"
@@ -89,36 +92,39 @@ const ALL: Record<StockColumnKey, Column<ScannerRow>> = {
     header: "Entry",
     align: "right",
     hideBelow: "sm",
-    sortValue: (r) => r.levels.entry,
-    render: (r) => <span className="text-foreground">{formatPrice(r.levels.entry)}</span>,
+    sortValue: (r) => r.levels?.entry ?? -1,
+    render: (r) => (r.levels ? <span className="text-foreground">{formatPrice(r.levels.entry)}</span> : NO_LEVEL),
   },
   stop: {
     key: "stop",
     header: "Stop-loss",
     align: "right",
     hideBelow: "xl",
-    sortValue: (r) => r.levels.stopLoss,
-    render: (r) => <span className="text-bear">{formatPrice(r.levels.stopLoss)}</span>,
+    sortValue: (r) => r.levels?.stopLoss ?? -1,
+    render: (r) => (r.levels ? <span className="text-bear">{formatPrice(r.levels.stopLoss)}</span> : NO_LEVEL),
   },
   target: {
     key: "target",
     header: "Target",
     align: "right",
     hideBelow: "2xl",
-    sortValue: (r) => r.levels.target,
-    render: (r) => <span className="text-bull">{formatPrice(r.levels.target)}</span>,
+    sortValue: (r) => r.levels?.target ?? -1,
+    render: (r) => (r.levels ? <span className="text-bull">{formatPrice(r.levels.target)}</span> : NO_LEVEL),
   },
   rr: {
     key: "rr",
     header: "R:R",
     align: "right",
     hideBelow: "sm",
-    sortValue: (r) => r.levels.riskReward,
-    render: (r) => (
-      <span className={TONE_TEXT[rrTone(r.levels.riskReward)]}>
-        1:{r.levels.riskReward.toFixed(1)}
-      </span>
-    ),
+    sortValue: (r) => r.levels?.riskReward ?? -1,
+    render: (r) =>
+      r.levels ? (
+        <span className={TONE_TEXT[rrTone(r.levels.riskReward)]}>
+          1:{r.levels.riskReward.toFixed(1)}
+        </span>
+      ) : (
+        NO_LEVEL
+      ),
   },
   quality: {
     key: "quality",

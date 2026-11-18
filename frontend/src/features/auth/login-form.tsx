@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { AuthHeading, DemoNotice, TextLink } from "./auth-heading";
 import { PasswordInput } from "./password-input";
 import { validateEmail, validatePassword } from "./validation";
+import { ApiError } from "@/lib/api/client";
+import { login, loginErrorMessage } from "@/lib/api/auth";
+import { USE_HTTP } from "@/lib/api/config";
 
 export function LoginForm() {
   const router = useRouter();
@@ -24,8 +27,18 @@ export function LoginForm() {
     setErrors(next);
     if (next.email || next.password) return;
     setLoading(true);
-    // Demo only — no authentication backend in Phase 1.
-    setTimeout(() => router.push("/dashboard"), 700);
+    if (!USE_HTTP) {
+      // Mock data source: no authentication backend.
+      setTimeout(() => router.push("/dashboard"), 700);
+      return;
+    }
+    login(email.trim(), password, remember)
+      .then(() => router.push("/dashboard"))
+      .catch((err: unknown) => {
+        const message = err instanceof ApiError ? loginErrorMessage(err.code, err.status) : "Sign in failed. Try again.";
+        setErrors({ password: message });
+        setLoading(false);
+      });
   };
 
   return (

@@ -9,7 +9,12 @@ RUN npm ci
 
 FROM node:26-alpine AS builder
 WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1
+# Build-time data source selection (NEXT_PUBLIC_* is inlined) and the Laravel origin for the /api proxy.
+ARG NEXT_PUBLIC_DATA_SOURCE=mock
+ARG BACKEND_URL=http://backend-nginx:8000
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_DATA_SOURCE=$NEXT_PUBLIC_DATA_SOURCE \
+    BACKEND_URL=$BACKEND_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
