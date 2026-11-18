@@ -150,3 +150,4 @@ A reference level that coincides with a zone (inside the zone or within `zone.cl
 | OQ-SR-01 | Zone break closes: resolved for `pa-intraday 0.1.0` as 1 close (§5.1); revisit with intraday backtests. |
 | OQ-SR-02 | Should daily pivots (not only previous-day levels) be merged into intraday zones? Future scope. |
 | OQ-SR-03 | Should touch counting decay with age instead of the recency bonus? |
+| OQ-SR-04 | Implementation choices where §3-§6 are silent (T-I34..T-I38): `formed_at_index` is the latest member knowledge index among all members visible at `t` (zones are rebuilt at each `t`); a later touch whose preceding close is inside the zone is skipped; the reaction window for later touches is `pivot.right_bars_5m`; strength weights and buckets (§4.2) are code constants, not registry keys; equal levels use consecutive same-kind 5m pivots only; minimum width is measured against the midpoint. Confirm or amend. |

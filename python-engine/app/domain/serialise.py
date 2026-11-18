@@ -11,7 +11,9 @@ from decimal import Decimal
 from app.domain.analyse import AnalysisResult
 from app.domain.candles import canonical_json
 from app.domain.htf import HtfContext
+from app.domain.liquidity import LiquidityPool
 from app.domain.types import BarState, StructureEvent, StructureResult, SwingPoint
+from app.domain.zones import Zone
 
 
 def _price(p: Decimal) -> str:
@@ -66,6 +68,33 @@ def result_hash(r: StructureResult) -> str:
     return hashlib.sha256(structure_to_canonical(r).encode()).hexdigest()
 
 
+def _zone(z: Zone) -> dict[str, object]:
+    return {
+        "low": _price(z.low),
+        "high": _price(z.high),
+        "members": [
+            [m.timeframe, m.pivot.index, m.pivot.kind.value, _price(m.pivot.price)] for m in z.members
+        ],
+        "formed_at_index": z.formed_at_index,
+        "status": z.status.value,
+        "broken_direction": z.broken_direction.value if z.broken_direction else None,
+        "broken_at_index": z.broken_at_index,
+        "touches": z.touches,
+        "strength": z.strength,
+        "bucket": z.bucket.value,
+    }
+
+
+def _pool(p: LiquidityPool) -> dict[str, object]:
+    return {
+        "type": p.type.value,
+        "level": _price(p.level),
+        "first_index": p.first_index,
+        "second_index": p.second_index,
+        "confirmed_at_index": p.confirmed_at_index,
+    }
+
+
 def _htf(h: HtfContext | None) -> dict[str, object] | None:
     if h is None:
         return None
@@ -87,6 +116,8 @@ def analysis_to_canonical(a: AnalysisResult) -> str:
             "htf": {"index": a.htf.index, "state": _state(a.htf.state) if a.htf.state else None}
             if a.htf
             else None,
+            "zones": [_zone(z) for z in a.zones] if a.zones is not None else None,
+            "pools": [_pool(x) for x in a.pools] if a.pools is not None else None,
             "levels": {k: (None if v is None else _price(v)) for k, v in asdict(lv).items()} if lv else None,
         }
     )
