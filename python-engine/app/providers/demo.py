@@ -57,6 +57,13 @@ class DemoProvider:
             for i, s in enumerate(_SYMBOLS)
         ]
 
+    def fetch_ltp(self, ctx: ProviderContext, symbols: list[str]) -> dict[str, Decimal]:
+        # SAMPLE price: close of the latest generated weekday's last bar.
+        day = date.today()
+        while day.weekday() >= 5:
+            day = day.fromordinal(day.toordinal() - 1)
+        return {s: self._five_minute(s, day)[-1].close for s in symbols}
+
     def fetch_bars(
         self,
         ctx: ProviderContext,

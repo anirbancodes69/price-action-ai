@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import csv
 import io
+import time
+from collections.abc import Callable
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -29,18 +31,28 @@ from app.providers.base import (
     ProviderUnavailable,
     Timeframe,
 )
+from app.providers.resilience import RateLimiter, TokenBucket, call_with_retries
 
 IST = ZoneInfo("Asia/Kolkata")
 BASE_URL = "https://api.kite.trade"
 _INTERVALS: dict[str, str] = {"5m": "5minute", "15m": "15minute", "1D": "day"}
 _PRICE_QUANTUM = Decimal("0.01")
+_LTP_CHUNK = 200  # conservative; the documented per-call limit is higher (unverified)
 
 
 class KiteProvider:
     provider_code = "ZERODHA_KITE"
 
-    def __init__(self, api_key: str, client: httpx.Client | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        client: httpx.Client | None = None,
+        limiter: RateLimiter | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
         self._api_key = api_key
+        self._limiter: RateLimiter = limiter or TokenBucket(self.capabilities().requests_per_second)
+        self._sleep = sleep
         self._client = client or httpx.Client(base_url=BASE_URL, timeout=15.0)
 
     def capabilities(self) -> ProviderCapabilities:
@@ -76,6 +88,18 @@ class KiteProvider:
                 raise ProviderDataError("malformed instrument row") from exc
         return out
 
+    def fetch_ltp(self, ctx: ProviderContext, symbols: list[str]) -> dict[str, Decimal]:
+        out: dict[str, Decimal] = {}
+        for i in range(0, len(symbols), _LTP_CHUNK):
+            params = [("i", f"NSE:{s}") for s in symbols[i : i + _LTP_CHUNK]]
+            payload = self._get(ctx, "/quote/ltp", params).json()
+            try:
+                for key, row in payload["data"].items():
+                    out[key.split(":", 1)[1]] = Decimal(str(row["last_price"])).quantize(_PRICE_QUANTUM)
+            except (KeyError, IndexError, AttributeError, TypeError, InvalidOperation) as exc:
+                raise ProviderDataError("malformed quote payload") from exc
+        return out
+
     def fetch_bars(
         self,
         ctx: ProviderContext,
@@ -108,7 +132,14 @@ class KiteProvider:
 
         return ProviderBar(ts, timeframe, price(c[1]), price(c[2]), price(c[3]), price(c[4]), int(c[5]))
 
-    def _get(self, ctx: ProviderContext, path: str, params: dict[str, str] | None = None) -> httpx.Response:
+    def _get(self, ctx: ProviderContext, path: str, params: Any = None) -> httpx.Response:
+        def once() -> httpx.Response:
+            self._limiter.acquire()
+            return self._get_once(ctx, path, params)
+
+        return call_with_retries(once, sleep=self._sleep)
+
+    def _get_once(self, ctx: ProviderContext, path: str, params: Any = None) -> httpx.Response:
         # JIT token: obtained per call, held only in this local header.
         headers = {
             "X-Kite-Version": "3",
