@@ -25,9 +25,14 @@ REF = ProviderInstrumentRef("738561", "RELIANCE")
 T0, T1 = datetime(2026, 11, 17, 9, 15, tzinfo=IST), datetime(2026, 11, 17, 10, 0, tzinfo=IST)
 
 
+class NoLimit:
+    def acquire(self) -> None:
+        return None
+
+
 def make(handler: httpx.MockTransport | object) -> KiteProvider:
     client = httpx.Client(base_url="https://api.kite.trade", transport=httpx.MockTransport(handler))  # type: ignore[arg-type]
-    return KiteProvider("KEY", client)
+    return KiteProvider("KEY", client, limiter=NoLimit(), sleep=lambda s: None)
 
 
 def test_fetch_bars_normalises_dedupes_and_sends_jit_token() -> None:
