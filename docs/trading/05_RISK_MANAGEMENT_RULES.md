@@ -213,4 +213,5 @@ The engine contract (`python-engine/app/schemas/risk.py`) and ARC-04 §8.1 still
 | OQ-RM-03 | Confirm NSE tick-size table and its history for backtests. |
 | OQ-RM-04 | Resolved by ADR-014: the owner's planning values replace the old UI/onboarding/spec defaults; the remaining values are OQ-TRD-04. |
 | OQ-RM-05 | Should the losing streak count only today's trades (chosen) or roll across sessions? |
+| OQ-RM-07 | Implementation choices where §3-§8 are silent (T-I46..T-I51): the entry-cutoff check blocks a request whose bar ends after the cutoff; ties between sizing terms resolve in the §3 order; binding names are `RISK_BUDGET`, `CAPITAL`, `POSITION_CAP`, `OPEN_RISK`, `DAILY_LOSS`; extra fill skip codes `SKIPPED_ACCOUNT_LIMIT` and `SKIPPED_SIZE`; exit order is gap at the open, session end, structure exit, then intrabar stop/target; `est_round_trip_costs` and `rr_after_costs` are not computed until the TRD-06 §5 schedule is verified. Confirm or amend. |
 | OQ-RM-06 | Broker automatic square-off time for intraday positions — verify, and keep `session.exit_minutes_before_close` earlier than it. |

@@ -49,7 +49,7 @@
 | [Market Structure Rules](trading/02_MARKET_STRUCTURE_RULES.md) | Specification ready | TRD-01 | OQ-STR-01, OQ-STR-02, OQ-STR-03 | 2026-11-15 |
 | [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) | Specification ready | TRD-01, TRD-02 | OQ-SR-01, OQ-SR-02, OQ-SR-03, OQ-SR-04 | 2026-11-15 |
 | [Setup Detection Rules and Price Action Quality Score](trading/04_SETUP_DETECTION_RULES.md) | Specification ready | TRD-01..03, TRD-05 | OQ-SD-01, OQ-SD-02, OQ-SD-03, OQ-SD-04, OQ-SD-05, OQ-SD-06 | 2026-11-15 |
-| [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) | Specification ready for intraday (v0.2.0, ADR-014) | TRD-01, TRD-04 | OQ-RM-01, OQ-RM-02, OQ-RM-03, OQ-RM-05, OQ-RM-06 | 2026-11-15 |
+| [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) | Specification ready for intraday (v0.2.0, ADR-014) | TRD-01, TRD-04 | OQ-RM-01, OQ-RM-02, OQ-RM-03, OQ-RM-05, OQ-RM-06, OQ-RM-07 | 2026-11-15 |
 | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) | Specification ready for intraday (v0.2.0; costs and history depth to verify) | TRD-01..05 | OQ-BT-01, OQ-BT-02, OQ-BT-03, OQ-BT-05, OQ-BT-06, OQ-BT-07 | 2026-11-17 |
 | [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) | Specification ready for intraday (v0.2.0) | TRD-04..06 | OQ-PT-01, OQ-PT-02 | 2026-11-17 |
 | [Trading Engine Validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Specification ready | TRD-02..06 | — | 2026-11-15 |
@@ -145,6 +145,7 @@ All unresolved decisions, aggregated from each document's "Open questions" secti
 | OQ-RM-03 | Confirm NSE tick-size table and its history for backtests. | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
 | OQ-RM-05 | Should the losing streak count only today's trades (chosen) or roll across sessions? | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
 | OQ-RM-06 | Broker automatic square-off time for intraday positions — verify, and keep the session-end exit earlier. | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
+| OQ-RM-07 | Implementation choices where TRD-05 is silent (cutoff boundary, tie order, binding names, extra skip codes, exit order, costs not computed). | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) |
 | OQ-BT-01 | Source of point-in-time NIFTY 50 membership history. | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
 | OQ-BT-02 | Source and maintenance of current and historical intraday charge schedules (per broker). | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
 | OQ-BT-03 | Corporate-action data source. | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) |
