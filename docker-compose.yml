@@ -32,6 +32,8 @@ x-backend-env: &backend-env
   ENGINE_URL: http://engine:8100
   ENGINE_SERVICE_TOKEN: ${ENGINE_SERVICE_TOKEN:?run ./scripts/setup-env.sh}
   ENGINE_DATA_SOURCE_ID: ${INGEST_DATA_SOURCE_ID:-}
+  TRADING_UNIVERSE: ${TRADING_UNIVERSE:-NIFTY50}
+  SANCTUM_STATEFUL_DOMAINS: localhost:3000,localhost:3001,127.0.0.1:3000,127.0.0.1:3001
 
 x-engine-env: &engine-env
   APP_ENV: ${APP_ENV:-local}
@@ -45,6 +47,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_DATA_SOURCE: ${NEXT_PUBLIC_DATA_SOURCE:-mock}
     image: priceaction-ai/frontend:${IMAGE_TAG:-local}
     ports:
       - "3000:3000"
@@ -58,6 +62,9 @@ services:
       dockerfile: Dockerfile.dev
     ports:
       - "3001:3000"
+    environment:
+      NEXT_PUBLIC_DATA_SOURCE: ${NEXT_PUBLIC_DATA_SOURCE:-mock}
+      BACKEND_URL: http://backend-nginx:8000
     volumes:
       - ./frontend:/app
       - /app/node_modules

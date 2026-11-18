@@ -61,6 +61,7 @@ Legend: **S** = secret (never committed; `.env.example` holds placeholder only).
 | `ENGINE_URL` | `http://engine:8100` | | |
 | `ENGINE_TIMEOUT_SECONDS`, `ENGINE_SCAN_TIMEOUT_SECONDS` | `2`, `15` | | Engine call budgets; a scan or analysis reads stored bars (ADR-016) |
 | `ENGINE_DATA_SOURCE_ID` | — | | `data_sources` row the owner reads; Compose passes `INGEST_DATA_SOURCE_ID`. Empty: the DEMO source |
+| `TRADING_UNIVERSE` | `NIFTY50` | | Universe the scanner reads by default (`DEMO` with the demo data source) |
 | `TRADING_CAPITAL_DEFAULT` | `100000` | | Planning capital used until a risk profile is stored (HYPOTHESIS, ADR-014) |
 | `ENGINE_SERVICE_TOKEN`, `ENGINE_SERVICE_TOKEN_PREVIOUS` | — | S | Laravel → engine |
 | `BACKEND_INTERNAL_TOKEN`, `..._PREVIOUS` | — | S | engine → Laravel |

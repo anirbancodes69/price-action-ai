@@ -28,9 +28,9 @@ Revised for the personal intraday direction ([ADR-014](../adr/ADR-014-PERSONAL-I
 
 | ID | Feature & description | User value | Depends on | Functional behaviour → acceptance | Status | Milestone |
 |---|---|---|---|---|---|---|
-| F-01 | **Login** — owner account (seeded), email/password session | Secure personal workspace | — | FR-002, FR-005, FR-006 | Mock functionality only · Backend pending | I6 |
+| F-01 | **Login** — owner account (`php artisan owner:create`), email/password session | Secure personal workspace | — | FR-002, FR-005, FR-006 | **Working in HTTP mode** (Sanctum SPA cookie, CSRF, rate limit); mock login otherwise | I6 |
 | F-02 | **Password reset** | Account recovery | F-01 | FR-003 | Mock functionality only (request form) · Backend pending | I6 |
-| F-03 | **Route protection** | Privacy | F-01 | FR-006 | Specification ready | I6 |
+| F-03 | **Route protection** | Privacy | F-01 | FR-006 | **Working in HTTP mode** (session check in the browser, redirect to sign in) | I6 |
 | F-04 | **Progressive onboarding** | — | F-01 | PRD-05 | **Deferred** (UI exists, not linked) | — |
 | F-05 | **Demo mode** — DEMO intraday data source | Use the app without a broker | — | US-01; badge everywhere | Mock functionality only · Backend: daily DEMO seeded (M1), intraday DEMO pending | I2 |
 | F-06 | **Broker data connection** — Kite or Groww (T-201/T-203), token custody | Personal real data | F-01, ARC-08 | US-02, FR-020–022, FR-025 | Mock functionality only (placeholders) · Backend pending | I2/I6 |
@@ -42,7 +42,7 @@ Revised for the personal intraday direction ([ADR-014](../adr/ADR-014-PERSONAL-I
 | F-12 | **Intraday setups** — opening range breakout, previous-day high/low break, breakout-retest; lifecycle bounded by the session | Actionable shortlist | F-10, F-11 | TRD-04 §3–7, §11; TV-SET | Specification ready | I4 |
 | F-13 | **Quality score (PAQS intraday)** | Prioritisation | F-12 | TRD-04 §10 | Mock functionality only (daily score UI) · Backend pending | I4 |
 | F-14 | **Signal states with time** — NO TRADE / BUY WATCH / ENTRY CONFIRMED / HOLD / EXIT, `signal_at`, `valid_until` | Clear meaning and freshness | F-12, F-21 | TRD-04 §12; `lib/labels.ts` | Frontend implemented (labels) · Backend pending | I4/I6 |
-| F-15 | **Intraday scanner** | Live shortlist | F-12 | FR-030–033; US-03 | Mock functionality only · Backend pending | I6 |
+| F-15 | **Intraday scanner** | Live shortlist | F-12 | FR-030–033; US-03 | **Working in HTTP mode** (live engine proxy, 30 s polling; DEMO data labelled as sample). Mock rows otherwise. Not yet run against real Kite bars | I6 |
 | F-16 | **Intraday dashboard** — session clock, P&L, limits, positions | Session overview | F-15, F-41 | FR-035, FR-110 | Mock functionality only (session clock, today's risk panel on sample data) · Backend pending | I6 |
 | F-17 | **Stock analysis view** — 5m/15m annotated chart & panels | Understand a setup | F-10–F-13 | FR-040–049; US-04/05 | Mock functionality only · Backend pending | I6 |
 | F-18 | **Global search** (⌘K) | Speed | F-08 | M1 search API | Frontend implemented (mock list) · Backend pending | I6 |
