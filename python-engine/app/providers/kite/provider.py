@@ -11,6 +11,7 @@ import io
 import time
 from collections.abc import Callable
 from datetime import datetime
+from datetime import time as dtime
 from decimal import Decimal, InvalidOperation
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -61,6 +62,7 @@ class KiteProvider:
             requests_per_second=3.0,  # placeholder: no 429 seen at ~12 req/s (ARC-08 §4.0)
             adjusted=False,
             verified=False,
+            intraday_close=dtime(15, 15),  # equity bars end with the 15:10 5m bar (ARC-08 §4.0)
         )
 
     def fetch_instruments(self, ctx: ProviderContext) -> list[ProviderInstrument]:

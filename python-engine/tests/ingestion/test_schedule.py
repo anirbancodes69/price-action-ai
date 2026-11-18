@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 
 from app.ingestion.schedule import due_bars
 from app.ingestion.session import IST
@@ -40,3 +40,12 @@ def test_no_bars_after_the_session_close() -> None:
     got = due_bars(at(18, 0), SESSION, {})
     assert max(b for _, b in got) == at(15, 25) and ("15m", at(15, 15)) in got
     assert all(b + timedelta(minutes=5) <= SESSION[1] for _, b in got)
+
+
+def test_provider_cutoff_ends_the_schedule_at_15_15() -> None:
+    got = due_bars(at(18, 0), SESSION, {}, provider_close=time(15, 15))
+    assert max(b for tf, b in got if tf == "5m") == at(15, 10)
+    assert max(b for tf, b in got if tf == "15m") == at(15, 0)
+    assert (
+        due_bars(at(15, 30), SESSION, {"5m": at(15, 10), "15m": at(15, 0)}, provider_close=time(15, 15)) == []
+    )

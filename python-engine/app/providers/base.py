@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, time
 from decimal import Decimal
 from typing import Literal, Protocol
 
@@ -76,6 +76,9 @@ class ProviderCapabilities:
     requests_per_second: float
     adjusted: bool
     verified: bool = False
+    # Latest bar end the provider serves intraday; None = the exchange session close.
+    # Kite equity bars stop at 15:15 (ARC-08 §4.0), so its intraday grid ends there.
+    intraday_close: time | None = None
 
 
 @dataclass(frozen=True, slots=True)

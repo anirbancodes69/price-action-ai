@@ -7,7 +7,7 @@ LATE_BAR is a fetch-time concern (per-bar deadline) and lives in the fetcher, no
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 
 from app.ingestion.session import bar_minutes, session_bar_starts, session_bounds
@@ -48,14 +48,17 @@ def check_session_bars(
     timeframe: Timeframe,
     bars: list[ProviderBar],
     expected: list[datetime] | None = None,
+    close: time | None = None,
 ) -> BarCheckResult:
     """Validate one instrument's bars for one session.
 
     ``expected`` overrides the normal grid for special sessions (from ``market_calendar``).
+    ``close`` is the provider's intraday cutoff (``ProviderCapabilities.intraday_close``); bars
+    after it are ``OUTSIDE_SESSION`` and none are expected there.
     Duplicates keep the last bar received, plus a DUPLICATE issue.
     """
-    grid = expected if expected is not None else session_bar_starts(day, timeframe)
-    open_, close = session_bounds(day)
+    grid = expected if expected is not None else session_bar_starts(day, timeframe, close)
+    open_, close_at = session_bounds(day, close)
     step = bar_minutes(timeframe)
     issues: list[QualityIssue] = []
     kept: dict[datetime, ProviderBar] = {}
@@ -63,7 +66,7 @@ def check_session_bars(
         ts = b.bar_start
         if ts.tzinfo is None:
             issues.append(QualityIssue("MISALIGNED_BAR", ts, "naive timestamp"))
-        elif not (open_ <= ts < close):
+        elif not (open_ <= ts < close_at):
             issues.append(QualityIssue("OUTSIDE_SESSION", ts, "outside regular session"))
         elif (ts - open_).total_seconds() % (step * 60) != 0:
             issues.append(QualityIssue("MISALIGNED_BAR", ts, f"not on the {timeframe} grid"))
