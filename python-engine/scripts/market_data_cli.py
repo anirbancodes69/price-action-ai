@@ -4,6 +4,7 @@
   sync-instruments --symbols FILE            instrument master -> instruments, refs, snapshots
   load-universe --code NIFTY50 --symbols FILE --from YYYY-MM-DD
   backfill --code NIFTY50 --timeframe 5m --from YYYY-MM-DD --to YYYY-MM-DD
+  history-check --code NIFTY50 --timeframe 5m --from YYYY-MM-DD --to YYYY-MM-DD
 
 Needs DATABASE_URL (an engine-role URL), KITE_API_KEY and a fresh `.kite_token` (scripts/kite_login.py).
 The NIFTY 50 symbol file is supplied by the owner: no constituent source is verified yet (OQ-BT-01).
@@ -26,9 +27,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # make `app` impor
 
 from app.db.tables import data_sources
 from app.ingestion.backfill import backfill
+from app.ingestion.history_check import history_report
 from app.ingestion.instruments import sync_instruments
 from app.ingestion.session import IST
-from app.ingestion.universe import load_universe, read_symbol_file, universe_refs
+from app.ingestion.universe import load_universe, read_symbol_file, universe_members, universe_refs
 from app.providers.base import ProviderContext
 from app.settings import get_settings
 from app.workers.ingest import build_provider
@@ -48,6 +50,11 @@ def _parser() -> argparse.ArgumentParser:
     c.add_argument("--timeframe", choices=["5m", "15m"], default="5m")
     c.add_argument("--from", dest="from_", type=date.fromisoformat, required=True)
     c.add_argument("--to", type=date.fromisoformat, required=True)
+    d = sub.add_parser("history-check")
+    d.add_argument("--code", default="NIFTY50")
+    d.add_argument("--timeframe", choices=["5m", "15m"], default="5m")
+    d.add_argument("--from", dest="from_", type=date.fromisoformat, required=True)
+    d.add_argument("--to", type=date.fromisoformat, required=True)
     return p
 
 
@@ -78,6 +85,24 @@ def main(argv: list[str] | None = None) -> int:
                 print("no instrument (run sync-instruments first):", ", ".join(u.unknown))
             if u.not_closed:
                 print("could not close (joined on/after the date):", ", ".join(u.not_closed))
+        elif args.cmd == "history-check":
+            members = universe_members(conn, args.code, args.to)
+            hr = history_report(
+                conn,
+                source,
+                members,
+                args.timeframe,
+                args.from_,
+                args.to,
+                provider.capabilities().intraday_close,
+            )
+            print(f"{hr.timeframe}: {hr.sessions} sessions {hr.first}..{hr.last}, clean={hr.clean}")
+            for c in hr.symbols:
+                if c.missing_bars or c.missing_sessions:
+                    print(
+                        f"  {c.symbol}: {c.coverage_pct:.1f}% complete, {c.missing_bars} bars missing,"
+                        f" {len(c.missing_sessions)} sessions absent, worst {list(c.worst)}"
+                    )
         else:
             refs = universe_refs(conn, args.code, provider.provider_code, args.to)
             rep = backfill(conn, source, provider, ctx, refs, args.timeframe, args.from_, args.to, time.sleep)
