@@ -50,6 +50,7 @@ class Zone:
     formed_at_index: int
     status: ZoneStatus = ZoneStatus.ACTIVE
     broken_direction: Direction | None = None
+    approach_break: Direction | None = None  # only break direction allowed (price's approach side)
     broken_at_index: int | None = None
     retired_at_index: int | None = None
     touches: int = 0

@@ -26,12 +26,17 @@ def evaluate_break(
     t: int,
     confirm_closes: int,
     buffer: Decimal,
+    only: Direction | None = None,
 ) -> BreakOutcome:
     """Scan closes after formation up to `t` (inclusive).
 
     `confirm_closes` consecutive closes beyond a bound x buffer break the zone (recorded at the last
     confirming close, §5.1) and flip its role. Consecutive closes beyond the *opposite* bound afterwards
     retire it (§5.2). A single close back inside resets the count (failed break).
+
+    `only` restricts the first break to one direction: a zone that price approaches from one side
+    (a resistance zone with price below it) is not "broken" by closes on the side price came from.
+    `None` allows either direction (used when the approach side is unknown).
     """
     below_lvl, above_lvl = low * (1 - buffer), high * (1 + buffer)
     status, direction = ZoneStatus.ACTIVE, None
@@ -42,10 +47,10 @@ def evaluate_break(
         n_down = n_down + 1 if c < below_lvl else 0
         n_up = n_up + 1 if c > above_lvl else 0
         if status is ZoneStatus.ACTIVE:
-            if n_down >= confirm_closes:
+            if n_down >= confirm_closes and only is not Direction.UP:
                 status, direction, broken_at = ZoneStatus.BROKEN_FLIPPED, Direction.DOWN, j
                 n_down = n_up = 0
-            elif n_up >= confirm_closes:
+            elif n_up >= confirm_closes and only is not Direction.DOWN:
                 status, direction, broken_at = ZoneStatus.BROKEN_FLIPPED, Direction.UP, j
                 n_down = n_up = 0
         elif (direction is Direction.DOWN and n_up >= confirm_closes) or (
