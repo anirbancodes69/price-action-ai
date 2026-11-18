@@ -14,6 +14,7 @@ import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { Disclaimer } from "@/components/data/disclaimer";
 import { Empty } from "@/components/data/empty";
+import { LiveDataBadge } from "@/components/data/live-data-badge";
 import { SampleDataBadge } from "@/components/data/sample-data-badge";
 import { StockTable } from "@/components/trading/stock-table";
 import { DEFAULT_FILTERS, activeFilterCount, applyFilters, type ScannerFilters } from "./filters";
@@ -25,7 +26,16 @@ const opts = <T extends string>(rec: Record<T, { label: string }>, allLabel: str
 
 const dot = (cls: string) => <span className={cn("size-1.5 rounded-full", cls)} aria-hidden />;
 
-export function ScannerView({ rows, asOf }: { rows: ScannerRow[]; asOf: string }) {
+export interface ScannerLive {
+  /** Data mode of the source (ADR-011). DEMO is shown as sample data, never as live. */
+  mode: "DEMO" | "PERSONAL" | "LICENSED";
+  refreshing: boolean;
+  onRefresh: () => void;
+  /** When the data can next change (end of the next 5m bar). */
+  nextBarClose: string | null;
+}
+
+export function ScannerView({ rows, asOf, live }: { rows: ScannerRow[]; asOf: string; live?: ScannerLive }) {
   const toast = useToast();
   const [f, setF] = useState<ScannerFilters>(DEFAULT_FILTERS);
   const filtered = useMemo(() => applyFilters(rows, f), [rows, f]);
@@ -46,8 +56,8 @@ export function ScannerView({ rows, asOf }: { rows: ScannerRow[]; asOf: string }
     <PageFrame>
       <PageHeader
         title="Market Scanner"
-        description="Scan the universe for price-action structure and setups on the daily timeframe. Select a row to open its analysis."
-        meta={<SampleDataBadge asOf={asOf} />}
+        description="Scan the universe for price-action structure and setups (15m structure, 5m setups). Select a row to open its analysis."
+        meta={live && live.mode !== "DEMO" ? <LiveDataBadge mode={live.mode} asOf={asOf} /> : <SampleDataBadge asOf={asOf} />}
         actions={
           <>
             <Button
@@ -56,8 +66,12 @@ export function ScannerView({ rows, asOf }: { rows: ScannerRow[]; asOf: string }
             >
               <Download /> Export
             </Button>
-            <Button variant="primary" onClick={() => toast({ title: "Scan refreshed", description: `Sample data · ${rows.length} stocks evaluated.` })}>
-              <RotateCcw /> Re-run scan
+            <Button
+              variant="primary"
+              disabled={live?.refreshing}
+              onClick={() => (live ? live.onRefresh() : toast({ title: "Scan refreshed", description: `Sample data · ${rows.length} stocks evaluated.` }))}
+            >
+              <RotateCcw className={live?.refreshing ? "animate-spin" : undefined} /> {live?.refreshing ? "Scanning…" : "Re-run scan"}
             </Button>
           </>
         }
