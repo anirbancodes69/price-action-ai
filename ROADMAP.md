@@ -14,7 +14,7 @@ Direction changed on 2026-11-17 to a **personal intraday workstation** ([ADR-014
 | I0 | Direction and specifications | ADR-014/015, intraday TRD-01..07, product docs | M1 | `NEEDS REVIEW` (all I0 tasks done on branch `docs/intraday-direction-and-specs`; PR pending) | — |
 | I1 | Intraday schema and contracts | Bar timestamps, 1m/5m/15m/1D, snapshot by reference, risk state, calendar seed | I0 | `NEEDS REVIEW` (T-I09 done on the restructuring branch) | — |
 | I2 | Intraday market data | Provider adapter (Kite or Groww), bar-close fetcher, current-price cache, quality checks, DEMO intraday data | I1, provider access | `IN PROGRESS` (Kite chosen; adapter, DEMO provider, quality checks, fetcher, writer and scheduler core built; Kite limits partly verified, ARC-08 §4.0) | — |
-| I3 | Engine core on 15m/5m | Pivots, structure, BOS/CHoCH, higher-timeframe alignment | I1 | `NOT STARTED` | — |
+| I3 | Engine core on 15m/5m | Pivots, structure, BOS/CHoCH, higher-timeframe alignment | I1 | `IN PROGRESS` (pivots, labels, structure machine done; 15m→5m alignment, snapshot hash, `analyse` orchestration open) | — |
 | I4 | Session context and setups | Opening range, previous-day levels, S/R zones, breakout-retest, levels, NO_TRADE | I3 | `NOT STARTED` | — |
 | I5 | Intraday risk and trade state | Sizing with ₹ caps, daily loss and streak limits, open risk, intraday costs, end-of-day exit | I1 | `NOT STARTED` | — |
 | I6 | API and frontend integration | `/api/v1` subset, HTTP adapter, intraday chart, polling | I2–I5 | `IN PROGRESS` (frontend restructured to the intraday model on sample data, T-I10; API, HTTP adapter and polling pending) | — |
