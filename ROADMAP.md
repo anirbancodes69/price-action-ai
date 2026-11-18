@@ -19,7 +19,7 @@ Direction changed on 2026-11-17 to a **personal intraday workstation** ([ADR-014
 | I5 | Intraday risk and trade state | Sizing with ₹ caps, daily loss and streak limits, open risk, intraday costs, end-of-day exit | I1 | `IN PROGRESS` (sizing, limits, validation, fills and exits done in the engine; intraday costs, API and trade-state persistence open) | — |
 | I6 | API and frontend integration | `/api/v1` subset, HTTP adapter, intraday chart, polling | I2–I5 | `IN PROGRESS` (frontend restructured to the intraday model on sample data, T-I10; API, HTTP adapter and polling pending) | — |
 | I7 | Journal and performance | Planned vs actual, net P&L, server-side stats | I6 | `NOT STARTED` | — |
-| I8 | Intraday backtesting | 5m bar replay, sessions, collisions, end-of-day exit, costs, out-of-sample | I3–I5, history | `NOT STARTED` | — |
+| I8 | Intraday backtesting | 5m bar replay, sessions, collisions, end-of-day exit, costs, out-of-sample | I3–I5, history | `IN PROGRESS` (engine library done and tested on scripted data: replay, costs, metrics, splits, run record; no historical data loaded, no persistence, no API) | — |
 
 ## Milestone acceptance (summary)
 
