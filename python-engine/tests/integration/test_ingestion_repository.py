@@ -86,8 +86,11 @@ class Fixture:
     def cleanup(self) -> None:
         c = self.conn
         c.rollback()
+        day_start = BAR.replace(hour=0, minute=0)
         runs = select(ingestion_runs.c.id).where(
-            ingestion_runs.c.data_source_id == self.source, ingestion_runs.c.bar_start == BAR
+            ingestion_runs.c.data_source_id == self.source,
+            ingestion_runs.c.bar_start >= day_start,
+            ingestion_runs.c.bar_start < day_start + timedelta(days=1),
         )
         ids = self.instrument_ids
         c.execute(delete(data_quality_issues).where(data_quality_issues.c.ingestion_run_id.in_(runs)))
@@ -217,3 +220,48 @@ def test_unmapped_instrument_is_a_provider_gap_and_late_bar_is_recorded(fx: Fixt
         2,
         2,
     )
+
+
+def test_run_due_bars_follows_the_calendar_and_is_idempotent(fx: Fixture) -> None:
+    from sqlalchemy import func
+
+    from app.db.tables import market_calendar
+    from app.ingestion.schedule import run_due_bars
+
+    day = BAR.date()
+    fx.conn.execute(
+        insert(market_calendar).values(
+            exchange="NSE",
+            calendar_date=day,
+            is_trading_day=True,
+            session_open=BAR.replace(hour=9, minute=15).time(),
+            session_close=BAR.replace(hour=15, minute=30).time(),
+            note="integration test",
+        )
+    )
+    fx.conn.commit()
+    try:
+        clk = Clock()
+        clk.t = BAR.replace(
+            hour=9, minute=33
+        )  # 5m bars 09:15 and 09:20, 15m bar 09:15 are closed... 09:30 close
+        first = run_due_bars(fx.conn, fx.source, DemoProvider(), CTX, fx.refs, clk.now, clk.sleep)
+        got = [(r.timeframe, r.bar_start.strftime("%H:%M"), r.status) for r in first]
+        assert got == [
+            ("5m", "09:15", "COMPLETED"),
+            ("5m", "09:20", "COMPLETED"),
+            ("5m", "09:25", "COMPLETED"),
+            ("15m", "09:15", "COMPLETED"),
+        ]
+        assert run_due_bars(fx.conn, fx.source, DemoProvider(), CTX, fx.refs, clk.now, clk.sleep) == []
+        n = fx.conn.execute(
+            select(func.count()).select_from(candles).where(candles.c.instrument_id.in_(fx.instrument_ids))
+        ).scalar_one()
+        assert n == 2 * 4
+        # A day missing from the calendar is not a trading day.
+        clk.t = clk.t + timedelta(days=1)
+        assert run_due_bars(fx.conn, fx.source, DemoProvider(), CTX, fx.refs, clk.now, clk.sleep) == []
+    finally:
+        fx.conn.rollback()
+        fx.conn.execute(market_calendar.delete().where(market_calendar.c.calendar_date == day))
+        fx.conn.commit()
