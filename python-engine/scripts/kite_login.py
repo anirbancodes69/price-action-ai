@@ -1,7 +1,7 @@
 """Daily Kite login: exchange the request_token for an access token (ARC-08 §4.1, manual form).
 
 Usage: uv run python scripts/kite_login.py
-1. Open the printed login URL and log in to Zerodha.
+1. The Zerodha login page opens in your browser; log in.
 2. Your browser is redirected to KITE_REDIRECT_URL?request_token=...&status=success. The page may fail
    to load: that is fine. Copy the full address-bar URL and paste it here.
 The access token is written to .kite_token (gitignored, mode 600). Nothing secret is printed.
@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import sys
+import webbrowser
 from urllib.parse import parse_qs, urlparse
 
 import httpx
@@ -21,7 +22,14 @@ def main() -> None:
     env = load_env()
     require(env, "KITE_API_KEY", "KITE_API_SECRET")
     key, secret = env["KITE_API_KEY"], env["KITE_API_SECRET"]
-    print(f"Open and log in:\n  https://kite.zerodha.com/connect/login?v=3&api_key={key}\n")
+    # Opened in the browser rather than printed, so no value from .env reaches the terminal or logs.
+    if webbrowser.open(f"https://kite.zerodha.com/connect/login?v=3&api_key={key}"):
+        print("Opened the Zerodha login page in your browser. Log in there.\n")
+    else:
+        print(
+            "Could not open a browser. Open this URL yourself, with your KITE_API_KEY from .env:\n"
+            "  https://kite.zerodha.com/connect/login?v=3&api_key=<KITE_API_KEY>\n"
+        )
     pasted = input("Paste the full redirected URL (or just the request_token): ").strip()
     query = parse_qs(urlparse(pasted).query)
     if "request_token" in query:
@@ -35,6 +43,7 @@ def main() -> None:
         token = pasted
     if query.get("status", ["success"])[0] != "success":
         sys.exit("Login did not succeed (status != success).")
+    # Not password hashing: Kite's token exchange mandates this exact SHA-256 checksum (ARC-08 §4.0).
     checksum = hashlib.sha256((key + token + secret).encode()).hexdigest()
     resp = httpx.post(
         "https://api.kite.trade/session/token",
