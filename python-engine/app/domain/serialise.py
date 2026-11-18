@@ -12,6 +12,7 @@ from app.domain.analyse import AnalysisResult
 from app.domain.candles import canonical_json
 from app.domain.htf import HtfContext
 from app.domain.liquidity import LiquidityPool
+from app.domain.setups.signal import ScoredSetup, SignalResult
 from app.domain.types import BarState, StructureEvent, StructureResult, SwingPoint
 from app.domain.zones import Zone
 
@@ -95,6 +96,57 @@ def _pool(p: LiquidityPool) -> dict[str, object]:
     }
 
 
+def _opt(v: Decimal | None) -> str | None:
+    return None if v is None else _price(v)
+
+
+def _scored(x: ScoredSetup) -> dict[str, object]:
+    s, lv, p = x.setup, x.levels, x.paqs
+    return {
+        "type": s.type.value,
+        "direction": s.direction.value,
+        "status": s.status.value,
+        "detected_at_index": s.detected_at_index,
+        "trigger_price": _price(s.trigger_price),
+        "anchor": s.anchor,
+        "confirmed_at_index": s.confirmed_at_index,
+        "end_reason": s.end_reason,
+        "ended_at_index": s.ended_at_index,
+        "informational": s.informational,
+        "levels": None
+        if lv is None
+        else {
+            "entry": _price(lv.entry),
+            "stop": _price(lv.stop),
+            "target": _opt(lv.target),
+            "target_source": lv.target_source,
+            "rr": _opt(lv.rr.quantize(Decimal("0.0001")) if lv.rr is not None else None),
+            "rr_below_min": lv.rr_below_min,
+        },
+        "paqs": None
+        if p is None
+        else {
+            "version": p.version,
+            "total": p.total,
+            "components": [[c.name, c.points, c.maximum, c.missing] for c in p.components],
+        },
+    }
+
+
+def _signal(r: SignalResult | None) -> dict[str, object] | None:
+    if r is None:
+        return None
+    return {
+        "signal": r.signal.value,
+        "primary": None
+        if r.primary is None
+        else [r.primary.setup.type.value, r.primary.setup.detected_at_index],
+        "reasons": list(r.reasons),
+        "signal_at": r.signal_at.astimezone(UTC).isoformat(),
+        "valid_until": r.valid_until.astimezone(UTC).isoformat() if r.valid_until else None,
+    }
+
+
 def _htf(h: HtfContext | None) -> dict[str, object] | None:
     if h is None:
         return None
@@ -116,6 +168,9 @@ def analysis_to_canonical(a: AnalysisResult) -> str:
             "htf": {"index": a.htf.index, "state": _state(a.htf.state) if a.htf.state else None}
             if a.htf
             else None,
+            "setups": [_scored(x) for x in a.setups] if a.setups is not None else None,
+            "signal": _signal(a.signal),
+            "no_setup_reasons": list(a.no_setup_reasons),
             "zones": [_zone(z) for z in a.zones] if a.zones is not None else None,
             "pools": [_pool(x) for x in a.pools] if a.pools is not None else None,
             "levels": {k: (None if v is None else _price(v)) for k, v in asdict(lv).items()} if lv else None,

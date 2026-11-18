@@ -8,7 +8,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from app.domain.params import RulesetParams
-from app.domain.types import Bar, SwingPoint
+from app.domain.types import Bar, Direction, SwingPoint
 from app.domain.zone_break import evaluate_break
 from app.domain.zone_strength import strength_score, touch_stats
 from app.domain.zones import Zone, ZoneMember, ZoneRole, ZoneStatus, cluster_pivots
@@ -48,7 +48,9 @@ def build_zones(
         members, params.pct("zone.cluster_tolerance_pct"), params.pct("zone.min_width_pct"), tick
     ):
         formed = max(m.known_index_5m for m in c.members)
-        out = evaluate_break(bars_5m, c.low, c.high, formed, t, confirm, buf)
+        fc = bars_5m[formed].close
+        side = Direction.UP if fc < c.low else Direction.DOWN if fc > c.high else None
+        out = evaluate_break(bars_5m, c.low, c.high, formed, t, confirm, buf, side)
         if out.status is ZoneStatus.RETIRED:
             continue
         stats = touch_stats(bars_5m, c.members, c.low, c.high, formed, t, window)
@@ -62,17 +64,18 @@ def build_zones(
         )
         zones.append(
             Zone(
-                c.low,
-                c.high,
-                c.members,
-                formed,
-                out.status,
-                out.broken_direction,
-                out.broken_at_index,
-                out.retired_at_index,
-                stats.touches,
-                score,
-                bucket,
+                low=c.low,
+                high=c.high,
+                members=c.members,
+                formed_at_index=formed,
+                status=out.status,
+                broken_direction=out.broken_direction,
+                approach_break=side,
+                broken_at_index=out.broken_at_index,
+                retired_at_index=out.retired_at_index,
+                touches=stats.touches,
+                strength=score,
+                bucket=bucket,
             )
         )
     return zones
