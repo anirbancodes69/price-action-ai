@@ -5,7 +5,8 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Sequence
-from datetime import UTC
+from datetime import UTC, datetime, timedelta
+from itertools import pairwise
 
 from app.domain.types import Bar
 
@@ -52,3 +53,22 @@ def canonical_json(obj: object) -> str:
 def candles_hash(bars: Sequence[Bar]) -> str:
     """SHA-256 of the canonical bar list (input identity of an analysis)."""
     return hashlib.sha256(canonical_json([canonical_bar(b) for b in bars]).encode()).hexdigest()
+
+
+def missing_bar_starts(
+    bars: Sequence[Bar], step: timedelta, session_gap: timedelta | None = None
+) -> list[datetime]:
+    """Starts of bars absent inside a run of consecutive bars (TV-SES-03: inputs marked incomplete).
+
+    A gap longer than `session_gap` (when given) is a session break, not a missing bar.
+    """
+    missing: list[datetime] = []
+    for prev, cur in pairwise(bars):
+        gap = cur.start - prev.start
+        if gap <= step or (session_gap is not None and gap >= session_gap):
+            continue
+        t = prev.start + step
+        while t < cur.start:
+            missing.append(t)
+            t += step
+    return missing

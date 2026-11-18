@@ -32,6 +32,12 @@ None.
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-I33 | Tests for the ruleset loader and `RulesetParams` accessors (closes the T-I22 gap) and for the whole batch below | I3 | 2026-11-18 (`tests/test_rulesets.py`, `tests/trading/test_session.py`) |
+| T-I32 | Canonical `AnalysisResult` and `analysis_hash` (`serialise.py`) | I3 | 2026-11-18 (determinism, sensitivity; ruff, mypy clean) |
+| T-I31 | `analyse` orchestration for structure (`app/domain/analyse.py`: snapshot check, 5m and 15m structure, 15m context at the last 5m bar, session levels; non-VALID snapshots return no analysis). No zones, setups or risk yet | I3 | 2026-11-18 (2 tests; ruff, mypy strict clean) |
+| T-I30 | Snapshot status (`app/domain/snapshot.py`: `INVALID_INPUT` wins over `INSUFFICIENT_HISTORY`, minimums from `analysis.min_bars_*`) | I3 | 2026-11-18 (boundary test at the minimum). Previous-session context is checked per setup (MISSING_CONTEXT), not here |
+| T-I29 | `missing_bar_starts` (marks inputs incomplete, overnight gaps ignored) and TV-SES-01..03 (structure across sessions, opening gap break on the first bar, missing bar) | I3 | 2026-11-18 (3 tests) |
+| T-I28 | Session reference levels and clock (`app/domain/session.py`: PDH/PDL/PDC, opening range known only once its last bar has closed, session high/low of the current session, entry cutoff and session-exit times); TV-REF-01..03 | I4 (levels) | 2026-11-18 (3 tests plus cutoff test). Session open/close come from the caller (`market_calendar`), not computed here |
 | T-I27 | Canonical structure output and `result_hash` (`app/domain/serialise.py`: sorted keys, no whitespace, UTC ISO timestamps, fixed decimal strings; SHA-256) | I3 | 2026-11-18 (determinism and sensitivity tests, TV-NLA-04; ruff, mypy clean). Covers structure output only, not the whole `AnalysisResult` |
 | T-I26 | Candle validation and input hash (`app/domain/candles.py`: `validate_bars` for the TRD-01 §4 `INVALID_INPUT` rules, `candles_hash`) | I3 | 2026-11-18 (tests; ruff, mypy clean). Not wired to snapshot status codes yet |
 | T-I25 | 15m→5m alignment (`app/domain/htf.py`: `align_htf` gives each 5m bar the 15m state of the largest bar closed by its end); TV-HTF-01..04 | I3 | 2026-11-18 (5 tests; 98 engine tests pass, 2 DB tests skipped). TV-SES-01..03 not covered yet |
