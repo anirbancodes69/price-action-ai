@@ -161,4 +161,5 @@ Metrics with fewer than 30 trades or 60 sessions are shown with a "low sample" w
 | OQ-BT-04 | Resolved: dividends are irrelevant for intraday positions. |
 | OQ-BT-05 | Promotion thresholds (proposed in TRD-08 §6). |
 | OQ-BT-06 | How much 5m/15m history can the provider supply for NIFTY 50 (depth, per-request limits, gaps)? Determines the achievable test span. |
+| OQ-BT-08 | Implementation choices where TRD-06 is silent (T-I52..T-I57): when the data's last bar ends at or after the session-exit time (Kite stops at 15:15) a still-open position exits at that close with reason `SESSION_END`, otherwise `END_OF_DATA`; gap stop exits take adverse slippage but session-end and structure exits do not; one open position per symbol; sessions with an `ACCOUNT_LIMIT` skip count as "blocked" without separating daily-loss from streak; Sharpe uses sample standard deviation of session returns over starting capital; exposure is the share of session length covered by at least one open trade. Confirm or amend. |
 | OQ-BT-07 | Use 1m bars to resolve same-bar stop/target collisions instead of the conservative rule? |

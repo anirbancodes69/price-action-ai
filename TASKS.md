@@ -32,6 +32,12 @@ None.
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-I57 | Backtest run (`app/backtest/run.py`: date-ordered sessions, FIXED or COMPOUNDING sizing, reproducibility record with inputs hash, flags `short_history`, `survivorship_bias_risk`, `low_sample`, `end_of_data_trades`, equity curve) | I8 | 2026-11-18 (4 tests incl. determinism and the compounding quantity change 476 → 482) |
+| T-I56 | IS / OOS / holdout split, walk-forward windows and promotion gates (`app/backtest/splits.py`, TRD-06 §9) | I8 | 2026-11-18 (500 sessions → 300/100/100; 9 walk-forward windows) |
+| T-I55 | Metrics (`app/backtest/metrics.py`, TRD-06 §10: win rate, net/gross R, profit factor, drawdown, session P&L, Sharpe, exposure, time in trade, exit mix, skips, cost drag, breakdowns by setup, half-hour, 15m context and month, low-sample flag) | I8 | 2026-11-18 (hand-computed 3-session example) |
+| T-I54 | Session replay (`app/backtest/replay.py`: live `analyse` at each close with only closed bars, next-open fills, PAQS-then-symbol ordering, account limits, one position per symbol, structure and session-end exits, skips by reason) | I8 | 2026-11-18 (9 scripted-analysis tests plus a default-analysis smoke test). Not run on real history |
+| T-I53 | Simulated positions, exits and trades (`app/backtest/trade.py`: TRD-06 §4.2 exit reasons, adverse slippage on stop and gap exits, gross/net P&L, R) | I8 | 2026-11-18 (5 tests with costs) |
+| T-I52 | Dated cost schedule (`app/backtest/costs.py`, TRD-06 §5): the spec illustration of ₹53.08 is reproduced exactly | I8 | 2026-11-18. **The schedule values themselves are unverified (OQ-BT-02)** |
 | T-I51 | Risk calculation for a plan (`risk/request.py`: SHORT and capital checks, account limits first, conservative rounding, stop and R:R validation, sizing, stop-override warning, remaining daily loss); TV-RSK | I5 | 2026-11-18 (6 tests; 179 engine tests pass, 2 DB tests skipped; ruff, mypy strict clean). Cost estimates and `rr_after_costs` are returned as `None`: the TRD-06 §5 schedule is unverified. Not exposed through the API yet |
 | T-I50 | Exit rules (`risk/exits.py`: stop with adverse slippage, target without positive slippage, gap at the open, stop wins a same-bar collision, session-end and structure exits at the open) | I5 | 2026-11-18 (2 tests) |
 | T-I49 | Entry fill at the next open (`risk/fill.py`: cutoff, gap below stop, gap up, degraded R:R, quantity re-check never increased, optional slippage); spec examples 1503.00 skipped, 1499.00 filled at 33 | I5 | 2026-11-18 (2 tests) |
