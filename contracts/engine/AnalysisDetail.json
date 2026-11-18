@@ -1,0 +1,640 @@
+{
+  "$defs": {
+    "EventModel": {
+      "additionalProperties": false,
+      "properties": {
+        "break_bar_start": {
+          "format": "date-time",
+          "title": "Break Bar Start",
+          "type": "string"
+        },
+        "close": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Close",
+          "type": "string"
+        },
+        "close_inside_buffer": {
+          "title": "Close Inside Buffer",
+          "type": "boolean"
+        },
+        "direction": {
+          "title": "Direction",
+          "type": "string"
+        },
+        "level": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Level",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "direction",
+        "level",
+        "break_bar_start",
+        "close",
+        "close_inside_buffer"
+      ],
+      "title": "EventModel",
+      "type": "object"
+    },
+    "PaqsComponentModel": {
+      "additionalProperties": false,
+      "properties": {
+        "maximum": {
+          "title": "Maximum",
+          "type": "integer"
+        },
+        "missing": {
+          "title": "Missing",
+          "type": "boolean"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "points": {
+          "title": "Points",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "points",
+        "maximum",
+        "missing"
+      ],
+      "title": "PaqsComponentModel",
+      "type": "object"
+    },
+    "PivotModel": {
+      "additionalProperties": false,
+      "properties": {
+        "bar_start": {
+          "format": "date-time",
+          "title": "Bar Start",
+          "type": "string"
+        },
+        "confirmed_at": {
+          "description": "Show the pivot only from this moment on (no repainting).",
+          "format": "date-time",
+          "title": "Confirmed At",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "price": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Price",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "bar_start",
+        "price",
+        "label",
+        "confirmed_at"
+      ],
+      "title": "PivotModel",
+      "type": "object"
+    },
+    "PoolModel": {
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Level",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "level"
+      ],
+      "title": "PoolModel",
+      "type": "object"
+    },
+    "SessionLevelsModel": {
+      "additionalProperties": false,
+      "properties": {
+        "or_high": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Or High"
+        },
+        "or_low": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Or Low"
+        },
+        "pdc": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Pdc"
+        },
+        "pdh": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Pdh"
+        },
+        "pdl": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Pdl"
+        },
+        "session_high": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Session High"
+        },
+        "session_low": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Session Low"
+        }
+      },
+      "required": [
+        "pdh",
+        "pdl",
+        "pdc",
+        "or_high",
+        "or_low",
+        "session_high",
+        "session_low"
+      ],
+      "title": "SessionLevelsModel",
+      "type": "object"
+    },
+    "SetupModel": {
+      "additionalProperties": false,
+      "properties": {
+        "detected_at": {
+          "format": "date-time",
+          "title": "Detected At",
+          "type": "string"
+        },
+        "direction": {
+          "title": "Direction",
+          "type": "string"
+        },
+        "end_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "End Reason"
+        },
+        "entry": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Entry"
+        },
+        "informational": {
+          "title": "Informational",
+          "type": "boolean"
+        },
+        "paqs": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Paqs"
+        },
+        "paqs_components": {
+          "items": {
+            "$ref": "#/$defs/PaqsComponentModel"
+          },
+          "title": "Paqs Components",
+          "type": "array"
+        },
+        "paqs_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Paqs Version"
+        },
+        "rr": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rr"
+        },
+        "rr_below_min": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rr Below Min"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "stop": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stop"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target"
+        },
+        "target_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target Source"
+        },
+        "trigger_price": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Trigger Price",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "direction",
+        "informational",
+        "status",
+        "detected_at",
+        "trigger_price",
+        "entry",
+        "stop",
+        "target",
+        "target_source",
+        "rr",
+        "rr_below_min",
+        "paqs",
+        "paqs_version",
+        "paqs_components",
+        "end_reason"
+      ],
+      "title": "SetupModel",
+      "type": "object"
+    },
+    "SignalModel": {
+      "additionalProperties": false,
+      "properties": {
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "signal": {
+          "title": "Signal",
+          "type": "string"
+        },
+        "signal_at": {
+          "format": "date-time",
+          "title": "Signal At",
+          "type": "string"
+        },
+        "valid_until": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valid Until"
+        }
+      },
+      "required": [
+        "signal",
+        "reasons",
+        "signal_at",
+        "valid_until"
+      ],
+      "title": "SignalModel",
+      "type": "object"
+    },
+    "ZoneModel": {
+      "additionalProperties": false,
+      "properties": {
+        "high": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "High",
+          "type": "string"
+        },
+        "htf_member": {
+          "title": "Htf Member",
+          "type": "boolean"
+        },
+        "low": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Low",
+          "type": "string"
+        },
+        "role": {
+          "description": "SUPPORT, RESISTANCE or INSIDE relative to the last close.",
+          "title": "Role",
+          "type": "string"
+        },
+        "role_reversed": {
+          "title": "Role Reversed",
+          "type": "boolean"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "strength": {
+          "title": "Strength",
+          "type": "integer"
+        },
+        "strength_bucket": {
+          "title": "Strength Bucket",
+          "type": "string"
+        },
+        "touches": {
+          "title": "Touches",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "role",
+        "low",
+        "high",
+        "touches",
+        "strength",
+        "strength_bucket",
+        "status",
+        "role_reversed",
+        "htf_member"
+      ],
+      "title": "ZoneModel",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "as_of_ts": {
+      "format": "date-time",
+      "title": "As Of Ts",
+      "type": "string"
+    },
+    "events": {
+      "items": {
+        "$ref": "#/$defs/EventModel"
+      },
+      "title": "Events",
+      "type": "array"
+    },
+    "levels": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SessionLevelsModel"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "no_setup_reasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "No Setup Reasons",
+      "type": "array"
+    },
+    "pivots": {
+      "items": {
+        "$ref": "#/$defs/PivotModel"
+      },
+      "title": "Pivots",
+      "type": "array"
+    },
+    "pools": {
+      "items": {
+        "$ref": "#/$defs/PoolModel"
+      },
+      "title": "Pools",
+      "type": "array"
+    },
+    "problems": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Problems",
+      "type": "array"
+    },
+    "ruleset_version": {
+      "title": "Ruleset Version",
+      "type": "string"
+    },
+    "session_date": {
+      "title": "Session Date",
+      "type": "string"
+    },
+    "setups": {
+      "items": {
+        "$ref": "#/$defs/SetupModel"
+      },
+      "title": "Setups",
+      "type": "array"
+    },
+    "signal": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SignalModel"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "state_15m": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "State 15M"
+    },
+    "state_5m": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "State 5M"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "symbol": {
+      "title": "Symbol",
+      "type": "string"
+    },
+    "transition_direction_5m": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Transition Direction 5M"
+    },
+    "zones": {
+      "items": {
+        "$ref": "#/$defs/ZoneModel"
+      },
+      "title": "Zones",
+      "type": "array"
+    }
+  },
+  "required": [
+    "symbol",
+    "session_date",
+    "as_of_ts",
+    "status",
+    "problems",
+    "ruleset_version",
+    "state_5m",
+    "transition_direction_5m",
+    "state_15m",
+    "levels",
+    "pivots",
+    "events",
+    "zones",
+    "pools",
+    "setups",
+    "signal",
+    "no_setup_reasons"
+  ],
+  "title": "AnalysisDetail",
+  "type": "object"
+}

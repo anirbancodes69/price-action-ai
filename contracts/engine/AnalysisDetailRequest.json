@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "as_of_ts": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "As Of Ts"
+    },
+    "data_source_id": {
+      "format": "uuid",
+      "title": "Data Source Id",
+      "type": "string"
+    },
+    "symbol": {
+      "pattern": "^[A-Z0-9&_-]{1,32}$",
+      "title": "Symbol",
+      "type": "string"
+    }
+  },
+  "required": [
+    "data_source_id",
+    "symbol"
+  ],
+  "title": "AnalysisDetailRequest",
+  "type": "object"
+}

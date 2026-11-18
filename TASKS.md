@@ -32,6 +32,12 @@ None.
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-I81 | Tests for the internal endpoints (service token, spec worked examples through HTTP, rejections as error codes, scan with the caller's account state, replay, stale rows, analysis through the real analysis) and contract export (17 schemas, `--check` clean) | I6 | 2026-11-18 (11 tests; 250 engine tests pass against the local Postgres) |
+| T-I80 | `POST /internal/v1/analysis` (`app/analysis/detail.py`, `app/schemas/analysis_detail.py`): one symbol's structure, levels, pivots, events, zones, pools, setups with PAQS components and signal, mapped from the analysis result without new calculation | I6 | 2026-11-18 |
+| T-I79 | `POST /internal/v1/scan` (`app/api/scan.py`; Postgres snapshot source behind a protocol so tests use a fake) | I6 | 2026-11-18. Not called from Laravel yet (none exists) |
+| T-I78 | Scan contract models (`ScanRequest`, `ScanResponse`, `ScanRowModel`, `ScanAccount`) exported to `contracts/engine/` | I6 | 2026-11-18 |
+| T-I77 | `POST /internal/v1/risk/validate-levels` | I5 | 2026-11-18 |
+| T-I76 | `POST /internal/v1/risk/position-size` mapping the existing contract onto `calculate_risk` (TRD-05 §3.1 example through HTTP: 33 / `POSITION_CAP` / ₹424.05; costs ₹53.08, 2.28R after costs, `COSTS_UNVERIFIED`); `ACTIVE_RULESET` default corrected from `pa-core@0.1.0` to `pa-intraday@0.1.0` (stale since ADR-014) | I5 | 2026-11-18 |
 | T-I75 | Scan CLI `scripts/scan.py` (universe, optional account file, `--as-of` replay, `--watch`, `--all`, JSON output; labels DEMO data as sample, never live) | I6 | 2026-11-18 (`--help`; the pieces it composes are tested; the script has not run on real bars) |
 | T-I74 | Scan output (`app/analysis/format.py`: table with entry, stop, target, R:R, quantity, risk, validity, reasons; stale-data and "decision support only" notices; JSON) | I6 | 2026-11-18 (3 tests) |
 | T-I73 | Owner-supplied account state (`app/analysis/account.py`: capital, today's closed trades, open positions from a JSON file, since the engine stores no trades yet) | I5 | 2026-11-18 (test incl. losing streak, open risk) |
