@@ -81,7 +81,7 @@ def simulate_exit(bar: Bar, position: OpenPosition, ...) -> ExitResult | None: .
 
 ## 5. Ruleset versioning
 
-- Rulesets are seeded rows in `ruleset_versions` (ARC-03 §7.1) **and** a JSON file in `python-engine/rulesets/pa-core/0.1.0.json`; CI checks they are identical (hash). *Status (T-105):* `python-engine/rulesets/pa-core/0.1.0.json` exists, the seeded row comes from the byte-identical `backend/database/seeders/data/pa-core-0.1.0.json`, and `contracts/scripts/check_ruleset_hash.py` (in `contracts-ci.yml`) checks both against each other and against TRD-01 §6. `RulesetParams` (`app/domain/params.py`) is not built yet (M3). History: `python-engine/rulesets/CHANGELOG.md`.
+- Rulesets are seeded rows in `ruleset_versions` (ARC-03 §7.1) **and** a JSON file in `python-engine/rulesets/pa-core/0.1.0.json`; CI checks they are identical (hash). *Status (T-105):* `python-engine/rulesets/pa-core/0.1.0.json` exists, the seeded row comes from the byte-identical `backend/database/seeders/data/pa-core-0.1.0.json`, and `contracts/scripts/check_ruleset_hash.py` (in `contracts-ci.yml`) checks both against each other and against TRD-01 §6. `RulesetParams` (`app/domain/params.py`, pure) exists since T-I22; the file loader is `app/rulesets.py`. History: `python-engine/rulesets/CHANGELOG.md`.
 - The engine loads the active ruleset at startup and caches by id; requests may pin a version (backtests, reproductions).
 - Any change to rule code that alters golden outputs requires a new ruleset version (or patch version when fixing a bug with an explicit changelog entry in `rulesets/CHANGELOG.md`).
 - `engine_version` (package version) is recorded separately.
