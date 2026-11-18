@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+import json
+from dataclasses import asdict
 from datetime import UTC
 from decimal import Decimal
 
+from app.domain.analyse import AnalysisResult
 from app.domain.candles import canonical_json
+from app.domain.htf import HtfContext
 from app.domain.types import BarState, StructureEvent, StructureResult, SwingPoint
 
 
@@ -60,3 +64,33 @@ def structure_to_canonical(r: StructureResult) -> str:
 
 def result_hash(r: StructureResult) -> str:
     return hashlib.sha256(structure_to_canonical(r).encode()).hexdigest()
+
+
+def _htf(h: HtfContext | None) -> dict[str, object] | None:
+    if h is None:
+        return None
+    return {"index": h.index, "state": _state(h.state) if h.state else None}
+
+
+def analysis_to_canonical(a: AnalysisResult) -> str:
+    """Canonical form of a whole analysis (status, input hashes, structure, context, levels)."""
+    lv = a.levels
+    return canonical_json(
+        {
+            "ruleset": [a.ruleset_code, a.ruleset_version],
+            "status": a.check.status.value,
+            "problems": list(a.check.problems),
+            "input_hash_5m": a.input_hash_5m,
+            "input_hash_15m": a.input_hash_15m,
+            "structure_5m": json.loads(structure_to_canonical(a.structure_5m)) if a.structure_5m else None,
+            "structure_15m": json.loads(structure_to_canonical(a.structure_15m)) if a.structure_15m else None,
+            "htf": {"index": a.htf.index, "state": _state(a.htf.state) if a.htf.state else None}
+            if a.htf
+            else None,
+            "levels": {k: (None if v is None else _price(v)) for k, v in asdict(lv).items()} if lv else None,
+        }
+    )
+
+
+def analysis_hash(a: AnalysisResult) -> str:
+    return hashlib.sha256(analysis_to_canonical(a).encode()).hexdigest()
