@@ -124,6 +124,9 @@ class AuthTest extends TestCase
 
     public function test_a_stateful_post_without_a_csrf_token_is_rejected(): void
     {
+        // Laravel skips CSRF validation when the environment is `testing` (CI sets APP_ENV=testing at the OS level,
+        // which also beats phpunit.xml). Pin a normal environment so this test means the same everywhere.
+        $this->app['env'] = 'local';
         $this->owner();
 
         $this->withHeaders(self::ORIGIN)->postJson('/api/v1/auth/login', [
