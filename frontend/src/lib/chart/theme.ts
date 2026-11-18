@@ -81,6 +81,11 @@ export interface ChartPalette {
   resistanceFill: string;
   resistanceLine: string;
   labelBg: string;
+  /** Session separators and session-level lines (intraday). */
+  separator: string;
+  sessionLine: string;
+  orFill: string;
+  orLine: string;
 }
 
 export function chartPalette(): ChartPalette {
@@ -107,6 +112,10 @@ export function chartPalette(): ChartPalette {
     resistanceFill: rgba("bear", 0.08),
     resistanceLine: rgba("bear", 0.5),
     labelBg: rgba("popover", 0.9),
+    separator: rgba("muted-foreground", 0.35),
+    sessionLine: rgba("muted-foreground", 0.85),
+    orFill: rgba("chart-event", 0.07),
+    orLine: rgba("chart-event", 0.5),
   };
 }
 

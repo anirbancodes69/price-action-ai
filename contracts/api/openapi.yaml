@@ -4,7 +4,7 @@
 openapi: "3.1.0"
 info:
   title: "PriceAction AI public API"
-  version: "0.1.0"
+  version: "0.2.0"
   summary: "REST API v1 served by Laravel under /api/v1."
   description: "Machine-readable source of the public API (ARC-04, docs/architecture/04_API_SPECIFICATION.md). Authentication is Laravel Sanctum SPA cookie auth with CSRF. Tenant context comes from the session; clients never send a tenant id, and another tenant's resource id returns 404. Prices and money are decimal strings. Responses carry meta.data_mode and meta.as_of whenever they contain market data or analysis, and the UI must badge DEMO as sample data. There is deliberately no endpoint that places, changes or cancels broker orders (ADR-010)."
   license:
@@ -1015,30 +1015,33 @@ paths:
         - "Market"
       summary: "Daily candles"
       x-arc04-id: "M5"
-      description: "At most 2,000 bars (422 RANGE_TOO_LARGE). Weekly and monthly aggregation is done client-side."
+      description: "At most 2,000 bars (422 RANGE_TOO_LARGE). Only completed bars are returned."
       parameters:
         - "$ref": "#/components/parameters/SymbolPath"
-        - name: "timeframe"
+        - name: "interval"
           in: "query"
           schema:
             type: "string"
             enum:
+              - "5m"
+              - "15m"
               - "1D"
+          description: "Bar interval; 1m is reserved."
         - name: "from"
           in: "query"
           schema:
             type: "string"
-            format: "date"
+            description: "Timestamp or date."
         - name: "to"
           in: "query"
           schema:
             type: "string"
-            format: "date"
+            description: "Timestamp or date."
       security:
         - sessionCookie: []
       responses:
         "200":
-          description: "Candles from the selected data source."
+          description: "Completed bars from the selected data source."
           content:
             "application/json":
               schema:
@@ -1054,10 +1057,13 @@ paths:
                         type: "array"
                         items:
                           "$ref": "#/components/schemas/Candle"
+                      interval:
+                        "$ref": "#/components/schemas/Timeframe"
                       adjusted:
                         type: "boolean"
                     required:
                       - "candles"
+                      - "interval"
                       - "adjusted"
                     additionalProperties: false
                   meta:
@@ -1273,6 +1279,11 @@ paths:
           in: "query"
           schema:
             type: "string"
+        - name: "htf_state"
+          in: "query"
+          schema:
+            "$ref": "#/components/schemas/StructureState"
+          description: "15m context."
         - name: "structure"
           in: "query"
           schema:
@@ -1502,7 +1513,7 @@ paths:
       description: "404 NO_ANALYSIS_AVAILABLE."
       parameters:
         - "$ref": "#/components/parameters/SymbolPath"
-        - "$ref": "#/components/parameters/AsOf"
+        - "$ref": "#/components/parameters/AsOfTs"
         - name: "include"
           in: "query"
           schema:
@@ -1513,7 +1524,7 @@ paths:
         - sessionCookie: []
       responses:
         "200":
-          description: "Latest run for the selected source, or the run as of a date. INSUFFICIENT_HISTORY is returned as 200 with empty setups and signal NO_TRADE."
+          description: "Latest run for the selected source, or the run at that 5m close. INSUFFICIENT_HISTORY is returned as 200 with empty setups and signal NO_TRADE."
           content:
             "application/json":
               schema:
@@ -2039,6 +2050,41 @@ paths:
           "$ref": "#/components/responses/EngineContractError"
         "503":
           "$ref": "#/components/responses/Unavailable"
+  "/api/v1/risk/today":
+    get:
+      operationId: "getRiskToday"
+      tags:
+        - "Risk"
+      summary: "Account state of one book for the current session"
+      x-arc04-id: "R2"
+      description: "422 BOOK_REQUIRED."
+      parameters:
+        - "$ref": "#/components/parameters/BookRequired"
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: "Account state (TRD-05 §8.1)."
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                required:
+                  - "data"
+                  - "meta"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/RiskToday"
+                  meta:
+                    "$ref": "#/components/schemas/Meta"
+        "401":
+          "$ref": "#/components/responses/Unauthenticated"
+        "403":
+          "$ref": "#/components/responses/Forbidden"
+        "422":
+          "$ref": "#/components/responses/ValidationFailed"
+        "429":
+          "$ref": "#/components/responses/RateLimited"
   "/api/v1/trade-plans":
     get:
       operationId: "listTradePlans"
@@ -2919,6 +2965,43 @@ paths:
           "$ref": "#/components/responses/ValidationFailed"
         "429":
           "$ref": "#/components/responses/RateLimited"
+  "/api/v1/positions/live":
+    get:
+      operationId: "listLivePositions"
+      tags:
+        - "Portfolio"
+      summary: "Open positions with current prices"
+      x-arc04-id: "X11"
+      description: "Current prices come from the current-price cache and are labelled with price_at; they never change analysis. 422 BOOK_REQUIRED."
+      parameters:
+        - "$ref": "#/components/parameters/BookRequired"
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: "Open positions of the book."
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                required:
+                  - "data"
+                  - "meta"
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/LivePosition"
+                  meta:
+                    "$ref": "#/components/schemas/MarketMeta"
+        "401":
+          "$ref": "#/components/responses/Unauthenticated"
+        "403":
+          "$ref": "#/components/responses/Forbidden"
+        "422":
+          "$ref": "#/components/responses/ValidationFailed"
+        "429":
+          "$ref": "#/components/responses/RateLimited"
   "/api/v1/journal":
     get:
       operationId: "listJournal"
@@ -3684,6 +3767,20 @@ components:
         type: "string"
         format: "date"
       description: "Exchange date, YYYY-MM-DD."
+    AsOfTs:
+      name: "as_of"
+      in: "query"
+      schema:
+        type: "string"
+        format: "date-time"
+      description: "A 5m bar close (ISO-8601 with +05:30); default the latest."
+    BookRequired:
+      name: "book"
+      in: "query"
+      required: true
+      schema:
+        "$ref": "#/components/schemas/Book"
+      description: "Required. Books are never mixed."
   responses:
     BadRequest:
       description: "400 BAD_REQUEST: malformed JSON."
@@ -3901,14 +3998,14 @@ components:
           "$ref": "#/components/schemas/Instrument"
         as_of:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
+          description: "End of the last completed 5m bar used."
+          format: "date-time"
         status:
           "$ref": "#/components/schemas/RunStatus"
         timeframe:
           type: "string"
           enum:
-            - "1D"
+            - "5m"
         ruleset:
           type: "object"
           properties:
@@ -3928,9 +4025,47 @@ components:
           additionalProperties: false
         engine_version:
           type: "string"
-        candle_snapshot_id:
-          type: "string"
-          format: "uuid"
+        inputs:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              role:
+                type: "string"
+                enum:
+                  - "PRIMARY_5M"
+                  - "CONTEXT_15M"
+                  - "DAILY_CONTEXT"
+              candle_snapshot_id:
+                type: "string"
+                format: "uuid"
+            required:
+              - "role"
+              - "candle_snapshot_id"
+            additionalProperties: false
+          minItems: 1
+        context:
+          type: "object"
+          properties:
+            htf_state:
+              oneOf:
+                - "$ref": "#/components/schemas/StructureState"
+                - type: "null"
+            htf_transition_direction:
+              oneOf:
+                - type: "string"
+                  enum:
+                    - "UP"
+                    - "DOWN"
+                - type: "null"
+            session:
+              "$ref": "#/components/schemas/SessionLevels"
+          required:
+            - "htf_state"
+            - "htf_transition_direction"
+            - "session"
+          description: "15m context aligned to the 5m close without look-ahead (TRD-02 §9)."
+          additionalProperties: false
         structure:
           "$ref": "#/components/schemas/StructureSummary"
         signal:
@@ -3942,9 +4077,23 @@ components:
               type: "array"
               items:
                 type: "string"
+            signal_at:
+              oneOf:
+                - type: "string"
+                  format: "date-time"
+                  description: "ISO-8601 timestamp with offset."
+                - type: "null"
+            valid_until:
+              oneOf:
+                - type: "string"
+                  format: "date-time"
+                  description: "ISO-8601 timestamp with offset."
+                - type: "null"
           required:
             - "state"
             - "reason_codes"
+            - "signal_at"
+            - "valid_until"
           additionalProperties: false
         primary_setup_id:
           oneOf:
@@ -3984,7 +4133,8 @@ components:
         - "timeframe"
         - "ruleset"
         - "engine_version"
-        - "candle_snapshot_id"
+        - "inputs"
+        - "context"
         - "structure"
         - "signal"
         - "primary_setup_id"
@@ -3993,7 +4143,7 @@ components:
         - "events"
         - "zones"
         - "liquidity"
-      description: "Immutable analysis of one instrument as of one date."
+      description: "Immutable analysis of one instrument at one 5m bar close (ADR-015)."
       additionalProperties: false
     AuthSession:
       type: "object"
@@ -4237,21 +4387,21 @@ components:
           enum:
             - "FILLED"
             - "SKIPPED"
-        signal_date:
+        signal_at:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
-        entry_date:
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+        entry_at:
           oneOf:
             - type: "string"
-              format: "date"
-              description: "Exchange date, YYYY-MM-DD."
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
             - type: "null"
-        exit_date:
+        exit_at:
           oneOf:
             - type: "string"
-              format: "date"
-              description: "Exchange date, YYYY-MM-DD."
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
             - type: "null"
         skip_reason:
           oneOf:
@@ -4260,7 +4410,7 @@ components:
       required:
         - "id"
         - "outcome"
-        - "signal_date"
+        - "signal_at"
     Book:
       type: "string"
       enum:
@@ -4276,10 +4426,14 @@ components:
     Candle:
       type: "object"
       properties:
-        date:
+        start:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+        end:
+          type: "string"
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
         open:
           "$ref": "#/components/schemas/Price"
         high:
@@ -4292,7 +4446,8 @@ components:
           type: "integer"
           minimum: 0
       required:
-        - "date"
+        - "start"
+        - "end"
         - "open"
         - "high"
         - "low"
@@ -4317,6 +4472,54 @@ components:
     DashboardSummary:
       type: "object"
       properties:
+        session:
+          type: "object"
+          properties:
+            state:
+              type: "string"
+              enum:
+                - "PRE_OPEN"
+                - "OPEN"
+                - "CLOSED"
+            entry_cutoff_at:
+              oneOf:
+                - type: "string"
+                  format: "date-time"
+                  description: "ISO-8601 timestamp with offset."
+                - type: "null"
+            session_end_exit_at:
+              oneOf:
+                - type: "string"
+                  format: "date-time"
+                  description: "ISO-8601 timestamp with offset."
+                - type: "null"
+            last_bar_close:
+              oneOf:
+                - type: "string"
+                  format: "date-time"
+                  description: "ISO-8601 timestamp with offset."
+                - type: "null"
+          required:
+            - "state"
+            - "entry_cutoff_at"
+            - "session_end_exit_at"
+            - "last_bar_close"
+          additionalProperties: false
+        books:
+          type: "object"
+          properties:
+            PAPER:
+              "$ref": "#/components/schemas/RiskToday"
+            ACTUAL:
+              "$ref": "#/components/schemas/RiskToday"
+          required:
+            - "PAPER"
+            - "ACTUAL"
+          additionalProperties: false
+        open_positions:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/LivePosition"
         stocks_scanned:
           type: "integer"
         active_setups:
@@ -4348,6 +4551,12 @@ components:
                 "$ref": "#/components/schemas/Ratio"
               signal:
                 "$ref": "#/components/schemas/SignalState"
+              valid_until:
+                oneOf:
+                  - type: "string"
+                    format: "date-time"
+                    description: "ISO-8601 timestamp with offset."
+                  - type: "null"
             required:
               - "symbol"
               - "setup_id"
@@ -4355,8 +4564,9 @@ components:
               - "trigger"
               - "distance_pct"
               - "signal"
+              - "valid_until"
             additionalProperties: false
-        recent_analyses:
+        recent_signals:
           type: "array"
           items:
             type: "object"
@@ -4366,26 +4576,29 @@ components:
               analysis_run_id:
                 type: "string"
                 format: "uuid"
-              viewed_at:
+              signal:
+                "$ref": "#/components/schemas/SignalState"
+              signal_at:
                 type: "string"
                 format: "date-time"
                 description: "ISO-8601 timestamp with offset."
-              signal:
-                "$ref": "#/components/schemas/SignalState"
             required:
               - "symbol"
               - "analysis_run_id"
-              - "viewed_at"
               - "signal"
+              - "signal_at"
             additionalProperties: false
       required:
+        - "session"
+        - "books"
+        - "open_positions"
         - "stocks_scanned"
         - "active_setups"
         - "awaiting_confirmation"
         - "active_trade_plans"
         - "top_setups"
         - "upcoming_triggers"
-        - "recent_analyses"
+        - "recent_signals"
       additionalProperties: false
     DataMode:
       type: "string"
@@ -5006,15 +5219,15 @@ components:
                 - type: "null"
             direction:
               "$ref": "#/components/schemas/Direction"
-            entry_date:
+            entry_at:
               type: "string"
-              format: "date"
-              description: "Exchange date, YYYY-MM-DD."
-            exit_date:
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            exit_at:
               oneOf:
                 - type: "string"
-                  format: "date"
-                  description: "Exchange date, YYYY-MM-DD."
+                  format: "date-time"
+                  description: "ISO-8601 timestamp with offset."
                 - type: "null"
             entry_price:
               "$ref": "#/components/schemas/Price"
@@ -5044,8 +5257,8 @@ components:
             - "symbol"
             - "setup_type"
             - "direction"
-            - "entry_date"
-            - "exit_date"
+            - "entry_at"
+            - "exit_at"
             - "entry_price"
             - "exit_price"
             - "quantity"
@@ -5177,20 +5390,84 @@ components:
             - "SWEEP_LOW"
         level:
           "$ref": "#/components/schemas/Price"
-        first_date:
+        first_bar_start:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
-        last_date:
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+        last_bar_start:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
       required:
         - "id"
         - "type"
         - "level"
-        - "first_date"
-        - "last_date"
+        - "first_bar_start"
+        - "last_bar_start"
+      additionalProperties: false
+    LivePosition:
+      type: "object"
+      properties:
+        position_id:
+          type: "string"
+          format: "uuid"
+        symbol:
+          type: "string"
+        quantity:
+          type: "integer"
+          minimum: 1
+        entry_price:
+          "$ref": "#/components/schemas/Price"
+        entry_at:
+          type: "string"
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+        current_price:
+          oneOf:
+            - "$ref": "#/components/schemas/Price"
+            - type: "null"
+        price_at:
+          oneOf:
+            - type: "string"
+              description: "Time of the current price (from the current-price cache)."
+              format: "date-time"
+            - type: "null"
+        unrealised_pnl:
+          oneOf:
+            - "$ref": "#/components/schemas/Money"
+            - type: "null"
+        stop:
+          "$ref": "#/components/schemas/Price"
+        target:
+          "$ref": "#/components/schemas/Price"
+        distance_to_stop_pct:
+          oneOf:
+            - "$ref": "#/components/schemas/Ratio"
+            - type: "null"
+        distance_to_target_pct:
+          oneOf:
+            - "$ref": "#/components/schemas/Ratio"
+            - type: "null"
+        signal:
+          type: "string"
+          enum:
+            - "HOLD"
+            - "EXIT"
+      required:
+        - "position_id"
+        - "symbol"
+        - "quantity"
+        - "entry_price"
+        - "entry_at"
+        - "current_price"
+        - "price_at"
+        - "unrealised_pnl"
+        - "stop"
+        - "target"
+        - "distance_to_stop_pct"
+        - "distance_to_target_pct"
+        - "signal"
+      description: "Current prices are display-only and never change analysis (ENG-05 §12)."
       additionalProperties: false
     LoginRequest:
       type: "object"
@@ -5256,6 +5533,30 @@ components:
             - "CLOSED"
         is_trading_day:
           type: "boolean"
+        session_open:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            - type: "null"
+        session_close:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            - type: "null"
+        entry_cutoff_at:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            - type: "null"
+        session_end_exit_at:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            - type: "null"
         next_open:
           type: "string"
           format: "date-time"
@@ -5264,19 +5565,27 @@ components:
           type: "string"
           format: "date"
           description: "Exchange date, YYYY-MM-DD."
-        last_ingested_date:
+        last_bar_close:
           oneOf:
             - type: "string"
-              format: "date"
-              description: "Exchange date, YYYY-MM-DD."
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
             - type: "null"
+        calendar_verified:
+          type: "boolean"
+          description: "False while the NSE holiday list is not loaded (ARC-03 §2.2)."
       required:
         - "exchange"
         - "state"
         - "is_trading_day"
+        - "session_open"
+        - "session_close"
+        - "entry_cutoff_at"
+        - "session_end_exit_at"
         - "next_open"
         - "last_trading_day"
-        - "last_ingested_date"
+        - "last_bar_close"
+        - "calendar_verified"
       additionalProperties: false
     Me:
       type: "object"
@@ -5308,8 +5617,14 @@ components:
           "$ref": "#/components/schemas/DataMode"
         as_of:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
+          format: "date-time"
+          description: "End of the last completed bar used (ISO-8601, +05:30)."
+        next_bar_close:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "When the data can next change (end of the next 5m bar)."
+            - type: "null"
         next_cursor:
           oneOf:
             - type: "string"
@@ -5546,6 +5861,7 @@ components:
         - "TARGET_GAP"
         - "STRUCTURE_EXIT"
         - "MANUAL"
+        - "SESSION_END"
         - "CORPORATE_ACTION_EXIT"
     PaperTrade:
       type: "object"
@@ -5563,10 +5879,10 @@ components:
           enum:
             - "OPEN"
             - "CLOSED"
-        entry_date:
+        entry_at:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
         entry_price:
           "$ref": "#/components/schemas/Price"
         quantity:
@@ -5578,11 +5894,11 @@ components:
           "$ref": "#/components/schemas/Price"
         target:
           "$ref": "#/components/schemas/Price"
-        exit_date:
+        exit_at:
           oneOf:
             - type: "string"
-              format: "date"
-              description: "Exchange date, YYYY-MM-DD."
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
             - type: "null"
         exit_price:
           oneOf:
@@ -5617,13 +5933,13 @@ components:
         - "trade_plan_id"
         - "instrument"
         - "status"
-        - "entry_date"
+        - "entry_at"
         - "entry_price"
         - "quantity"
         - "initial_stop"
         - "current_stop"
         - "target"
-        - "exit_date"
+        - "exit_at"
         - "exit_price"
         - "exit_reason"
         - "gross_pnl"
@@ -5853,26 +6169,37 @@ components:
           "$ref": "#/components/schemas/Money"
         risk_per_trade_pct:
           "$ref": "#/components/schemas/Ratio"
+        max_position_value:
+          "$ref": "#/components/schemas/Money"
+        daily_loss_limit_pct:
+          "$ref": "#/components/schemas/Ratio"
+        max_consecutive_losses:
+          type: "integer"
+          minimum: 1
+          maximum: 10
         max_open_positions:
           type: "integer"
           minimum: 1
-        max_portfolio_heat_pct:
-          "$ref": "#/components/schemas/Ratio"
-        max_position_pct:
+        max_open_risk_pct:
           "$ref": "#/components/schemas/Ratio"
         min_rr:
-          "$ref": "#/components/schemas/Ratio"
+          oneOf:
+            - "$ref": "#/components/schemas/Ratio"
+            - type: "null"
         max_entry_gap_pct:
-          "$ref": "#/components/schemas/Ratio"
+          oneOf:
+            - "$ref": "#/components/schemas/Ratio"
+            - type: "null"
       required:
         - "version"
         - "trading_capital"
         - "risk_per_trade_pct"
+        - "max_position_value"
+        - "daily_loss_limit_pct"
+        - "max_consecutive_losses"
         - "max_open_positions"
-        - "max_portfolio_heat_pct"
-        - "max_position_pct"
-        - "min_rr"
-        - "max_entry_gap_pct"
+        - "max_open_risk_pct"
+      description: "Intraday risk profile (TRD-05 §2, ranges TRD-01 §6)."
       additionalProperties: false
     RiskProfileRead:
       allOf:
@@ -5931,9 +6258,13 @@ components:
           "$ref": "#/components/schemas/Money"
         rr:
           "$ref": "#/components/schemas/Ratio"
+        rr_after_costs:
+          "$ref": "#/components/schemas/Ratio"
+        est_round_trip_costs:
+          "$ref": "#/components/schemas/Money"
         binding_constraint:
           type: "string"
-          description: "Which sizing constraint set the quantity (e.g. POSITION_CAP)."
+          description: "Which sizing constraint set the quantity (e.g. POSITION_CAP, DAILY_LOSS)."
         constraints:
           type: "object"
           properties:
@@ -5943,13 +6274,39 @@ components:
               type: "integer"
             qty_position_cap:
               type: "integer"
-            qty_heat:
+            qty_open_risk:
+              type: "integer"
+            qty_daily_loss:
               type: "integer"
           required:
             - "qty_risk"
             - "qty_capital"
             - "qty_position_cap"
-            - "qty_heat"
+            - "qty_open_risk"
+            - "qty_daily_loss"
+          additionalProperties: false
+        account_state:
+          type: "object"
+          properties:
+            realised_net_pnl_today:
+              "$ref": "#/components/schemas/Money"
+            open_risk:
+              "$ref": "#/components/schemas/Money"
+            losing_streak:
+              type: "integer"
+              minimum: 0
+            remaining_daily_loss:
+              "$ref": "#/components/schemas/Money"
+            blocked_reason:
+              oneOf:
+                - type: "string"
+                - type: "null"
+          required:
+            - "realised_net_pnl_today"
+            - "open_risk"
+            - "losing_streak"
+            - "remaining_daily_loss"
+            - "blocked_reason"
           additionalProperties: false
         rounding:
           type: "object"
@@ -5975,7 +6332,7 @@ components:
             type: "string"
         ruleset_version:
           type: "string"
-          description: "e.g. pa-core 0.1.0."
+          description: "e.g. pa-intraday 0.1.0."
       required:
         - "quantity"
         - "risk_budget"
@@ -5984,12 +6341,74 @@ components:
         - "actual_risk_pct"
         - "position_value"
         - "rr"
+        - "rr_after_costs"
+        - "est_round_trip_costs"
         - "binding_constraint"
         - "constraints"
+        - "account_state"
         - "rounding"
         - "warnings"
         - "errors"
         - "ruleset_version"
+      description: "TRD-05 §11."
+      additionalProperties: false
+    RiskToday:
+      type: "object"
+      properties:
+        book:
+          "$ref": "#/components/schemas/Book"
+        session_date:
+          type: "string"
+          format: "date"
+          description: "Exchange date, YYYY-MM-DD."
+        realised_net_pnl_today:
+          "$ref": "#/components/schemas/Money"
+        open_risk:
+          "$ref": "#/components/schemas/Money"
+        losing_streak:
+          type: "integer"
+          minimum: 0
+        open_positions:
+          type: "integer"
+          minimum: 0
+        daily_loss_limit:
+          "$ref": "#/components/schemas/Money"
+        remaining_daily_loss:
+          "$ref": "#/components/schemas/Money"
+        max_consecutive_losses:
+          type: "integer"
+          minimum: 1
+        max_open_positions:
+          type: "integer"
+          minimum: 1
+        blocked_reason:
+          oneOf:
+            - type: "string"
+              description: "First failed account rule (TRD-05 §8)."
+            - type: "null"
+        entry_cutoff_at:
+          type: "string"
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+        session_end_exit_at:
+          type: "string"
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+      required:
+        - "book"
+        - "session_date"
+        - "realised_net_pnl_today"
+        - "open_risk"
+        - "losing_streak"
+        - "open_positions"
+        - "daily_loss_limit"
+        - "remaining_daily_loss"
+        - "max_consecutive_losses"
+        - "max_open_positions"
+        - "blocked_reason"
+        - "entry_cutoff_at"
+        - "session_end_exit_at"
+      description: "Account state of one book for the current session (TRD-05 §8.1)."
       additionalProperties: false
     Ruleset:
       type: "object"
@@ -6040,10 +6459,30 @@ components:
         analysis_run_id:
           type: "string"
           format: "uuid"
+        as_of:
+          type: "string"
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+        htf_state:
+          oneOf:
+            - "$ref": "#/components/schemas/StructureState"
+            - type: "null"
         structure_state:
           "$ref": "#/components/schemas/StructureState"
         signal_state:
           "$ref": "#/components/schemas/SignalState"
+        signal_at:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            - type: "null"
+        valid_until:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            - type: "null"
         primary_setup:
           oneOf:
             - "$ref": "#/components/schemas/PrimarySetupSummary"
@@ -6055,9 +6494,60 @@ components:
         - "change_pct"
         - "volume"
         - "analysis_run_id"
+        - "as_of"
+        - "htf_state"
         - "structure_state"
         - "signal_state"
+        - "signal_at"
+        - "valid_until"
         - "primary_setup"
+      additionalProperties: false
+    SessionLevels:
+      type: "object"
+      properties:
+        pdh:
+          oneOf:
+            - "$ref": "#/components/schemas/Price"
+            - type: "null"
+        pdl:
+          oneOf:
+            - "$ref": "#/components/schemas/Price"
+            - type: "null"
+        pdc:
+          oneOf:
+            - "$ref": "#/components/schemas/Price"
+            - type: "null"
+        or_high:
+          oneOf:
+            - "$ref": "#/components/schemas/Price"
+            - type: "null"
+        or_low:
+          oneOf:
+            - "$ref": "#/components/schemas/Price"
+            - type: "null"
+        session_high:
+          "$ref": "#/components/schemas/Price"
+        session_low:
+          "$ref": "#/components/schemas/Price"
+        entry_cutoff_at:
+          type: "string"
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+        session_end_exit_at:
+          type: "string"
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+      required:
+        - "pdh"
+        - "pdl"
+        - "pdc"
+        - "or_high"
+        - "or_low"
+        - "session_high"
+        - "session_low"
+        - "entry_cutoff_at"
+        - "session_end_exit_at"
+      description: "Session reference levels (TRD-03 §8) and session times (TRD-01 §4.1). OR levels are null until the opening range is complete."
       additionalProperties: false
     Setup:
       type: "object"
@@ -6077,10 +6567,22 @@ components:
           description: "True for SHORT setups (informational only)."
         status:
           "$ref": "#/components/schemas/SetupStatus"
-        detected_at_date:
+        detected_at:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+        signal_at:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            - type: "null"
+        valid_until:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            - type: "null"
         levels:
           oneOf:
             - "$ref": "#/components/schemas/SetupLevels"
@@ -6167,7 +6669,9 @@ components:
         - "direction"
         - "informational"
         - "status"
-        - "detected_at_date"
+        - "detected_at"
+        - "signal_at"
+        - "valid_until"
         - "levels"
         - "rr_below_min"
         - "entry_window_open"
@@ -6242,10 +6746,15 @@ components:
     SetupType:
       type: "string"
       enum:
+        - "OPENING_RANGE_BREAKOUT"
+        - "PREV_DAY_HIGH_BREAK"
+        - "PREV_DAY_LOW_BREAK"
         - "BREAKOUT_RETEST"
+        - "TREND_CONTINUATION"
+        - "LIQUIDITY_SWEEP_REVERSAL"
         - "SUPPORT_REJECTION"
         - "TREND_PULLBACK"
-        - "LIQUIDITY_SWEEP_REVERSAL"
+      description: "pa-intraday vocabulary (TRD-01 §7). SUPPORT_REJECTION and TREND_PULLBACK belong to the retired pa-core and appear only on pre-ADR-014 runs."
     SignalState:
       type: "string"
       enum:
@@ -6269,6 +6778,8 @@ components:
         id:
           type: "string"
           format: "uuid"
+        timeframe:
+          "$ref": "#/components/schemas/Timeframe"
         type:
           "$ref": "#/components/schemas/StructureEventType"
         direction:
@@ -6278,25 +6789,26 @@ components:
             - "DOWN"
         level:
           "$ref": "#/components/schemas/Price"
-        level_date:
+        level_bar_start:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
-        break_date:
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
+        break_bar_start:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
         break_close:
           "$ref": "#/components/schemas/Price"
         close_inside_buffer:
           type: "boolean"
       required:
         - "id"
+        - "timeframe"
         - "type"
         - "direction"
         - "level"
-        - "level_date"
-        - "break_date"
+        - "level_bar_start"
+        - "break_bar_start"
         - "break_close"
         - "close_inside_buffer"
       additionalProperties: false
@@ -6394,30 +6906,33 @@ components:
         id:
           type: "string"
           format: "uuid"
+        timeframe:
+          "$ref": "#/components/schemas/Timeframe"
         kind:
           type: "string"
           enum:
             - "HIGH"
             - "LOW"
-        date:
+        bar_start:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
         price:
           "$ref": "#/components/schemas/Price"
         label:
           "$ref": "#/components/schemas/SwingLabel"
-        confirmed_at_date:
+        confirmed_at:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
+          description: "Moment the pivot became known (end of its confirmation bar); never before it (TRD-02 §3.4)."
+          format: "date-time"
       required:
         - "id"
+        - "timeframe"
         - "kind"
-        - "date"
+        - "bar_start"
         - "price"
         - "label"
-        - "confirmed_at_date"
+        - "confirmed_at"
       additionalProperties: false
     SyncRequest:
       type: "object"
@@ -6467,6 +6982,14 @@ components:
         - "name"
         - "role"
       additionalProperties: false
+    Timeframe:
+      type: "string"
+      enum:
+        - "1m"
+        - "5m"
+        - "15m"
+        - "1D"
+      description: "5m is primary, 15m and 1D are context; 1m is reserved (ADR-014)."
     TradePlan:
       type: "object"
       properties:
@@ -6537,6 +7060,18 @@ components:
             - type: "null"
         ruleset_version:
           type: "string"
+        triggered_at:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            - type: "null"
+        valid_until:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+              description: "ISO-8601 timestamp with offset."
+            - type: "null"
         created_at:
           type: "string"
           format: "date-time"
@@ -6590,6 +7125,8 @@ components:
         - "analysis_run_id"
         - "setup_id"
         - "ruleset_version"
+        - "triggered_at"
+        - "valid_until"
         - "created_at"
         - "updated_at"
         - "lock_version"
@@ -6903,10 +7440,10 @@ components:
             - "RETIRED"
         role_reversed:
           type: "boolean"
-        formed_at_date:
+        formed_at:
           type: "string"
-          format: "date"
-          description: "Exchange date, YYYY-MM-DD."
+          format: "date-time"
+          description: "ISO-8601 timestamp with offset."
         distance_pct:
           "$ref": "#/components/schemas/Ratio"
       required:
@@ -6919,7 +7456,7 @@ components:
         - "strength_bucket"
         - "status"
         - "role_reversed"
-        - "formed_at_date"
+        - "formed_at"
         - "distance_pct"
       additionalProperties: false
     ZonesView:

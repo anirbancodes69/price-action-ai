@@ -157,7 +157,7 @@ Covered inside backend-ci (`migrations`, feature tests on real PostgreSQL) and p
 | Container images | Trivy image scan of built images (critical/high, ignore-unfixed configurable) + Trivy config scan of Dockerfiles/compose | |
 | IaC/config | Trivy config (same run) | |
 
-Exceptions: `.github/security-exceptions.yaml` listing CVE/finding id, justification, owner, expiry date; CI fails when an exception expires.
+Exceptions: `.github/security-exceptions.json` (JSON, not YAML, so the checker needs no parser) listing advisory id (GHSA), package, justification, owner and expiry date. **Implemented for the npm audit** (`.github/scripts/check_npm_audit.py`, with tests, run by `security-scan.yml`): a high/critical advisory fails the job unless it has a complete, unexpired entry; an expired or incomplete entry also fails. Composer and pip-audit still fail on any finding and have no exception path yet. Current exception: `GHSA-fc5q-39xc-vjpf` (picomatch ReDoS; no patched release exists; dev tooling only; `npm audit --omit=dev` is clean; expires 2026-12-18, review then).
 
 ## 5. Required secrets
 

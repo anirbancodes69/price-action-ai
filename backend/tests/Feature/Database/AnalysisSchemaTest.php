@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
-/** ARC-03 §7: immutability and integrity of analysis data, enforced by the database. */
+/** ARC-03 §7 and §2.2 (ADR-015): immutability and integrity of analysis data, enforced by the database. */
 class AnalysisSchemaTest extends TestCase
 {
     use AssertsDatabaseRejects;
@@ -46,9 +46,10 @@ class AnalysisSchemaTest extends TestCase
             'name' => 'Test', 'status' => 'ACTIVE',
         ]);
         DB::table('candle_snapshots')->insert([
-            'id' => $snapshot, 'data_source_id' => $source, 'instrument_id' => $instrument, 'timeframe' => '1D',
-            'from_date' => '2025-01-01', 'to_date' => '2026-01-05', 'bar_count' => 250, 'price_basis' => 'ADJUSTED',
-            'content_hash' => $this->hash('snap'), 'payload' => 'zstd-bytes',
+            'id' => $snapshot, 'data_source_id' => $source, 'instrument_id' => $instrument, 'timeframe' => '5m',
+            'from_date' => '2025-12-29', 'to_date' => '2026-01-05', 'bar_count' => 390, 'price_basis' => 'UNADJUSTED',
+            'from_bar_start' => '2025-12-29T09:15:00+05:30', 'to_bar_start' => '2026-01-05T10:25:00+05:30',
+            'max_revision' => 1, 'content_hash' => $this->hash('snap'),
         ]);
 
         return ['source' => $source, 'instrument' => $instrument, 'snapshot' => $snapshot, 'ruleset' => $this->ruleset()];
@@ -59,8 +60,8 @@ class AnalysisSchemaTest extends TestCase
         $id = $this->id();
         DB::table('analysis_runs')->insert(array_merge([
             'id' => $id, 'data_source_id' => $in['source'], 'instrument_id' => $in['instrument'],
-            'candle_snapshot_id' => $in['snapshot'], 'ruleset_version_id' => $in['ruleset'],
-            'engine_version' => '0.1.0', 'as_of_date' => '2026-01-05', 'status' => 'COMPLETED',
+            'ruleset_version_id' => $in['ruleset'],
+            'engine_version' => '0.1.0', 'as_of_date' => '2026-01-05', 'as_of_ts' => '2026-01-05T10:30:00+05:30', 'status' => 'COMPLETED',
             'signal_state' => 'NO_TRADE', 'result_hash' => $this->hash('run'),
         ], $o));
 
@@ -73,8 +74,8 @@ class AnalysisSchemaTest extends TestCase
         DB::table('detected_setups')->insert(array_merge([
             'id' => $id, 'analysis_run_id' => $run, 'instrument_id' => $instrument, 'setup_key' => $this->hash('setup'),
             'setup_type' => 'BREAKOUT_RETEST', 'direction' => 'LONG', 'informational' => false, 'status' => 'FORMING',
-            'detected_at_date' => '2026-01-05', 'status_changed_date' => '2026-01-05',
-            'entry_price' => 100, 'stop_price' => 95, 'target_price' => 115, 'paqs_score' => 72,
+            'detected_at_date' => '2026-01-05', 'detected_at_bar_start' => '2026-01-05T10:25:00+05:30',
+            'status_changed_date' => '2026-01-05', 'entry_price' => 100, 'stop_price' => 95, 'target_price' => 115, 'paqs_score' => 72,
             'paqs_version' => 'paqs-0.1.0', 'paqs_components' => '{}',
         ], $o));
 
@@ -116,9 +117,10 @@ class AnalysisSchemaTest extends TestCase
     {
         $in = $this->inputs();
         $snapshot = fn (array $o = []) => array_merge([
-            'id' => $this->id(), 'data_source_id' => $in['source'], 'instrument_id' => $in['instrument'], 'timeframe' => '1D',
-            'from_date' => '2025-01-01', 'to_date' => '2026-01-05', 'bar_count' => 250, 'price_basis' => 'ADJUSTED',
-            'content_hash' => $this->hash(), 'payload' => 'x',
+            'id' => $this->id(), 'data_source_id' => $in['source'], 'instrument_id' => $in['instrument'], 'timeframe' => '15m',
+            'from_date' => '2025-12-29', 'to_date' => '2026-01-05', 'bar_count' => 130, 'price_basis' => 'UNADJUSTED',
+            'from_bar_start' => '2025-12-29T09:15:00+05:30', 'to_bar_start' => '2026-01-05T10:15:00+05:30',
+            'max_revision' => 1, 'content_hash' => $this->hash(),
         ], $o);
 
         DB::table('candle_snapshots')->insert($snapshot());
@@ -129,23 +131,49 @@ class AnalysisSchemaTest extends TestCase
         $this->assertRejected(fn () => DB::table('candle_snapshots')->insert($snapshot(['to_date' => '2024-01-01'])));
         $this->assertRejected(fn () => DB::table('candle_snapshots')->insert($snapshot(['price_basis' => 'RAW'])));
         $this->assertRejected(fn () => DB::table('candle_snapshots')->insert($snapshot(['content_hash' => 'not-a-hash'])));
+        $this->assertRejected(fn () => DB::table('candle_snapshots')->insert($snapshot(['timeframe' => '2h'])));
+        $this->assertRejected(fn () => DB::table('candle_snapshots')->insert($snapshot(['to_bar_start' => '2025-12-01T09:15:00+05:30'])));
+        $this->assertRejected(fn () => DB::table('candle_snapshots')->insert($snapshot(['max_revision' => 0])));
+        $this->assertRejected(fn () => DB::table('candle_snapshots')->insert($snapshot(['from_bar_start' => null])));
+        DB::table('candle_snapshots')->insert($snapshot(['timeframe' => '1D', 'price_basis' => 'ADJUSTED']));   // daily context
 
         $this->assertRejected(fn () => DB::table('candle_snapshots')->where('id', $in['snapshot'])->update(['bar_count' => 251]));
     }
 
-    public function test_analysis_run_requires_snapshot_and_ruleset_and_is_idempotent(): void
+    public function test_analysis_run_requires_ruleset_and_time_and_is_idempotent(): void
     {
         $in = $this->inputs();
         $this->analysisRun($in);
 
-        $this->assertRejected(fn () => $this->analysisRun($in));                                             // same snapshot + ruleset
-        $this->assertRejected(fn () => $this->analysisRun($in, ['candle_snapshot_id' => null]));             // C-08
+        $this->assertRejected(fn () => $this->analysisRun($in));                                             // same bar close + ruleset
         $this->assertRejected(fn () => $this->analysisRun($in, ['ruleset_version_id' => null]));             // C-08
-        $this->assertRejected(fn () => $this->analysisRun($in, ['ruleset_version_id' => $this->ruleset(['version' => '0.2.0']), 'candle_snapshot_id' => $this->id()]));
-
-        // A new ruleset version over the same snapshot is a different, valid run.
+        $this->assertRejected(fn () => $this->analysisRun($in, ['as_of_ts' => null]));
+        // as_of_date is the IST session date of as_of_ts.
+        $this->assertRejected(fn () => $this->analysisRun($in, ['as_of_ts' => '2026-01-06T10:30:00+05:30']));
+        // 2026-01-05 20:00 UTC is already 2026-01-06 in IST: the session date follows IST, not UTC.
+        $this->assertRejected(fn () => $this->analysisRun($in, ['as_of_ts' => '2026-01-05T20:00:00+00:00']));
+        // A new ruleset version or a later bar close is a different, valid run.
         $this->analysisRun($in, ['ruleset_version_id' => $this->ruleset(['version' => '0.3.0'])]);
-        $this->assertSame(2, DB::table('analysis_runs')->count());
+        $this->analysisRun($in, ['as_of_ts' => '2026-01-05T10:35:00+05:30']);
+        $this->assertSame(3, DB::table('analysis_runs')->count());
+    }
+
+    public function test_analysis_run_inputs_link_snapshots_by_role_and_are_immutable(): void
+    {
+        $in = $this->inputs();
+        $run = $this->analysisRun($in);
+        $input = fn (array $o = []) => array_merge(['analysis_run_id' => $run, 'role' => 'PRIMARY_5M', 'candle_snapshot_id' => $in['snapshot']], $o);
+
+        DB::table('analysis_run_inputs')->insert($input());
+        DB::table('analysis_run_inputs')->insert($input(['role' => 'CONTEXT_15M']));
+
+        $this->assertRejected(fn () => DB::table('analysis_run_inputs')->insert($input()));                           // one snapshot per role
+        $this->assertRejected(fn () => DB::table('analysis_run_inputs')->insert($input(['role' => 'WEEKLY'])));
+        $this->assertRejected(fn () => DB::table('analysis_run_inputs')->insert($input(['role' => 'DAILY_CONTEXT', 'candle_snapshot_id' => $this->id()])));
+        $this->assertRejected(fn () => DB::table('analysis_run_inputs')->where('role', 'PRIMARY_5M')->update(['role' => 'DAILY_CONTEXT']));
+
+        DB::table('analysis_runs')->where('id', $run)->delete();
+        $this->assertSame(0, DB::table('analysis_run_inputs')->count());                                             // cascades with the run
     }
 
     public function test_analysis_run_enums_and_completed_run_needs_result_hash(): void
@@ -180,16 +208,17 @@ class AnalysisSchemaTest extends TestCase
         DB::table('universes')->insert(['id' => $universe, 'code' => 'NIFTY500', 'name' => 'NIFTY 500']);
         $batch = fn (array $o = []) => array_merge([
             'id' => $this->id(), 'data_source_id' => $in['source'], 'universe_id' => $universe, 'as_of_date' => '2026-01-05',
-            'ruleset_version_id' => $in['ruleset'], 'trigger' => 'SCHEDULED_EOD', 'status' => 'QUEUED',
+            'as_of_ts' => '2026-01-05T10:30:00+05:30', 'ruleset_version_id' => $in['ruleset'], 'trigger' => 'BAR_CLOSE', 'status' => 'QUEUED',
         ], $o);
 
         DB::table('analysis_batches')->insert($batch());
-        DB::table('analysis_batches')->insert($batch(['as_of_date' => '2026-01-06']));
+        DB::table('analysis_batches')->insert($batch(['as_of_ts' => '2026-01-05T10:35:00+05:30']));               // next 5m close
 
         $this->assertRejected(fn () => DB::table('analysis_batches')->insert($batch()));
-        $this->assertRejected(fn () => DB::table('analysis_batches')->insert($batch(['as_of_date' => '2026-01-07', 'trigger' => 'CRON'])));
+        $this->assertRejected(fn () => DB::table('analysis_batches')->insert($batch(['as_of_ts' => '2026-01-05T10:40:00+05:30', 'trigger' => 'CRON'])));
+        $this->assertRejected(fn () => DB::table('analysis_batches')->insert($batch(['as_of_ts' => '2026-01-06T10:40:00+05:30'])));  // date mismatch
         $this->assertRejected(fn () => DB::table('analysis_batches')->insert($batch([
-            'as_of_date' => '2026-01-08', 'instruments_total' => 10, 'instruments_completed' => 8, 'instruments_failed' => 3,
+            'as_of_ts' => '2026-01-05T10:45:00+05:30', 'instruments_total' => 10, 'instruments_completed' => 8, 'instruments_failed' => 3,
         ])));
     }
 
@@ -198,8 +227,9 @@ class AnalysisSchemaTest extends TestCase
         $in = $this->inputs();
         $run = $this->analysisRun($in);
         $swing = fn (array $o = []) => array_merge([
-            'id' => $this->id(), 'analysis_run_id' => $run, 'kind' => 'HIGH', 'bar_index' => 100, 'bar_date' => '2025-11-03',
-            'price' => 150.5, 'label' => 'HH', 'confirmed_at_index' => 103, 'confirmed_at_date' => '2025-11-06',
+            'id' => $this->id(), 'analysis_run_id' => $run, 'kind' => 'HIGH', 'timeframe' => '5m', 'bar_index' => 100,
+            'bar_date' => '2026-01-05', 'bar_start' => '2026-01-05T09:50:00+05:30', 'price' => 150.5, 'label' => 'HH',
+            'confirmed_at_index' => 102, 'confirmed_at_date' => '2026-01-05', 'confirmed_at_bar_start' => '2026-01-05T10:00:00+05:30',
         ], $o);
 
         DB::table('swing_points')->insert($swing());
@@ -208,7 +238,10 @@ class AnalysisSchemaTest extends TestCase
 
         $this->assertRejected(fn () => DB::table('swing_points')->insert($swing(['label' => 'HL'])));                 // low label on a high
         $this->assertRejected(fn () => DB::table('swing_points')->insert($swing(['confirmed_at_index' => 99])));      // confirmed before it formed
-        $this->assertRejected(fn () => DB::table('swing_points')->insert($swing(['confirmed_at_date' => '2025-11-01'])));
+        $this->assertRejected(fn () => DB::table('swing_points')->insert($swing(['confirmed_at_date' => '2026-01-02'])));
+        $this->assertRejected(fn () => DB::table('swing_points')->insert($swing(['confirmed_at_bar_start' => '2026-01-05T09:45:00+05:30'])));  // known before its bar
+        $this->assertRejected(fn () => DB::table('swing_points')->insert($swing(['timeframe' => '2h'])));
+        $this->assertRejected(fn () => DB::table('swing_points')->insert($swing(['timeframe' => null])));
         $this->assertRejected(fn () => DB::table('swing_points')->insert($swing(['price' => 0])));
         $this->assertRejected(fn () => DB::table('swing_points')->insert($swing(['kind' => 'MID'])));
     }
@@ -219,6 +252,7 @@ class AnalysisSchemaTest extends TestCase
         $zone = fn (array $o = []) => array_merge([
             'id' => $this->id(), 'analysis_run_id' => $run, 'role' => 'SUPPORT', 'low' => 98, 'high' => 101,
             'strength_score' => 60, 'strength_bucket' => 'MODERATE', 'status' => 'ACTIVE', 'formed_at_date' => '2025-10-01',
+            'formed_at_bar_start' => '2025-10-01T11:00:00+05:30',
         ], $o);
 
         DB::table('price_zones')->insert($zone());
@@ -226,19 +260,26 @@ class AnalysisSchemaTest extends TestCase
         $this->assertRejected(fn () => DB::table('price_zones')->insert($zone(['strength_score' => 101])));
         $this->assertRejected(fn () => DB::table('price_zones')->insert($zone(['strength_bucket' => 'HUGE'])));
         $this->assertRejected(fn () => DB::table('price_zones')->insert($zone(['broken_at_date' => '2025-09-01'])));
+        $this->assertRejected(fn () => DB::table('price_zones')->insert($zone(['broken_at_bar_start' => '2025-10-01T10:55:00+05:30'])));
 
         $this->assertRejected(fn () => DB::table('structure_events')->insert([
-            'id' => $this->id(), 'analysis_run_id' => $run, 'event_type' => 'BREAKDOWN', 'direction' => 'UP',
-            'level_price' => 100, 'break_date' => '2026-01-02', 'break_close' => 101,
+            'id' => $this->id(), 'analysis_run_id' => $run, 'event_type' => 'BREAKDOWN', 'direction' => 'UP', 'timeframe' => '5m',
+            'level_price' => 100, 'break_date' => '2026-01-02', 'break_bar_start' => '2026-01-02T10:00:00+05:30', 'break_close' => 101,
         ]));
         DB::table('structure_events')->insert([
-            'id' => $this->id(), 'analysis_run_id' => $run, 'event_type' => 'BOS', 'direction' => 'UP',
-            'level_price' => 100, 'break_date' => '2026-01-02', 'break_close' => 101,
+            'id' => $this->id(), 'analysis_run_id' => $run, 'event_type' => 'BOS', 'direction' => 'UP', 'timeframe' => '15m',
+            'level_price' => 100, 'break_date' => '2026-01-02', 'break_bar_start' => '2026-01-02T10:00:00+05:30', 'break_close' => 101,
         ]);
 
         $this->assertRejected(fn () => DB::table('liquidity_events')->insert([
             'id' => $this->id(), 'analysis_run_id' => $run, 'event_type' => 'EQUAL_HIGHS',
             'level_price' => 120, 'first_date' => '2026-01-05', 'last_date' => '2026-01-01',
+            'first_bar_start' => '2026-01-05T10:00:00+05:30', 'last_bar_start' => '2026-01-01T10:00:00+05:30',
+        ]));
+        $this->assertRejected(fn () => DB::table('liquidity_events')->insert([
+            'id' => $this->id(), 'analysis_run_id' => $run, 'event_type' => 'EQUAL_HIGHS', 'level_price' => 120,
+            'first_date' => '2026-01-05', 'last_date' => '2026-01-05',
+            'first_bar_start' => '2026-01-05T10:00:00+05:30', 'last_bar_start' => '2026-01-05T09:55:00+05:30',
         ]));
     }
 
@@ -248,12 +289,14 @@ class AnalysisSchemaTest extends TestCase
         $run = $this->analysisRun($in);
         $swing = $this->id();
         DB::table('swing_points')->insert([
-            'id' => $swing, 'analysis_run_id' => $run, 'kind' => 'HIGH', 'bar_index' => 1, 'bar_date' => '2025-01-02',
-            'price' => 100, 'label' => 'HH', 'confirmed_at_index' => 4, 'confirmed_at_date' => '2025-01-07',
+            'id' => $swing, 'analysis_run_id' => $run, 'kind' => 'HIGH', 'timeframe' => '5m', 'bar_index' => 1,
+            'bar_date' => '2026-01-05', 'bar_start' => '2026-01-05T09:20:00+05:30', 'price' => 100, 'label' => 'HH',
+            'confirmed_at_index' => 3, 'confirmed_at_date' => '2026-01-05', 'confirmed_at_bar_start' => '2026-01-05T09:30:00+05:30',
         ]);
         DB::table('structure_events')->insert([
-            'id' => $this->id(), 'analysis_run_id' => $run, 'event_type' => 'BOS', 'direction' => 'UP', 'level_price' => 100,
-            'level_swing_point_id' => $swing, 'break_date' => '2025-02-01', 'break_close' => 102,
+            'id' => $this->id(), 'analysis_run_id' => $run, 'event_type' => 'BOS', 'direction' => 'UP', 'timeframe' => '5m',
+            'level_price' => 100, 'level_swing_point_id' => $swing, 'break_date' => '2026-01-05',
+            'break_bar_start' => '2026-01-05T10:05:00+05:30', 'break_close' => 102,
         ]);
         $setup = $this->detectedSetup($run, $in['instrument'], ['anchor_swing_point_id' => $swing]);
 
@@ -288,6 +331,12 @@ class AnalysisSchemaTest extends TestCase
         $this->assertRejected($make(['status_changed_date' => '2026-01-01']));
         $this->assertRejected($make(['setup_key' => 'abc']));
         $this->assertRejected($make(['rr' => 0]));
+        $this->assertRejected($make(['detected_at_bar_start' => null]));
+        // Validity: valid_until needs signal_at and cannot precede it (TRD-04 §12).
+        $this->assertRejected($make(['valid_until' => '2026-01-05T10:40:00+05:30']));
+        $this->assertRejected($make(['signal_at' => '2026-01-05T10:30:00+05:30', 'valid_until' => '2026-01-05T10:25:00+05:30']));
+        DB::transaction($make(['setup_type' => 'OPENING_RANGE_BREAKOUT', 'signal_at' => '2026-01-05T10:30:00+05:30', 'valid_until' => '2026-01-05T10:35:00+05:30']));
+        DB::transaction($make(['setup_type' => 'PREV_DAY_LOW_BREAK', 'direction' => 'SHORT', 'informational' => true, 'stop_price' => 105, 'target_price' => 90]));
     }
 
     public function test_primary_setup_fk_is_deferred_so_run_and_setup_can_insert_together(): void
@@ -301,7 +350,8 @@ class AnalysisSchemaTest extends TestCase
             DB::table('detected_setups')->insert([
                 'id' => $setupId, 'analysis_run_id' => $run, 'instrument_id' => $in['instrument'], 'setup_key' => $this->hash(),
                 'setup_type' => 'TREND_PULLBACK', 'direction' => 'LONG', 'informational' => false, 'status' => 'FORMING',
-                'detected_at_date' => '2026-01-05', 'status_changed_date' => '2026-01-05', 'paqs_score' => 50,
+                'detected_at_date' => '2026-01-05', 'detected_at_bar_start' => '2026-01-05T10:25:00+05:30',
+                'status_changed_date' => '2026-01-05', 'paqs_score' => 50,
                 'paqs_version' => 'paqs-0.1.0', 'paqs_components' => '{}',
             ]);
             DB::statement('SET CONSTRAINTS ALL IMMEDIATE');

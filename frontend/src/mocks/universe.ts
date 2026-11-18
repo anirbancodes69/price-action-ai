@@ -25,6 +25,13 @@ const MID: IndexMembership[] = ["NIFTY MIDCAP 100"];
 
 export const SAMPLE_AS_OF = "2026-11-13";
 
+/**
+ * Moment of the sample snapshot: 14:00 IST on SAMPLE_AS_OF, mid-session and before the 14:45 entry cutoff, so the
+ * sample signals are current. Nothing after this moment appears in the sample data (no forming or future bars).
+ */
+export const SAMPLE_SNAPSHOT = "14:00";
+export const SAMPLE_AS_OF_TS = `${SAMPLE_AS_OF}T${SAMPLE_SNAPSHOT}:00+05:30`;
+
 export const UNIVERSE: UniverseEntry[] = [
   { symbol: "RELIANCE", name: "Reliance Industries Ltd", exchange: "NSE", sector: "Energy", indices: N50, price: 1486.4, avgVolume: 9_800_000, template: "breakout" },
   { symbol: "TCS", name: "Tata Consultancy Services Ltd", exchange: "NSE", sector: "IT", indices: N50, price: 3124.6, avgVolume: 2_600_000, template: "range" },

@@ -73,7 +73,7 @@ Integration plan (M7):
 
 1. Add `src/lib/data/http-source.ts` implementing the read methods via `/api/v1` (server-side fetch forwarding cookies; see [ARC-04 §2.2](../architecture/04_API_SPECIFICATION.md#22-authentication)).
 2. Add a **mutations client** (`src/lib/api/`) for writes (plans, watchlists, settings, onboarding, journal, backtests, integrations) — the current interface is read-only; mutations today are local state + toasts.
-3. Generate API types from `contracts/api/openapi.yaml` into `src/lib/api/schema.ts`; map API schemas to existing view types in `src/lib/data/mappers/` so components stay unchanged (enum mapping per [TRD-04 §12](../trading/04_SETUP_DETECTION_RULES.md#12-frontend-vocabulary-reconciliation); price strings → numbers for display only).
+3. Generate API types from `contracts/api/openapi.yaml` into `src/lib/api/schema.ts`; map API schemas to existing view types in `src/lib/data/mappers/` so components stay unchanged (enum mapping per [TRD-04 §13](../trading/04_SETUP_DETECTION_RULES.md#13-frontend-vocabulary-reconciliation); price strings → numbers for display only).
 4. Replace global `DataSource.kind` with per-response `meta.data_mode`; render `SampleDataBadge` when `DEMO`.
 5. Select adapter with `NEXT_PUBLIC_DATA_SOURCE=mock|http` (server-only env preferred: `DATA_SOURCE`), keeping the mock adapter for Storybook-style development and frontend tests.
 6. Remove `getPlaceholderEquityCurve` once backtest results exist.
@@ -103,7 +103,7 @@ Integration plan (M7):
 | `/forgot-password` | Forgot password | F-02 | A5 | password_reset_tokens | Mock |
 | `/reset-password` | Reset password (**missing**) | F-02 | A6 | password_reset_tokens | Not built |
 | `/onboarding` | Onboarding | F-04, F-05, F-06, F-07, F-20 | O1–O4, I1, P5 | onboarding_progress, user_profiles, trading_preferences, data_source_selections, risk_profiles, provider_connections | Mock (local state) |
-| `/dashboard` | Dashboard | F-16, F-15, F-19, F-28, F-31 | N3, N4, M6, M7, W1, N1 | analysis_batches, analysis_runs, detected_setups, trade_plans, watchlists, notifications, candles (indices) | Mock |
+| `/dashboard` | Dashboard | F-16, F-15, F-19, F-28, F-31, F-41 | N3, N4, M6, M7, W1, N1, R2 (`getRiskToday`) | analysis_batches, analysis_runs, detected_setups, trade_plans, watchlists, notifications, candles (indices) | Mock |
 | `/market-scanner` | Scanner | F-15, F-34 | N1, N2 | analysis_batches, analysis_runs, detected_setups, instruments, universe_memberships | Mock (client filters) |
 | `/analysis` | Redirect | — | — | — | Redirect to `/analysis/RELIANCE` |
 | `/analysis/[symbol]` | Stock analysis | F-17, F-10–F-14, F-19, F-21, F-27 | N5, N6, N13–N15, W5/W6, R (8.1), T2 | analysis_runs, candle_snapshots, swing_points, structure_events, price_zones, liquidity_events, detected_setups, ai_explanations, ruleset_versions | Mock (demo heuristic) |
@@ -122,7 +122,7 @@ Differences between the current frontend and the specified product. None is fixe
 
 | ID | Area | Current frontend | Specification | Resolution | Milestone |
 |---|---|---|---|---|---|
-| D-01 | Setup types | `breakout-retest`, `pullback-to-support`, `range-breakout`, `breakdown-retest`, `trend-continuation`, `range-bound` | 4 canonical types (TRD-04) | Update `SetupType` + `SETUP_TYPES` labels; mapping table TRD-04 §12 | M7 |
+| D-01 | Setup types | `breakout-retest`, `pullback-to-support`, `range-breakout`, `breakdown-retest`, `trend-continuation`, `range-bound` | 4 canonical types (TRD-04) | Update `SetupType` + `SETUP_TYPES` labels; mapping table TRD-04 §13 | M7 |
 | D-02 | Setup status | No `expired`; `detected` | `FORMING`, …, `EXPIRED` | Add `expired`; rename label of `detected` → "Forming" | M7 |
 | D-03 | Universe options | NIFTY 50/100/200/MIDCAP 150, "All NSE equities"; default NIFTY 100 | NIFTY 500 default; subsets only | Add NIFTY 500, remove All NSE, change default | M7 |
 | D-04 | Types `Exchange`, `IndexMembership` | `BSE` allowed; index list lacks NIFTY 500 | NSE only; universes from API | Narrow types / use API universes | M7 |
@@ -146,6 +146,10 @@ Differences between the current frontend and the specified product. None is fixe
 | D-22 | Scanner exchange filter | NSE/BSE filter | Remove (NSE only) | Remove | M7 |
 | D-23 | Plan sizing input | Risk budget ₹5,000 default in dialog | Risk % from profile (₹ shown as derived) | See D-06 | M7 |
 | D-24 | Prices | `number` in types | Strings in API | Adapter parses | M7 |
+| D-25 | Time model | ~~`Candle.time` is a date string; `Timeframe = "1D" \| "1W" \| "1M"`; chart aggregates daily bars~~ **Resolved (restructuring branch):** `Candle.time` is an IST timestamp for intraday bars and a session date for daily bars; `Timeframe = "5m" \| "15m" \| "1D"`; the chart shifts timestamps to read IST (`lib/chart/time.ts`), draws session separators and session levels; `lib/chart/aggregate.ts` removed | Timestamped bars, `5m`/`15m` (daily display only), IST labels, session separators (ADR-015, ARC-04 §2.9) | Done | — |
+| D-26 | Market session | `use-market-session.ts` derives the session from the clock and ignores holidays | NSE calendar via `GET /market/session`; session clock with cutoff and exit times | **Partly resolved:** `sessionClock()` (tested) gives the phases pre-open / open / after-cutoff / exit-window / closed with countdowns, shown in `MarketStatus`. Still clock-based without holidays until the calendar API (M7 `GET /market/session`) | I6 (UIA-16) |
+| D-27 | Risk settings and dashboard | Daily risk fields (positions/heat %); no account limits, live P&L or freshness | ₹ position cap, daily loss and streak limits, today panel, last-bar time (TRD-05, PRD-07 UIA-11/17/18) | **Resolved on mock data:** settings "Risk and limits" (capital, risk %, ₹ cap, daily loss %, losing streak, open positions, open risk; session rules read-only); dashboard "Today's risk" per book (`DataSource.getRiskToday`, ARC-04 R2); `SampleDataBadge` shows the last bar time; scanner "Valid until" column; `/portfolio` framed as Active trades. Live prices per position (X11) arrive with the HTTP adapter | I6 |
+| D-28 | Mock data | Daily demo series and daily setup vocabulary (`src/mocks`) | Intraday DEMO series and `pa-intraday` setup vocabulary (TRD-04 §13) | **Partly resolved:** `mocks/demo-intraday.ts` (port of the PHP seeder, parity-tested against `mocks/fixtures/intraday-parity.json`) and `mocks/demo-session.ts` give 5m/15m bars and session levels for a 14:00 IST snapshot; intraday setup labels added. The sample setups themselves still come from the daily demo heuristic until the engine (I3–I4) and HTTP adapter (I6) | I6 |
 
 ## 10. Testing (frontend)
 

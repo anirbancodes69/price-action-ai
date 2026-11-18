@@ -1,0 +1,11 @@
+{
+  "exceptions": [
+    {
+      "id": "GHSA-fc5q-39xc-vjpf",
+      "package": "picomatch",
+      "justification": "ReDoS in extglob matching; affects every published version (<= 4.0.7, no patched release exists). Reached only through dev tooling (vite, vitest, tinyglobby, eslint-config-next), which only matches globs from this repository's own config. `npm audit --omit=dev` reports 0 vulnerabilities, so nothing ships to production or runs on user input.",
+      "owner": "owner",
+      "expires": "2026-12-18"
+    }
+  ]
+}

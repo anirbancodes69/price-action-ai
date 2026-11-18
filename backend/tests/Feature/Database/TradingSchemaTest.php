@@ -46,15 +46,17 @@ class TradingSchemaTest extends TestCase
             'parameters_hash' => $this->hash(), 'score_version' => 'paqs-0.1.0',
         ]);
         DB::table('candle_snapshots')->insert([
-            'id' => $in['snapshot'], 'data_source_id' => $in['source'], 'instrument_id' => $in['instrument'], 'timeframe' => '1D',
-            'from_date' => '2025-01-01', 'to_date' => '2026-01-05', 'bar_count' => 250, 'price_basis' => 'ADJUSTED',
-            'content_hash' => $this->hash(), 'payload' => 'x',
+            'id' => $in['snapshot'], 'data_source_id' => $in['source'], 'instrument_id' => $in['instrument'], 'timeframe' => '5m',
+            'from_date' => '2025-12-29', 'to_date' => '2026-01-05', 'bar_count' => 390, 'price_basis' => 'UNADJUSTED',
+            'from_bar_start' => '2025-12-29T09:15:00+05:30', 'to_bar_start' => '2026-01-05T10:25:00+05:30', 'max_revision' => 1,
+            'content_hash' => $this->hash(),
         ]);
         DB::table('analysis_runs')->insert([
             'id' => $in['run'], 'data_source_id' => $in['source'], 'instrument_id' => $in['instrument'],
-            'candle_snapshot_id' => $in['snapshot'], 'ruleset_version_id' => $in['ruleset'], 'engine_version' => '0.1.0',
-            'as_of_date' => '2026-01-05', 'status' => 'COMPLETED', 'signal_state' => 'NO_TRADE', 'result_hash' => $this->hash(),
+            'ruleset_version_id' => $in['ruleset'], 'engine_version' => '0.1.0', 'as_of_date' => '2026-01-05',
+            'as_of_ts' => '2026-01-05T10:30:00+05:30', 'status' => 'COMPLETED', 'signal_state' => 'NO_TRADE', 'result_hash' => $this->hash(),
         ]);
+        DB::table('analysis_run_inputs')->insert(['analysis_run_id' => $in['run'], 'role' => 'PRIMARY_5M', 'candle_snapshot_id' => $in['snapshot']]);
 
         return $in;
     }
@@ -90,7 +92,7 @@ class TradingSchemaTest extends TestCase
         DB::table('paper_trades')->insert(array_merge([
             'id' => $id, 'tenant_id' => $in['tenant'], 'user_id' => $in['user'], 'paper_account_id' => $account,
             'trade_plan_id' => $plan, 'instrument_id' => $in['instrument'], 'status' => 'OPEN', 'entry_date' => '2026-01-06',
-            'entry_price' => 100.1, 'quantity' => 100, 'initial_stop' => 95, 'current_stop' => 95, 'target_price' => 115,
+            'entry_at' => '2026-01-06T10:35:00+05:30', 'entry_price' => 100.1, 'quantity' => 100, 'initial_stop' => 95, 'current_stop' => 95, 'target_price' => 115,
         ], $o));
 
         return $id;
@@ -163,19 +165,18 @@ class TradingSchemaTest extends TestCase
         // CLOSED without exit facts, and exit facts on an OPEN trade, are both rejected.
         $this->assertRejected(fn () => DB::table('paper_trades')->where('id', $trade)->update(['status' => 'CLOSED']));
         $this->assertRejected(fn () => DB::table('paper_trades')->where('id', $trade)->update(['exit_price' => 110]));
-        $this->assertRejected(fn () => DB::table('paper_trades')->where('id', $trade)->update([
-            'status' => 'CLOSED', 'exit_date' => '2026-01-10', 'exit_price' => 110, 'exit_reason' => 'SOMETHING',
-            'gross_pnl' => 10, 'net_pnl' => 9,
-        ]));
-        $this->assertRejected(fn () => DB::table('paper_trades')->where('id', $trade)->update([
-            'status' => 'CLOSED', 'exit_date' => '2026-01-01', 'exit_price' => 110, 'exit_reason' => 'TARGET',   // before entry
-            'gross_pnl' => 10, 'net_pnl' => 9,
-        ]));
+        $close = ['status' => 'CLOSED', 'exit_date' => '2026-01-06', 'exit_at' => '2026-01-06T15:15:00+05:30', 'exit_price' => 110,
+            'exit_reason' => 'TARGET', 'gross_pnl' => 10, 'net_pnl' => 9];
+        $this->assertRejected(fn () => DB::table('paper_trades')->where('id', $trade)->update(array_merge($close, ['exit_reason' => 'SOMETHING'])));
+        $this->assertRejected(fn () => DB::table('paper_trades')->where('id', $trade)->update(array_merge($close, ['exit_date' => '2026-01-01'])));   // before entry
+        $this->assertRejected(fn () => DB::table('paper_trades')->where('id', $trade)->update(array_merge($close, ['exit_at' => null])));              // CLOSED needs exit_at
+        $this->assertRejected(fn () => DB::table('paper_trades')->where('id', $trade)->update(array_merge($close, ['exit_at' => '2026-01-06T10:30:00+05:30'])));  // before entry_at
+        $this->assertRejected(fn () => DB::table('paper_trades')->where('id', $trade)->update(['exit_at' => '2026-01-06T15:15:00+05:30']));  // OPEN has no exit_at
 
-        DB::table('paper_trades')->where('id', $trade)->update([
-            'status' => 'CLOSED', 'exit_date' => '2026-01-10', 'exit_price' => 115, 'exit_reason' => 'TARGET',
-            'gross_pnl' => 1490, 'charges' => 40, 'net_pnl' => 1450, 'r_multiple' => 2.9,
-        ]);
+        // Intraday session-end exit (TRD-07 §5).
+        DB::table('paper_trades')->where('id', $trade)->update(array_merge($close, [
+            'exit_price' => 115, 'exit_reason' => 'SESSION_END', 'gross_pnl' => 1490, 'charges' => 40, 'net_pnl' => 1450, 'r_multiple' => 2.9,
+        ]));
         $this->assertSame('CLOSED', DB::table('paper_trades')->where('id', $trade)->value('status'));
     }
 
@@ -314,21 +315,28 @@ class TradingSchemaTest extends TestCase
         ]);
         $trade = fn (array $o = []) => DB::table('backtest_trades')->insert(array_merge([
             'id' => $this->id(), 'backtest_run_id' => $runId, 'instrument_id' => $in['instrument'],
-            'setup_type' => 'TREND_PULLBACK', 'setup_key' => $this->hash(), 'signal_date' => '2024-03-01', 'outcome' => 'FILLED',
-            'entry_date' => '2024-03-04', 'entry_price' => 100, 'quantity' => 50, 'stop_price' => 95, 'target_price' => 115,
+            'setup_type' => 'OPENING_RANGE_BREAKOUT', 'setup_key' => $this->hash(), 'signal_date' => '2024-03-01',
+            'signal_at' => '2024-03-01T09:45:00+05:30', 'outcome' => 'FILLED', 'entry_date' => '2024-03-01',
+            'entry_at' => '2024-03-01T09:45:00+05:30', 'entry_price' => 100, 'quantity' => 50, 'stop_price' => 95, 'target_price' => 115,
         ], $o));
 
+        // Signal at the close of the 09:40–09:45 bar (signal_at 09:45); fill at the open of the next bar (entry_at 09:45).
         $trade();
-        $trade(['outcome' => 'SKIPPED', 'skip_reason' => 'GAP_TOO_LARGE', 'entry_date' => null, 'entry_price' => null,
+        $trade(['entry_at' => '2024-03-04T09:15:00+05:30', 'entry_date' => '2024-03-04', 'setup_type' => 'TREND_PULLBACK']);  // legacy type
+        $trade(['outcome' => 'SKIPPED', 'skip_reason' => 'SKIPPED_GAP_UP', 'entry_date' => null, 'entry_at' => null, 'entry_price' => null,
             'quantity' => null, 'stop_price' => null, 'target_price' => null]);
 
-        $this->assertRejected(fn () => $trade(['entry_date' => '2024-03-01']));                      // same bar as the signal
-        $this->assertRejected(fn () => $trade(['entry_date' => '2024-02-28']));
-        $this->assertRejected(fn () => $trade(['entry_date' => null]));                              // FILLED needs entry facts
+        $this->assertRejected(fn () => $trade(['entry_at' => '2024-03-01T09:40:00+05:30']));         // inside the signal bar (look-ahead)
+        $this->assertRejected(fn () => $trade(['entry_date' => '2024-02-28', 'entry_at' => '2024-03-01T10:00:00+05:30']));
+        $this->assertRejected(fn () => $trade(['entry_date' => null, 'entry_at' => null]));          // FILLED needs entry facts
+        $this->assertRejected(fn () => $trade(['entry_at' => null, 'entry_date' => '2024-03-01']));  // FILLED needs entry_at
+        $this->assertRejected(fn () => $trade(['signal_at' => null, 'entry_at' => '2024-03-01T10:00:00+05:30']));
         $this->assertRejected(fn () => $trade(['stop_price' => 101]));                               // long-only level order
         $this->assertRejected(fn () => $trade(['target_price' => 99]));
         $this->assertRejected(fn () => $trade(['outcome' => 'SKIPPED']));                            // SKIPPED needs a reason, no entry
-        $this->assertRejected(fn () => $trade(['exit_date' => '2024-03-01']));                       // exit before entry
+        $trade(['exit_date' => '2024-03-01', 'exit_at' => '2024-03-01T15:15:00+05:30']);              // same-session exit is normal intraday
+        $this->assertRejected(fn () => $trade(['exit_date' => '2024-02-29']));                       // exit date before entry
+        $this->assertRejected(fn () => $trade(['exit_date' => '2024-03-01', 'exit_at' => '2024-03-01T09:40:00+05:30']));  // exit time before entry
         $this->assertRejected(fn () => $trade(['paqs_score' => 101]));
         $this->assertRejected(fn () => $trade(['setup_type' => 'FOMO']));
 

@@ -7,7 +7,7 @@
 | Status | Specification ready (tool choice pending OQ-MON-01) |
 | Owner | DevOps / Technical Lead |
 | Last updated | 2026-11-15 |
-| Related | [ENG-06 Logging](../engineering/06_ERROR_HANDLING_AND_LOGGING.md) · [OPS-01 Health checks](01_DEPLOYMENT_GUIDE.md#5-health-checks) · [PRD-02 Success metrics](../product/02_BRD.md#10-success-metrics) |
+| Related | [ENG-06 Logging](../engineering/06_ERROR_HANDLING_AND_LOGGING.md) · [OPS-01 Health checks](01_DEPLOYMENT_GUIDE.md#5-health-checks) · [PRD-02 Success metrics](../product/02_BRD.md#9-success-metrics) |
 
 ## 1. Purpose
 

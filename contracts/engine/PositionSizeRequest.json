@@ -1,5 +1,47 @@
 {
   "$defs": {
+    "AccountState": {
+      "additionalProperties": false,
+      "description": "Derived state of one book for the current session (TRD-05 §8.1).\n\nLaravel computes it from the trade tables.",
+      "properties": {
+        "losing_streak": {
+          "minimum": 0,
+          "title": "Losing Streak",
+          "type": "integer"
+        },
+        "open_cost_basis": {
+          "description": "Σ cost basis of open positions in this book.",
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Open Cost Basis",
+          "type": "string"
+        },
+        "open_positions": {
+          "description": "Open positions plus TRIGGERED plans awaiting fill.",
+          "minimum": 0,
+          "title": "Open Positions",
+          "type": "integer"
+        },
+        "open_risk": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Open Risk",
+          "type": "string"
+        },
+        "realised_net_pnl_today": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Realised Net Pnl Today",
+          "type": "string"
+        }
+      },
+      "required": [
+        "realised_net_pnl_today",
+        "open_risk",
+        "open_cost_basis",
+        "open_positions",
+        "losing_streak"
+      ],
+      "title": "AccountState",
+      "type": "object"
+    },
     "BookKind": {
       "description": "The paper and actual books are never mixed (constraint C-11).",
       "enum": [
@@ -17,40 +59,32 @@
       ],
       "title": "Direction",
       "type": "string"
-    },
-    "OpenPosition": {
-      "additionalProperties": false,
-      "description": "One open position in the same book as the plan (TRD-05 §2).",
-      "properties": {
-        "cost_basis": {
-          "pattern": "^-?\\d+(\\.\\d+)?$",
-          "title": "Cost Basis",
-          "type": "string"
-        },
-        "open_risk": {
-          "pattern": "^-?\\d+(\\.\\d+)?$",
-          "title": "Open Risk",
-          "type": "string"
-        }
-      },
-      "required": [
-        "cost_basis",
-        "open_risk"
-      ],
-      "title": "OpenPosition",
-      "type": "object"
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "Inputs of TRD-05 §2. Laravel supplies capital, the risk profile and the open positions of one book.",
+  "description": "Inputs of TRD-05 §2.\n\nThe plan's levels, the risk profile, the book's account state and the session clock.",
   "properties": {
+    "account_state": {
+      "$ref": "#/$defs/AccountState"
+    },
+    "as_of_ts": {
+      "description": "End of the 5m bar the request is made at (ISO-8601 with offset).",
+      "format": "date-time",
+      "title": "As Of Ts",
+      "type": "string"
+    },
     "book": {
       "$ref": "#/$defs/BookKind"
     },
     "capital": {
       "pattern": "^-?\\d+(\\.\\d+)?$",
       "title": "Capital",
+      "type": "string"
+    },
+    "daily_loss_limit_pct": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Daily Loss Limit Pct",
       "type": "string"
     },
     "direction": {
@@ -61,25 +95,36 @@
       "title": "Entry",
       "type": "string"
     },
+    "entry_cutoff_at": {
+      "description": "Entry cutoff of the session (TRD-01 §4.1), from the calendar.",
+      "format": "date-time",
+      "title": "Entry Cutoff At",
+      "type": "string"
+    },
     "lot_size": {
       "default": 1,
       "minimum": 1,
       "title": "Lot Size",
       "type": "integer"
     },
-    "max_heat_pct": {
-      "pattern": "^-?\\d+(\\.\\d+)?$",
-      "title": "Max Heat Pct",
-      "type": "string"
+    "max_consecutive_losses": {
+      "minimum": 1,
+      "title": "Max Consecutive Losses",
+      "type": "integer"
     },
     "max_open_positions": {
       "minimum": 1,
       "title": "Max Open Positions",
       "type": "integer"
     },
-    "max_position_pct": {
+    "max_open_risk_pct": {
       "pattern": "^-?\\d+(\\.\\d+)?$",
-      "title": "Max Position Pct",
+      "title": "Max Open Risk Pct",
+      "type": "string"
+    },
+    "max_position_value": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Max Position Value",
       "type": "string"
     },
     "min_rr": {
@@ -95,13 +140,6 @@
       "default": null,
       "description": "User override; only accepted when stricter than the ruleset value.",
       "title": "Min Rr"
-    },
-    "open_positions": {
-      "items": {
-        "$ref": "#/$defs/OpenPosition"
-      },
-      "title": "Open Positions",
-      "type": "array"
     },
     "risk_pct": {
       "pattern": "^-?\\d+(\\.\\d+)?$",
@@ -138,9 +176,14 @@
     "stop",
     "target",
     "tick_size",
+    "max_position_value",
     "max_open_positions",
-    "max_heat_pct",
-    "max_position_pct",
+    "max_open_risk_pct",
+    "daily_loss_limit_pct",
+    "max_consecutive_losses",
+    "account_state",
+    "as_of_ts",
+    "entry_cutoff_at",
     "ruleset_version"
   ],
   "title": "PositionSizeRequest",

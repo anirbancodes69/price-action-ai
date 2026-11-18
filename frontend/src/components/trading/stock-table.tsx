@@ -4,7 +4,7 @@ import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { rrTone, TONE_TEXT } from "@/lib/colors";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatTime } from "@/lib/format";
 import { SETUP_TYPES } from "@/lib/labels";
 import type { ScannerRow } from "@/types";
 import { DataTable, type Column } from "@/components/data/data-table";
@@ -27,7 +27,8 @@ export type StockColumnKey =
   | "rr"
   | "quality"
   | "status"
-  | "signal";
+  | "signal"
+  | "validity";
 
 const ALL: Record<StockColumnKey, Column<ScannerRow>> = {
   symbol: {
@@ -139,10 +140,25 @@ const ALL: Record<StockColumnKey, Column<ScannerRow>> = {
     sortValue: (r) => r.signal,
     render: (r) => <SignalBadge signal={r.signal} />,
   },
+  validity: {
+    key: "validity",
+    header: "Valid until",
+    hideBelow: "lg",
+    sortValue: (r) => r.validUntil ?? "",
+    // Signal time and expiry (TRD-04 §12). Dash when there is no live signal.
+    render: (r) =>
+      r.validUntil ? (
+        <span className="tabular-nums text-muted-foreground" title={r.signalAt ? `Signal at the ${formatTime(r.signalAt)} close` : undefined}>
+          {formatTime(r.validUntil)}
+        </span>
+      ) : (
+        <span className="text-muted-foreground" aria-label="No live signal">—</span>
+      ),
+  },
 };
 
 export const SCANNER_COLUMNS: StockColumnKey[] = [
-  "symbol", "company", "price", "change", "structure", "setup", "entry", "stop", "target", "rr", "quality", "status", "signal",
+  "symbol", "company", "price", "change", "structure", "setup", "entry", "stop", "target", "rr", "quality", "status", "signal", "validity",
 ];
 
 interface StockTableProps {

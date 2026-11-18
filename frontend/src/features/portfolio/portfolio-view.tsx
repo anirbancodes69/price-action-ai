@@ -109,8 +109,8 @@ export function PortfolioView({ holdings, summary, allocation, orders, asOf }: P
   return (
     <PageFrame>
       <PageHeader
-        title="Portfolio"
-        description="Executed positions and holdings. Values are sample data; no broker is connected."
+        title="Active trades"
+        description="Open intraday positions and their risk. Every position is flattened by the 15:15 session-end exit. Values are sample data; no broker is connected."
         meta={<SampleDataBadge asOf={asOf} />}
       />
 

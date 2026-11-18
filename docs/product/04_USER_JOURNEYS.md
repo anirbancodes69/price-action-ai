@@ -3,166 +3,118 @@
 | Field | Value |
 |---|---|
 | Document ID | PRD-04 |
-| Version | 0.1.0 |
-| Status | Specification ready |
+| Version | 0.2.0 |
+| Status | Specification ready for the personal intraday direction (ADR-014) |
 | Owner | Product Manager |
-| Last updated | 2026-11-15 |
-| Related | [PRD-03 PRD](03_PRD.md) · [PRD-05 Onboarding](05_ONBOARDING_SPECIFICATION.md) · [ARC-04 API](../architecture/04_API_SPECIFICATION.md) · [TRD-07 Paper trading](../trading/07_PAPER_TRADING_SPECIFICATION.md) |
+| Last updated | 2026-11-17 |
+| Related | [ADR-014](../adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md) · [PRD-03 PRD](03_PRD.md) · [ARC-04 API](../architecture/04_API_SPECIFICATION.md) · [TRD-04 Setups](../trading/04_SETUP_DETECTION_RULES.md) · [TRD-05 Risk](../trading/05_RISK_MANAGEMENT_RULES.md) · [TRD-07 Paper trading](../trading/07_PAPER_TRADING_SPECIFICATION.md) |
 
 ## 1. Purpose
 
-End-to-end journeys for the primary persona ("Ravi", a working professional who swing-trades NIFTY 500 stocks after market hours). Each journey lists steps, the screens used, the APIs involved and what is built today versus specified.
+End-to-end journeys for the only user, **the owner**, who trades NIFTY 50 stocks intraday and executes manually on the broker platform. The journeys follow one trading day. Each lists steps, screens, APIs and what is built today (the current frontend shows daily mock data only). Times are IST on a normal session (09:15–15:30); special sessions use the calendar's times.
 
-## 2. Registration
+Registration, onboarding and the daily after-hours workflow of version 0.1.0 are retired with ADR-014.
+
+## 2. One-time setup
+
+| Step | Screen | API | Today |
+|---|---|---|---|
+| Owner account and tenant created by a setup command on the server | — | — | Not built |
+| Log in | `/login` | A1, A3 | Accepts any valid-format credentials |
+| Set capital, risk per trade, max position value, daily loss limit, losing-streak limit, open positions, open risk | `/settings` → Risk and limits | P3, P4 | Daily risk fields, session-only |
+| Connect the broker data account through the provider's login (Kite or Groww, T-201/T-203) | `/settings` → Market data and broker | I1–I3 | Placeholder toast |
+| Choose DEMO while not connected | `/settings` → Market data | P5, P6 | "Sample data — In use" |
+| Review the default watchlist (NIFTY 50) | `/watchlists` | W1, W5 | Mock lists |
+
+## 3. Before the open (09:00–09:15)
 
 ```mermaid
 flowchart LR
-  A[/register/] -->|submit| B{Valid?}
-  B -- no --> A
-  B -- yes --> C[Tenant + user created<br/>verification email sent]
-  C --> D[/onboarding/ welcome]
-  D -.->|email link| E[Email verified]
+  A[Login] --> B[Dashboard: session clock,<br/>limits reset, data health]
+  B --> C[Previous-day levels<br/>per symbol]
+  C --> D[Watchlist review]
 ```
 
 | Step | Screen | API | Today |
 |---|---|---|---|
-| Enter name, email, password, accept terms | `/register` | `GET /sanctum/csrf-cookie`, `POST /auth/register` | Form + validation built; submits to nothing, routes to `/onboarding` after 700 ms |
-| Verify email (can continue onboarding in parallel; tenant data blocked until verified) | Email → `/api/v1/auth/email/verify/...` | A8 | Not built |
+| See market status (pre-open), today's limits (fresh), broker connection and data health (last reconciliation) | `/dashboard` | M7, `GET /risk/today`, I3 | Clock-based status; mock widgets |
+| See PDH/PDL/PDC and yesterday's structure for the watchlist | `/watchlists`, `/analysis/{symbol}` | N5 | Daily mock chart |
 
-Failure paths: email taken (field error), weak password, rate limit.
+No setups exist yet: analysis starts with the first completed 5m bar.
 
-## 3. Login
+## 4. Opening range (09:15–09:30)
 
 | Step | Screen | API | Today |
 |---|---|---|---|
-| Enter credentials | `/login` | A1, A3 | Accepts any valid-format credentials |
-| Routing | — | A9 `GET /me` | Always `/dashboard`; spec: `/onboarding` if onboarding incomplete, else `/dashboard` (or original deep link) |
-| Forgot password | `/forgot-password` → email → `/reset-password` | A5, A6 | Request form only |
+| First 5m bars arrive at 09:20, 09:25, 09:30 (+ settle delay) | Scanner, dashboard (polling) | N1, N3 | Not built |
+| Scanner shows structure and previous-day-level setups; opening range breakouts are marked "opening range forming" until 09:30 | `/market-scanner` | N1 | Not built |
+| At the 09:30 close the opening range is known; ORB setups appear as `AWAITING_CONFIRMATION` (or `NO_TRADE` with `OR_TOO_NARROW`/`OR_TOO_WIDE`) | `/market-scanner`, `/analysis/{symbol}` | N1, N5 | Not built |
 
-## 4. First-time onboarding
-
-See [PRD-05](05_ONBOARDING_SPECIFICATION.md) for full state machine.
+## 5. Finding and checking a setup (any time before the entry cutoff)
 
 ```mermaid
 flowchart LR
-  W[Welcome] --> X[Experience] --> S[Trading style] --> U[Universe<br/>optional] --> D[Data source] --> R[Risk<br/>optional] --> C[Complete]
-  D -- Zerodha --> Z[Kite login flow] --> R
-  D -- Demo --> R
+  S[Scanner: BUY WATCH /<br/>ENTRY CONFIRMED] --> A[Analysis: 5m chart,<br/>15m context, evidence]
+  A --> P[Plan dialog:<br/>engine levels + size]
+  P -->|limits OK| OK[Plan saved]
+  P -->|limit or rule fails| NO[Refused with reason]
 ```
 
-## 5. Demo mode
+| Step | Screen | API | Today |
+|---|---|---|---|
+| Filter the scanner by signal BUY WATCH or ENTRY CONFIRMED; sort by score | `/market-scanner` | N1 | Daily mock filters |
+| Open a symbol: 5m chart with annotations shown from their confirmation bar, 15m context, evidence, levels, R:R before and after costs, `valid_until` | `/analysis/{symbol}` | N5 | Daily mock chart and panel |
+| Open the plan dialog: engine entry/stop/target pre-filled; size, risk, position value and costs computed by the engine (e.g. 33 shares, ₹424.05 risk, binding: position cap — TRD-05 §3.1) | Plan dialog | R1, T2 | Client-side calculation (must call the API) |
+| Save: account limits and rules are checked; a refused plan shows the specific reason (`DAILY_LOSS_LIMIT_REACHED`, `RR_BELOW_MINIMUM`, …) | Plan dialog | T2 | Mock save |
 
-1. User picks Demo in onboarding (default) → `data_source_selections` = DEMO source.
-2. Dashboard, scanner, analysis, backtests use demo instruments and generated candles; every surface shows "Sample data".
-3. Plans, paper trades and journal work normally against demo analysis (records are tagged with the demo data source through their `analysis_run_id`).
-4. User can switch to Personal later from `/settings → Market data`; demo records remain, clearly linked to demo runs.
+## 6. Executing and monitoring a trade
 
-Today: the whole frontend runs in this mode by default with mock data.
+| Step | Screen | API | Today |
+|---|---|---|---|
+| When the setup confirms (5m close), the plan becomes `TRIGGERED`; a notification shows the one-bar entry window | Notifications, `/trade-plans` | Z1, T1 | Mock |
+| The owner places the order on the broker platform (outside the app) and records the fill with its time | `/portfolio` → Actual → Add fill | X8 | Placeholder |
+| Paper tracking fills the paper twin at the next 5m open (or skips it with a reason) | `/portfolio` → Paper | X3 | Not built |
+| Active trades show the current price (labelled with its time), unrealised P&L, distance to stop and target, time to session-end exit, HOLD/EXIT | `/portfolio` | X10, `GET /positions/live` | Daily holdings mock |
+| Exit: record the sell fill; the paper twin exits by its own rules | `/portfolio` | X9 | Placeholder |
 
-## 6. Zerodha connection
+## 7. Limits during the day
 
-```mermaid
-sequenceDiagram
-  actor U as User
-  participant FE as /settings or /onboarding
-  participant BE as Laravel
-  participant K as Zerodha login
-  U->>FE: Connect Zerodha
-  FE->>BE: POST /integrations/zerodha/connect
-  BE-->>FE: login_url
-  FE->>K: redirect
-  U->>K: Zerodha credentials + 2FA (on Zerodha's site)
-  K-->>BE: callback with request_token
-  BE-->>FE: redirect /settings?result=connected
-  FE->>U: "Connected. Importing history — first analysis after import."
-  Note over BE: backfill + instrument sync queued
-```
+| Event | What the owner sees | API | Today |
+|---|---|---|---|
+| A loss brings the book's realised net loss to the daily limit | Banner "Daily loss limit reached — new plans blocked for this book until tomorrow"; pending plans show `ACCOUNT_LIMIT` | `GET /risk/today`, T1 | Not built |
+| Third consecutive losing trade (default limit 3) | Same, with the streak reason | `GET /risk/today` | Not built |
+| Two positions already open (default limit) | Plan dialog disabled with `MAX_POSITIONS_REACHED` | T2 | Not built |
 
-Post-conditions: PERSONAL data source exists; selection prompt "Use Zerodha data now?" (switch happens only after first successful ingestion — `DATA_SOURCE_NOT_READY` otherwise). Daily: if token expired at EOD time, user receives "Reconnect Zerodha" notification.
+## 8. Entry cutoff and session end (14:45–15:30)
 
-Today: buttons exist and show "coming soon"/"unavailable" toasts; no credentials are collected (correct).
-
-## 7. Universe selection
-
-1. Onboarding optional step or `/settings → Trading preferences`.
-2. Options: NIFTY 500 (default, product universe), NIFTY 50, NIFTY 100, NIFTY 200, NIFTY MIDCAP 150 — all subsets of NIFTY 500.
-3. Effect: scanner and dashboard default filter; EOD analysis always covers NIFTY 500 + watchlist symbols regardless (so switching is instant).
-
-Discrepancy: current UI offers NIFTY 50/100/200/MIDCAP 150 and an "All NSE equities" option but **no NIFTY 500**; "All NSE" is out of scope. See [ENG-02 §9](../engineering/02_FRONTEND_ARCHITECTURE.md#9-discrepancy-register).
-
-## 8. First stock analysis
-
-| Step | Detail |
-|---|---|
-| Open | Global search (⌘K) or scanner row → `/analysis/{symbol}` |
-| Read | Chart with annotations; analysis panel (structure, signal, setup, levels, quality); evidence; entry conditions; invalidation |
-| Explain (spec) | "Explain this chart" → AI summary with evidence refs and disclaimer |
-| Act | Add to watchlist; "Create plan" for LONG setups |
-
-## 9. Daily scanning workflow (after 18:30 IST)
-
-```mermaid
-flowchart TB
-  N[Notification: scan ready / plan triggered] --> D[/dashboard/]
-  D --> T{Triggered plans?}
-  T -- yes --> TP[/trade-plans/ review TRIGGERED plans<br/>decide manual execution at next open]
-  T -- no --> S[/market-scanner/ filter BUY WATCH, score ≥ 60]
-  S --> A[/analysis/symbol/ review evidence]
-  A --> P{Plan?}
-  P -- yes --> C[Create plan: risk-sized]
-  P -- no --> W[Add to watchlist or skip]
-  TP --> E[Execute manually on Kite next morning<br/>record actual trade]
-```
-
-## 10. Trade plan creation
-
-1. From analysis panel, "Create plan" opens the dialog with engine entry/stop/target.
-2. As the user edits, the dialog calls `POST /risk/calculate` and shows quantity, position value, R:R, binding constraint and errors.
-3. Save → `POST /trade-plans` (server recomputes and stores).
-4. Plan appears in `/trade-plans` as PENDING (or TRIGGERED if created from an ENTRY_CONFIRMED setup inside its entry window).
-
-Today: dialog computes quantity in the browser and shows a "saved for this session" toast — must be replaced by API calls (M7).
-
-## 11. Paper trade lifecycle
-
-```mermaid
-stateDiagram-v2
-  [*] --> PENDING_PLAN
-  PENDING_PLAN --> TRIGGERED: close > trigger (EOD)
-  TRIGGERED --> OPEN: next open within gap rule
-  TRIGGERED --> SKIPPED: gap / RR degraded
-  OPEN --> CLOSED: stop / target / structure exit / manual close (next open)
-  CLOSED --> JOURNAL_DRAFT
-  JOURNAL_DRAFT --> JOURNAL_COMPLETE: user adds reflection
-```
-
-User touchpoints: notifications at TRIGGERED, OPEN/SKIPPED, CLOSED; `/portfolio` (Paper) for open positions; `/journal` for drafts.
-
-## 12. Trade journaling
-
-1. Notification "Paper trade RELIANCE closed at target (+2.3R) — add a note".
-2. `/journal` → entry drawer shows facts (planned vs actual, exit reason, followed-plan flag computed).
-3. User writes notes, tags (e.g. `late-entry`), emotions, mistakes, rating → marks complete.
-4. Stats bar updates (server-side).
-
-Today: journal list, filters, detail drawer and notes editing exist with mock entries; save is session-only; no paper/actual distinction.
-
-## 13. Backtesting
-
-1. `/backtesting` → choose setup types, instruments (single / NIFTY 500 / watchlist), dates, capital, risk %.
-2. Submit → `POST /backtests` → 202; run appears in history with progress.
-3. On completion → notification; results show metrics, equity curve, trades (incl. skipped with reasons), version stamps and bias warnings (e.g. "Universe history incomplete — survivorship bias possible").
-
-Today: form + validation exist; submission ends in "Backtest engine not connected"; the curve shown is a labelled placeholder.
-
-## 14. Account settings
-
-| Section | Actions | Today |
+| Time (normal session) | What happens | Today |
 |---|---|---|
-| Profile | Name, timezone; change password; delete account | Name/email inputs (session-only); no password/delete |
-| Trading preferences | Styles, timeframe (Daily only), universe, direction (long only / long + reference) | Present (session-only) |
-| Risk management | Capital, risk %, max positions, max heat, max position % (new), min R:R override (new) | Present without max position % / min R:R |
-| Market data | Select Demo / Personal; ingestion status | Present as placeholders |
-| Broker connection | Connect/disconnect Zerodha; status | Placeholder ("Upstox — Planned") |
-| Notifications | Toggles | Present (session-only) |
-| Appearance | Dark/light | Implemented (localStorage) |
+| 14:45 (entry cutoff, 45 min before the close) | No new plans; open setups expire (`SESSION_CUTOFF`); warning if actual positions are open | Not built |
+| 15:15 (session-end exit, 15 min before the close) | Paper positions exit at the 15:15 bar's open (`SESSION_END`); warning on every screen for open actual positions | Not built |
+| 15:30 close | Session-end reconciliation of bars; journal drafts for every closed trade; an actual position still open is flagged `CARRIED_OVER` | Not built |
+
+## 9. Journaling (after the close)
+
+| Step | Screen | API | Today |
+|---|---|---|---|
+| Open today's drafts: planned vs actual entry/exit (price and time), slippage, costs, net P&L, R, exit reason | `/journal` | J1, J2 | Daily mock entries |
+| Add notes, mistakes, tags, rating; mark complete; attach a screenshot (I7) | `/journal` | J3 | Notes only |
+| Review session stats per book (net P&L, win rate, average R, plan adherence) | `/journal` | J4 | Client-computed |
+
+## 10. Backtesting and review (weekly)
+
+| Step | Screen | API | Today |
+|---|---|---|---|
+| Configure setups, NIFTY 50 or watchlist, session range, capital, limits, slippage, cost schedule | `/backtesting` | B1, B2 | Daily strategy list |
+| Follow progress; read metrics (session P&L distribution, exit mix, skips by reason), flags and versions | `/backtesting` | B3, B4, B5 | Placeholder curve labelled as such |
+| Compare with the forward paper log before trusting a setup with real money (BRD G1) | `/journal` (Paper), `/backtesting` | J4, B4 | Not built |
+
+## 11. Settings
+
+| Section | Contents | Today |
+|---|---|---|
+| Profile | Display name, timezone, password | Partially (session-only) |
+| Risk and limits | Capital, risk %, max position value, daily loss limit, losing-streak limit, open positions, open risk (FR-069) | Daily fields, session-only |
+| Session | Opening range, entry cutoff, session-end exit, ruleset version (read-only, FR-114) | Not built |
+| Market data and broker | DEMO/PERSONAL, connection status, token expiry, data health | Placeholders |
+| Notifications, Appearance | In-app types; theme | Built (session-only / localStorage) |

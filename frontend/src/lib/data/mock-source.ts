@@ -15,11 +15,12 @@ import {
   buildAllocation,
   buildHoldings,
   buildPortfolioSummary,
+  buildRiskToday,
   buildTradePlans,
   buildTriggers,
 } from "@/mocks/trading";
 import { DEMO_USER, NOTIFICATIONS } from "@/mocks/user";
-import { SAMPLE_AS_OF } from "@/mocks/universe";
+import { SAMPLE_AS_OF_TS } from "@/mocks/universe";
 import type { DataSource } from "./source";
 
 function analyses() {
@@ -39,12 +40,15 @@ function scannerRows(): ScannerRow[] {
     signal: a.setup.signal,
     levels: a.levels,
     qualityScore: a.qualityScore,
+    htfStructure: a.htfStructure,
+    signalAt: a.signalAt,
+    validUntil: a.validUntil,
   }));
 }
 
 export const mockSource: DataSource = {
   kind: "sample",
-  asOf: SAMPLE_AS_OF,
+  asOf: SAMPLE_AS_OF_TS,
 
   async getIndices() {
     return INDICES;
@@ -93,6 +97,9 @@ export const mockSource: DataSource = {
   },
   async getPortfolioSummary() {
     return buildPortfolioSummary(buildHoldings(), JOURNAL);
+  },
+  async getRiskToday(book) {
+    return buildRiskToday(book);
   },
   async getAllocation() {
     const summary = buildPortfolioSummary(buildHoldings(), JOURNAL);

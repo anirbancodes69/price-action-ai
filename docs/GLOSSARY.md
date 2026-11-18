@@ -57,12 +57,12 @@ Terms are grouped by domain. Where a term has a precise rule, the definition lin
 | Invalidation | Condition that terminates a setup before entry. |
 | Expiry | Setup termination after `setup.expiry_bars` without confirmation. |
 | Signal state | Trader-facing state: `NO_TRADE`, `BUY_WATCH`, `ENTRY_CONFIRMED`, `HOLD`, `EXIT`. |
-| PAQS | Price Action Quality Score (0–100): rule-conformance score, **not** a probability ([TRD-04 §9](trading/04_SETUP_DETECTION_RULES.md#9-price-action-quality-score-paqs)). |
+| PAQS | Price Action Quality Score (0–100): rule-conformance score, **not** a probability ([TRD-04 §10](trading/04_SETUP_DETECTION_RULES.md#10-price-action-quality-score-paqs)). |
 | R / R-multiple | Profit or loss expressed in units of initial risk. |
 | R:R (risk/reward) | (target − entry) / (entry − stop). |
 | Risk budget | capital × risk per trade %. |
 | Portfolio heat | Sum of open risk to stops across open positions. |
-| Gap rule | Next-open fill constraints ([TRD-05 §7](trading/05_RISK_MANAGEMENT_RULES.md#7-entry-gap-rules)). |
+| Gap rule | Next-open fill constraints ([TRD-05 §7](trading/05_RISK_MANAGEMENT_RULES.md#71-entry-gap-rule-next-5m-bar)). |
 | Same-candle collision | A bar touching both stop and target; resolved as stop. |
 | Look-ahead bias | Using information not available at decision time. |
 | Survivorship bias | Testing only on instruments that survived to today. |

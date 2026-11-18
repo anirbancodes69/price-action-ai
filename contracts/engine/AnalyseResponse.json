@@ -21,13 +21,19 @@
       "title": "Analysis Run Id",
       "type": "string"
     },
+    "as_of_ts": {
+      "format": "date-time",
+      "title": "As Of Ts",
+      "type": "string"
+    },
     "status": {
       "$ref": "#/$defs/AnalysisStatus"
     }
   },
   "required": [
     "analysis_run_id",
-    "status"
+    "status",
+    "as_of_ts"
   ],
   "title": "AnalyseResponse",
   "type": "object"

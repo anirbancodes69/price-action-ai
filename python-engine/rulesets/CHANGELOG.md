@@ -8,7 +8,16 @@ needs an entry here, updated TRD docs (TRD-01 §6 and the TRD that defines the r
 The backend seeds from `backend/database/seeders/data/<code>-<version>.json` because the backend container cannot see
 this directory; both files are kept byte-identical.
 
-## pa-core 0.1.0
+## pa-intraday 0.1.0 (2026-11-17)
+
+- First intraday ruleset (ADR-014): 41 parameters in TRD-01 §6 for 5m setups with 15m and daily context, session rules (opening range 15 min, entry cutoff 45 min and exit 15 min before the close), and the owner's risk planning values (0.5% risk, ₹50,000 per position). All `HYPOTHESIS`.
+- Not seeded yet: the seeder copy exists (`backend/database/seeders/data/pa-intraday-0.1.0.json`); seeding it as the active ruleset and retiring `pa-core` happens with the I1 schema work (T-I09).
+- Score version `paqs-intraday-0.1.0` (components defined when TRD-04 is revised, T-I05).
+
+## pa-core 0.1.0 (retired by ADR-014)
+
+- Kept for history. Its engine and seeder files are still checked against each other; TRD-01 now documents `pa-intraday`, and the `pa-core` registry is in TRD-01 Appendix A.
+
 
 - Initial registry: the 29 defaults of TRD-01 §6. All values are `HYPOTHESIS` (not validated by backtests).
 - Score version `paqs-0.1.0` (TRD-04 §9).

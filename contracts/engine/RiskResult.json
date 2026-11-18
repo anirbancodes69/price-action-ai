@@ -1,5 +1,52 @@
 {
   "$defs": {
+    "AccountStateResult": {
+      "additionalProperties": false,
+      "description": "Account state as evaluated, with what remains (TRD-05 §8.1, §11).",
+      "properties": {
+        "blocked_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "First failed account rule (TRD-05 §8), e.g. DAILY_LOSS_LIMIT_REACHED.",
+          "title": "Blocked Reason"
+        },
+        "losing_streak": {
+          "minimum": 0,
+          "title": "Losing Streak",
+          "type": "integer"
+        },
+        "open_risk": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Open Risk",
+          "type": "string"
+        },
+        "realised_net_pnl_today": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Realised Net Pnl Today",
+          "type": "string"
+        },
+        "remaining_daily_loss": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Remaining Daily Loss",
+          "type": "string"
+        }
+      },
+      "required": [
+        "realised_net_pnl_today",
+        "open_risk",
+        "losing_streak",
+        "remaining_daily_loss"
+      ],
+      "title": "AccountStateResult",
+      "type": "object"
+    },
     "RoundedLevels": {
       "additionalProperties": false,
       "description": "Entry, stop and target after tick-size rounding (TRD-01 §5).",
@@ -36,8 +83,12 @@
           "title": "Qty Capital",
           "type": "integer"
         },
-        "qty_heat": {
-          "title": "Qty Heat",
+        "qty_daily_loss": {
+          "title": "Qty Daily Loss",
+          "type": "integer"
+        },
+        "qty_open_risk": {
+          "title": "Qty Open Risk",
           "type": "integer"
         },
         "qty_position_cap": {
@@ -53,7 +104,8 @@
         "qty_risk",
         "qty_capital",
         "qty_position_cap",
-        "qty_heat"
+        "qty_open_risk",
+        "qty_daily_loss"
       ],
       "title": "SizingConstraints",
       "type": "object"
@@ -63,6 +115,9 @@
   "additionalProperties": false,
   "description": "Outcome of a sizing calculation. Rule violations are ``errors`` codes from TRD-05, not exceptions.",
   "properties": {
+    "account_state": {
+      "$ref": "#/$defs/AccountStateResult"
+    },
     "actual_risk": {
       "pattern": "^-?\\d+(\\.\\d+)?$",
       "title": "Actual Risk",
@@ -86,6 +141,11 @@
       },
       "title": "Errors",
       "type": "array"
+    },
+    "est_round_trip_costs": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Est Round Trip Costs",
+      "type": "string"
     },
     "position_value": {
       "pattern": "^-?\\d+(\\.\\d+)?$",
@@ -115,9 +175,14 @@
       "title": "Rr",
       "type": "string"
     },
+    "rr_after_costs": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Rr After Costs",
+      "type": "string"
+    },
     "ruleset_version": {
       "examples": [
-        "pa-core 0.1.0"
+        "pa-intraday 0.1.0"
       ],
       "title": "Ruleset Version",
       "type": "string"
@@ -138,8 +203,11 @@
     "actual_risk_pct",
     "position_value",
     "rr",
+    "rr_after_costs",
+    "est_round_trip_costs",
     "binding_constraint",
     "constraints",
+    "account_state",
     "rounding",
     "warnings",
     "errors",

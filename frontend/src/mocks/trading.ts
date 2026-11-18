@@ -4,6 +4,8 @@
  * so numbers are consistent across screens.
  */
 import type {
+  Book,
+  RiskToday,
   ActivityItem,
   AllocationSlice,
   BacktestStrategy,
@@ -16,6 +18,7 @@ import type {
   Watchlist,
 } from "@/types";
 import { toTick } from "./rng";
+import { SAMPLE_AS_OF } from "./universe";
 import { buildDemoAnalysis } from "./demo-analysis";
 
 const price = (symbol: string) => buildDemoAnalysis(symbol)?.stock.price ?? 0;
@@ -203,3 +206,18 @@ export const SAMPLE_EQUITY_CURVE: { time: string; value: number }[] = (() => {
   }
   return out;
 })();
+
+/**
+ * SAMPLE account state at the snapshot (TRD-05 §8.1), with the owner's planning limits: ₹1,00,000 capital,
+ * daily loss limit 1.5% (₹1,500), 3 consecutive losses, 2 open positions. Paper: one losing trade closed and one
+ * position open; actual: nothing yet today.
+ */
+export function buildRiskToday(book: Book): RiskToday {
+  const base = { book, sessionDate: SAMPLE_AS_OF, dailyLossLimit: 1500, maxConsecutiveLosses: 3, maxOpenPositions: 2, blockedReason: null };
+  if (book === "paper") {
+    const realisedNetPnl = -420.4;
+    const openRisk = 424.05;
+    return { ...base, realisedNetPnl, openRisk, losingStreak: 1, openPositions: 1, remainingDailyLoss: Math.round((1500 + realisedNetPnl - openRisk) * 100) / 100 };
+  }
+  return { ...base, realisedNetPnl: 0, openRisk: 0, losingStreak: 0, openPositions: 0, remainingDailyLoss: 1500 };
+}

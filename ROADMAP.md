@@ -4,19 +4,22 @@ High-level progress tracker. The **detailed plan** (scope, files, tests, exit cr
 
 Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REVIEW`. Target dates are not set yet (OQ-RD-01).
 
+Direction changed on 2026-11-17 to a **personal intraday workstation** ([ADR-014](docs/adr/ADR-014-PERSONAL-INTRADAY-WORKSTATION.md)). M0 and M1 stand. The daily milestones M2–M10 are superseded by the intraday milestones I0–I8 (detail in [ENG-01 §0](docs/engineering/01_IMPLEMENTATION_ROADMAP.md#0-intraday-roadmap-adr-014)). Effort ranges are solo engineering days, not dates.
+
 | M | Milestone | Objective | Depends on | Status | Completed |
 |---|---|---|---|---|---|
 | M0 | Repository and infrastructure foundation | Monorepo, Compose stack skeleton, GitHub repo config and CI gates | — | `COMPLETED` | 2026-11-15 |
-| M1 | Database and API contracts | ARC-03 schema, seeders, OpenAPI and engine JSON Schemas | M0 | `NEEDS REVIEW` (all M1 tasks T-101..T-105 verified locally on a branch; awaiting PR and CI. Fresh DB migrates and seeds, OpenAPI validates, engine schema matches the migrations) | — |
-| M2 | Zerodha integration and market data ingestion | Provider abstraction, DEMO + Kite providers, daily/backfill ingestion | M1 | `NOT STARTED` (verification blocked: OQ-INT-01/02) | — |
-| M3 | Swing points and market structure | TRD-02 pivots and structure state | M1 (can run parallel to M2 on fixtures) | `NOT STARTED` | — |
-| M4 | BOS, CHoCH, support/resistance and liquidity | TRD-02 breaks, TRD-03 zones, liquidity | M2, M3 | `NOT STARTED` | — |
-| M5 | Setup detection and risk management | TRD-04 setups + PAQS, TRD-05 risk sizing, internal engine endpoints | M4 | `NOT STARTED` | — |
-| M6 | Laravel APIs | ARC-04 `/api/v1` endpoints, tenancy, policies | M1, M5 | `NOT STARTED` | — |
-| M7 | Frontend integration | HTTP adapter replaces mock; discrepancies D-01..D-24 | M6 | `NOT STARTED` | — |
-| M8 | LLM explanations | ARC-07 explanation-only LLM with validator and fallback | M5, M7, OQ-AI-01 | `NOT STARTED` | — |
-| M9 | Backtesting and paper trading | TRD-06, TRD-07; release gate G1 (personal MVP) | M5, M7 | `NOT STARTED` | — |
-| M10 | Product validation and SaaS readiness | Parameter validation, staging/prod, RLS, 2FA, legal and licensing | M9 | `NOT STARTED` | — |
+| M1 | Database and API contracts | ARC-03 schema, seeders, OpenAPI and engine JSON Schemas | M0 | `COMPLETED` | 2026-11-17 (PRs #13–#15, #17, #19–#21) |
+| M2–M10 | Daily-timeframe roadmap | — | — | Superseded by ADR-014 (not started) | — |
+| I0 | Direction and specifications | ADR-014/015, intraday TRD-01..07, product docs | M1 | `NEEDS REVIEW` (all I0 tasks done on branch `docs/intraday-direction-and-specs`; PR pending) | — |
+| I1 | Intraday schema and contracts | Bar timestamps, 1m/5m/15m/1D, snapshot by reference, risk state, calendar seed | I0 | `NEEDS REVIEW` (T-I09 done on the restructuring branch) | — |
+| I2 | Intraday market data | Provider adapter (Kite or Groww), bar-close fetcher, current-price cache, quality checks, DEMO intraday data | I1, provider access | `NOT STARTED` (blocked: OQ-INT-01/04) | — |
+| I3 | Engine core on 15m/5m | Pivots, structure, BOS/CHoCH, higher-timeframe alignment | I1 | `NOT STARTED` | — |
+| I4 | Session context and setups | Opening range, previous-day levels, S/R zones, breakout-retest, levels, NO_TRADE | I3 | `NOT STARTED` | — |
+| I5 | Intraday risk and trade state | Sizing with ₹ caps, daily loss and streak limits, open risk, intraday costs, end-of-day exit | I1 | `NOT STARTED` | — |
+| I6 | API and frontend integration | `/api/v1` subset, HTTP adapter, intraday chart, polling | I2–I5 | `IN PROGRESS` (frontend restructured to the intraday model on sample data, T-I10; API, HTTP adapter and polling pending) | — |
+| I7 | Journal and performance | Planned vs actual, net P&L, server-side stats | I6 | `NOT STARTED` | — |
+| I8 | Intraday backtesting | 5m bar replay, sessions, collisions, end-of-day exit, costs, out-of-sample | I3–I5, history | `NOT STARTED` | — |
 
 ## Milestone acceptance (summary)
 
@@ -26,7 +29,13 @@ Full acceptance and exit criteria are in ENG-01 §3.
 |---|---|
 | M0 | `docker compose up` healthy; CI green on PR; `main` protected; required check `ci-gate`. **Verified:** PRs #1–#11 ran through `ci-gate`, and the "Protect Main" ruleset is active. |
 | M1 | Fresh DB migrates and seeds; OpenAPI validates; engine schema matches Laravel migrations. |
-| M2 | DEMO + Kite candles ingested for NIFTY 500 with quality checks; adapter tests use recorded fixtures; token never logged. |
+| I0 | ADR-014/015 accepted; TRD-01..07 describe the intraday methodology; the documents still describing daily scope are listed in DOCUMENTATION_STATUS. |
+| I1 | Fresh DB migrates and seeds with intraday timeframes; schema-diff, OpenAPI coverage and ruleset checks green. |
+| I2 | One full NIFTY 50 session of 5m/15m bars ingested without gaps against the calendar; adapter tests on recorded fixtures; token never logged. |
+| I3–I5 | Intraday TRD-08 vectors pass, including no-look-ahead and higher-timeframe alignment properties; risk limits block violating plans. |
+| I6–I7 | MVP workflows (scan, analyse, plan, record, monitor, journal) run end to end on DEMO data, then on the provider. |
+| I8 | Reproducible intraday backtests (input hash) with collision, end-of-day and cost vectors passing. |
+| M2 | *(superseded)* DEMO + Kite candles ingested for NIFTY 500 with quality checks; adapter tests use recorded fixtures; token never logged. |
 | M3 | TRD-02 test vectors and no-look-ahead tests pass. |
 | M4 | TRD-02/03 break, zone and liquidity vectors pass. |
 | M5 | Analysis runs contain setups with levels and evidence; risk endpoint matches TRD-05 examples; engine contract v1 frozen. |

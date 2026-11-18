@@ -7,7 +7,7 @@
 | Status | Specification ready (provider/model selection pending — OQ-AI-01) |
 | Owner | Solution Architect + Product Manager |
 | Last updated | 2026-11-15 |
-| Related | [ADR-009](../adr/ADR-009-LLM-EXPLANATION-ONLY.md) · [ADR-008](../adr/ADR-008-DETERMINISTIC-TRADING-ENGINE.md) · [TRD-04 Evidence](../trading/04_SETUP_DETECTION_RULES.md#8-evidence) · [ARC-05 §6](05_DATA_FLOW.md#6-llm-explanation-generation) |
+| Related | [ADR-009](../adr/ADR-009-LLM-EXPLANATION-ONLY.md) · [ADR-008](../adr/ADR-008-DETERMINISTIC-TRADING-ENGINE.md) · [TRD-04 Evidence](../trading/04_SETUP_DETECTION_RULES.md#9-evidence) · [ARC-05 §6](05_DATA_FLOW.md#9-llm-explanations) |
 
 ## 1. Purpose
 
@@ -128,7 +128,7 @@ Temperature: low (0–0.3). Max output tokens: 700 (summary), 500 (Q&A).
 | Quota exceeded | 429 `QUOTA_EXCEEDED` (no provider call) |
 | Provider disabled (`LLM_ENABLED=false`) | `FALLBACK` immediately |
 
-Fallback text is generated **deterministically** from evidence templates (TRD-04 §8): headline + ordered evidence titles/details + invalidation list. It is always correct by construction and is labelled "Automatic summary".
+Fallback text is generated **deterministically** from evidence templates (TRD-04 §9): headline + ordered evidence titles/details + invalidation list. It is always correct by construction and is labelled "Automatic summary".
 
 ## 9. Token and cost controls
 

@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "Build a candle snapshot and analyse one instrument. ``as_of`` defaults to the latest ingested date.",
+  "description": "Analyse one instrument at one 5m bar close (5m primary, 15m and daily context).\n\n``as_of_ts`` is the end of the last completed 5m bar to use; it defaults to the latest stored bar close.",
   "properties": {
-    "as_of": {
+    "as_of_ts": {
       "anyOf": [
         {
-          "format": "date",
+          "format": "date-time",
           "type": "string"
         },
         {
@@ -14,7 +14,7 @@
         }
       ],
       "default": null,
-      "title": "As Of"
+      "title": "As Of Ts"
     },
     "data_source_id": {
       "format": "uuid",

@@ -1,5 +1,5 @@
 import { FlaskConical } from "lucide-react";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,7 +18,9 @@ export function SampleDataBadge({ asOf, className, compact }: { asOf?: string; c
     >
       <FlaskConical className="size-3" aria-hidden />
       {compact ? "Sample" : "Sample data"}
-      {asOf && !compact && <span className="font-normal">· as of {formatDate(asOf)}</span>}
+      {asOf && !compact && (
+        <span className="font-normal tabular-nums">· as of {asOf.includes("T") ? formatDateTime(asOf) : formatDate(asOf)}</span>
+      )}
     </span>
   );
 }

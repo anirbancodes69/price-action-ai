@@ -3,7 +3,9 @@
  * Components look up labels here instead of hard-coding strings.
  */
 import type {
+  AccountBlockReason,
   Bias,
+  Book,
   MarketStructure,
   SetupStatus,
   SetupType,
@@ -55,6 +57,9 @@ export const SIGNAL_STATES: Record<SignalState, LabelMeta> = {
 };
 
 export const SETUP_TYPES: Record<SetupType, { label: string; short: string }> = {
+  "opening-range-breakout": { label: "Opening Range Breakout", short: "ORB" },
+  "prev-day-high-break": { label: "Previous-Day High Break", short: "PDH Break" },
+  "prev-day-low-break": { label: "Previous-Day Low Break", short: "PDL Break" },
   "breakout-retest": { label: "Breakout & Retest", short: "BO-Retest" },
   "pullback-to-support": { label: "Pullback to Support", short: "Pullback" },
   "range-breakout": { label: "Range Breakout", short: "Range BO" },
@@ -154,3 +159,14 @@ export const OUTCOMES: Record<TradeOutcome, { label: string; tone: Tone }> = {
   breakeven: { label: "Breakeven", tone: "neutral" },
 };
 
+/** Why a book cannot take new plans (TRD-05 §8). */
+export const ACCOUNT_BLOCK_REASONS: Record<AccountBlockReason, string> = {
+  "daily-loss-limit": "Daily loss limit reached",
+  "max-consecutive-losses": "Losing-streak limit reached",
+  "max-open-positions": "Open-position limit reached",
+  "open-risk-limit": "Open-risk limit reached",
+  "entry-cutoff-passed": "Entry cutoff passed",
+  "session-closed": "Session closed",
+};
+
+export const BOOKS: Record<Book, string> = { paper: "Paper", actual: "Actual" };

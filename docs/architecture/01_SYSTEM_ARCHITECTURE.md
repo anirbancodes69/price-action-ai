@@ -77,10 +77,11 @@ flowchart TB
 |---|---|---|
 | **frontend** (Next.js) | Rendering, routing, forms, client-side validation for UX, chart rendering (Lightweight Charts), calling `/api/v1/*` through the `DataSource` adapter, showing data-mode badges | Authoritative calculations, storing secrets or broker tokens, talking to the engine or Kite directly |
 | **backend** (Laravel) | Identity, sessions, tenants, authorization policies, onboarding, preferences, risk profiles, watchlists, trade plans, paper/actual trade records, journal, notifications, entitlements, audit logging, public REST API, Kite OAuth connect flow & token custody, orchestration of engine jobs | Market-structure or risk math (delegated to engine), LLM prompting |
-| **backend-queue** (Horizon) | Laravel jobs: notifications, emails, audit fan-out, handling engine domain events (`POST /internal/v1/events`) | CPU-heavy analysis; chaining EOD pipeline steps (the engine-worker chains ingest → analyse → paper EOD itself, see ARC-05 §2) |
-| **backend-scheduler** | Cron triggers: EOD pipeline kick-off, token-expiry sweeps, retention jobs | — |
+| **backend-queue** (Horizon) | Laravel jobs: notifications, emails, audit fan-out, handling engine domain events (`POST /internal/v1/events`) | CPU-heavy analysis; chaining bar-close pipeline steps (the market-data process and engine-worker chain fetch → analyse → paper processing, see ARC-05 §3) |
+| **backend-scheduler** | Cron triggers: session start/end checks against `market_calendar`, token-expiry sweeps, retention jobs (the bar-close pipeline is driven by the market-data process, ARC-05 §3) | — |
 | **engine** (FastAPI) | Internal synchronous endpoints: single-instrument analysis, risk calculation, explanation request, job submission/status; owns the deterministic domain library | Authentication of end users, user-facing API |
-| **engine-worker** (arq) | Async jobs: instrument master sync, candle ingestion, universe analysis batches, backtests, paper-trade EOD processing, LLM explanations | Accepting public traffic |
+| **engine-worker** (arq) | Async jobs: instrument master sync, universe analysis batches at every 5m close, bar-close paper processing, session-end reconciliation, backtests, (deferred) LLM explanations | Accepting public traffic |
+| **market-data process** (engine image, a Compose service from I2) | During market hours: fetch completed 5m/15m bars at each close, run quality checks, enqueue the analysis batch, keep current prices of open positions and the watchlist in Redis; session-end reconciliation (ENG-05 §12, ARC-05 §3) | Analysis, order placement, storing forming bars |
 | **PostgreSQL** | System of record for all persistent data | Caching, queues |
 | **Redis** | Cache, Laravel queues/Horizon, arq queues, rate-limit counters, sessions | Durable data of record (everything in Redis is reconstructable) |
 
@@ -110,10 +111,10 @@ Rule: a module accesses another module's tables only through that module's servi
 
 | Data | Writer | Readers |
 |---|---|---|
-| Users, tenants, plans, trades, journal, watchlists, preferences | Laravel | Laravel; engine-worker reads plans/trades for EOD paper processing |
+| Users, tenants, plans, trades, journal, watchlists, preferences | Laravel | Laravel; engine-worker reads plans/trades for bar-close paper processing |
 | Instruments, candles, ingestion runs, data quality issues | engine-worker | Laravel (read-only), engine |
 | Candle snapshots, analysis runs and children | engine / engine-worker | Laravel (read-only) |
-| Paper trade fills/exits (EOD) | engine-worker (via domain function) | Laravel |
+| Paper trade fills/exits (bar close) | engine-worker (via domain function) | Laravel |
 | AI explanations | engine-worker | Laravel |
 | Backtest runs | Laravel creates row (QUEUED); engine-worker updates status/results | Laravel |
 | Provider tokens | Laravel only | engine-worker via JIT internal endpoint (never persisted outside Laravel) |
@@ -124,7 +125,7 @@ Documented shared-write exceptions (all on trading tables, all protected by opti
 
 | Table | Laravel writes | engine-worker writes |
 |---|---|---|
-| `trade_plans` | create, user edits, cancel | EOD status transitions only (`status`, `status_reason`, `triggered_on`, `lock_version`) |
+| `trade_plans` | create, user edits, cancel | Bar-close status transitions only (`status`, `status_reason`, `triggered_on`, `triggered_at`, `lock_version`) |
 | `paper_trades`, `paper_trade_events` | user commands: stop move up, close request (`current_stop`, `exit_requested_on`) | fills, exits, P&L |
 | `journal_entries` | user edits | creation of `DRAFT` entries on trade close |
 | `backtest_runs` | create (`QUEUED`), cancel request | status, progress, results |
@@ -192,10 +193,10 @@ Every request carries `X-Request-Id` generated at the edge (or by Laravel) and p
 
 | Pressure | First response | Later |
 |---|---|---|
-| EOD analysis of NIFTY 500 (~500 instruments) | arq worker concurrency (CPU count); per-instrument analysis expected well under 1 s (assumption, to be benchmarked in M4) | More worker containers on the same host |
-| Backtests (long CPU) | Dedicated `backtest` queue with concurrency 1–2 so EOD jobs are never starved | Separate worker host |
+| Bar-close analysis of NIFTY 50 (~50 instruments every 5 minutes, ~3,750 runs per session) | arq worker concurrency (CPU count); per-instrument analysis expected well under 1 s (assumption, to be benchmarked in I3) so a close completes within 60 s | More worker containers on the same host |
+| Backtests (long CPU) | Dedicated `backtest` queue with concurrency 1–2 so bar-close jobs are never starved; run heavy backtests outside market hours | Separate worker host |
 | API read load | Redis cache for latest scanner results per (data_source, as_of_date); HTTP caching headers | Read replica |
-| Candle volume | ~500 instruments × 250 days × years per data source ⇒ low millions of rows; plain indexed table | Range partitioning by year if > 50M rows |
+| Candle volume | NIFTY 50 at 5m and 15m ≈ 5,000 bars per session (~1.3M per year) plus daily bars; plain indexed table (ADR-015) | Monthly partitioning by `bar_start` when 1m bars are added |
 | Multi-tenant SaaS | Licensed data source is shared across tenants (one ingestion), personal sources are per-tenant | Per-tenant quotas via entitlements |
 
 ## 11. Deployment topology

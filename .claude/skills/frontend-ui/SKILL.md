@@ -7,7 +7,7 @@ description: Frontend workflow for the PriceAction AI Next.js 16 app in frontend
 
 Changes to `frontend/` must look and behave like the existing product: dark-first, data-dense, token-driven, and honest about sample data. Authority: [docs/design-standards.md](../../../docs/design-standards.md) (mandatory for every visual change, [ADR-013](../../../docs/adr/ADR-013-DESIGN-STANDARDS.md)), [ADR-001](../../../docs/adr/ADR-001-FRONTEND-ARCHITECTURE.md), [ENG-02](../../../docs/engineering/02_FRONTEND_ARCHITECTURE.md) (§11 design-system implementation and deviations), [PRD-07](../../../docs/product/07_UI_UX_SPECIFICATION.md).
 
-> Current state: Phase 1 UI is complete on **mock data only** (`src/lib/data/mock-source.ts`). Analysis overlays come from a demo heuristic (`src/mocks/demo-analysis.ts`), not the engine. There is no HTTP adapter, mutation client or auth guard yet (M7). 24 known spec discrepancies are in ENG-02 §9.
+> Current state: the UI runs on **mock data only** (`src/lib/data/mock-source.ts`) and has been restructured for the intraday direction (ADR-014): `Candle` timestamps, `Timeframe` 5m/15m/1D, an IST chart with session separators and session levels (`lib/chart/time.ts`), sample 5m/15m bars from `src/mocks/demo-intraday.ts` (parity-tested against the PHP seeder), a session clock, today's risk per book, intraday risk settings. The sample snapshot is 14:00 IST. Setups still come from a daily demo heuristic (`src/mocks/demo-analysis.ts`), not the engine. There is no HTTP adapter, mutation client or auth guard yet (I6). Discrepancies are in ENG-02 §9 (D-25..D-28 track the intraday work).
 
 ## Required context
 
@@ -36,7 +36,7 @@ Changes to `frontend/` must look and behave like the existing product: dark-firs
 | Every market-data surface shows its data mode. DEMO shows `SampleDataBadge` and is never styled or worded as live | C-03, ARC-08 §2 |
 | No order-placement UI. Plans are for manual execution | ADR-010, BAC-06 |
 | SHORT setups are informational (dashed or reference styling, no buy action). NO_TRADE is presented as a valid result, not an error | C-12, PRD-07 §7 |
-| Legacy setup vocabulary is mapped at the adapter boundary (TRD-04 §12), not in components | ENG-02 §5 |
+| Legacy setup vocabulary is mapped at the adapter boundary (TRD-04 §13), not in components | ENG-02 §5 |
 | No redesigns or renames during integration work. Keep the existing structure | ROADMAP M7, CLAUDE.md §5 |
 
 ## Deliverables

@@ -3,11 +3,13 @@
 | Field | Value |
 |---|---|
 | Document ID | PRD-05 |
-| Version | 0.1.0 |
-| Status | Specification ready |
+| Version | 0.1.1 |
+| Status | **Deferred** by ADR-014 (personal intraday direction); kept for a possible future multi-user phase |
 | Owner | Product Manager |
-| Last updated | 2026-11-15 |
+| Last updated | 2026-11-17 |
 | Related | [PRD-03 FR-010–016](03_PRD.md) · [ARC-04 §5](../architecture/04_API_SPECIFICATION.md#5-onboarding-preferences-data-source-entitlements) · [ARC-03 §4.5](../architecture/03_DATABASE_DESIGN.md) · Frontend: `frontend/src/features/onboarding/` |
+
+> **Deferred (ADR-014).** The MVP has one owner whose account is created by a setup command. Capital, risk limits, data source and watchlist are set in `/settings` ([PRD-03 §2.2](03_PRD.md#22-onboarding-fr-010--fr-016)). The rest of this document describes the earlier multi-user design and is not built for the MVP; its risk defaults (NIFTY 500 universe, 1% risk) are superseded by TRD-01 §6 (`pa-intraday`).
 
 ## 1. Purpose
 

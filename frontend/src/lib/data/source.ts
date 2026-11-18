@@ -7,6 +7,8 @@
  * analysis engine) without any change to pages or components.
  */
 import type {
+  Book,
+  RiskToday,
   ActivityItem,
   AllocationSlice,
   BacktestStrategy,
@@ -34,6 +36,7 @@ export interface DashboardSummary {
 export interface DataSource {
   /** "sample" until a real market-data provider is connected. */
   readonly kind: "sample" | "live";
+  /** End of the last completed bar the data reflects (ISO timestamp, IST offset). */
   readonly asOf: string;
 
   getIndices(): Promise<MarketIndex[]>;
@@ -51,6 +54,8 @@ export interface DataSource {
   getHoldings(): Promise<Holding[]>;
   getExecutedOrders(): Promise<ExecutedOrder[]>;
   getPortfolioSummary(): Promise<PortfolioSummary>;
+  /** Account state of one book for the current session (ARC-04 R2 `GET /risk/today`). */
+  getRiskToday(book: Book): Promise<RiskToday>;
   getAllocation(): Promise<AllocationSlice[]>;
   getJournal(): Promise<JournalEntry[]>;
   getBacktestStrategies(): Promise<BacktestStrategy[]>;

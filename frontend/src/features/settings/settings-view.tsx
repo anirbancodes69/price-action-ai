@@ -21,7 +21,7 @@ type SectionId = "profile" | "trading" | "risk" | "data" | "broker" | "notificat
 const SECTIONS: { id: SectionId; label: string; icon: LucideIcon }[] = [
   { id: "profile", label: "Profile", icon: UserRound },
   { id: "trading", label: "Trading preferences", icon: SlidersHorizontal },
-  { id: "risk", label: "Risk management", icon: ShieldCheck },
+  { id: "risk", label: "Risk and limits", icon: ShieldCheck },
   { id: "data", label: "Market data", icon: Database },
   { id: "broker", label: "Broker connection", icon: Cable },
   { id: "notifications", label: "Notifications", icon: Bell },
@@ -81,7 +81,17 @@ export function SettingsView({ user }: { user: UserProfile }) {
   const [theme, setTheme] = useTheme();
   const [profile, setProfile] = useState({ name: user.name, email: user.email });
   const [notif, setNotif] = useState({ triggers: true, invalidations: true, digest: false, email: true, push: false });
-  const [risk, setRisk] = useState({ capital: "1000000", perTrade: "1", maxOpen: "6", maxDaily: "2" });
+  // Defaults: the pa-intraday registry (TRD-01 §6) and the owner's planning values (ADR-014). All HYPOTHESIS.
+  const [risk, setRisk] = useState({
+    capital: "100000",
+    perTrade: "0.5",
+    maxPositionValue: "50000",
+    dailyLoss: "1.5",
+    maxLosses: "3",
+    maxOpen: "2",
+    openRisk: "1.0",
+  });
+  const rupees = (pct: string) => `≈ ₹${Math.round((Number(risk.capital) * Number(pct)) / 100).toLocaleString("en-IN")}`;
   const save = (what: string) => toast({ title: `${what} saved`, description: "Demo mode — stored for this session only." });
 
   const content: Record<SectionId, ReactNode> = {
@@ -103,21 +113,37 @@ export function SettingsView({ user }: { user: UserProfile }) {
     trading: (
       <Section title="Trading preferences" description="Defaults used by the scanner and analysis views." footer={<Button variant="primary" onClick={() => save("Preferences")}>Save changes</Button>}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select label="Trading style" defaultValue="swing" options={[{ value: "swing", label: "Swing (days to weeks)" }, { value: "positional", label: "Positional (weeks to months)" }]} />
-          <Select label="Default timeframe" defaultValue="1D" options={[{ value: "1D", label: "Daily" }, { value: "1W", label: "Weekly" }]} />
-          <Select label="Market universe" defaultValue="nifty100" options={[{ value: "nifty50", label: "NIFTY 50" }, { value: "nifty100", label: "NIFTY 100" }, { value: "nifty200", label: "NIFTY 200" }, { value: "all", label: "All NSE equities" }]} />
+          <Select label="Trading style" defaultValue="intraday" options={[{ value: "intraday", label: "Intraday (NSE cash, flat by the close)" }]} />
+          <Select label="Chart timeframe" defaultValue="5m" options={[{ value: "5m", label: "5 minutes (setups)" }, { value: "15m", label: "15 minutes (context)" }]} />
+          <Select label="Market universe" defaultValue="nifty50" options={[{ value: "nifty50", label: "NIFTY 50" }]} />
           <Select label="Direction" defaultValue="long" options={[{ value: "long", label: "Long only (cash equity)" }, { value: "both", label: "Long and short (reference)" }]} />
         </div>
       </Section>
     ),
     risk: (
-      <Section title="Risk management" description="Limits used to size proposed plans. Nothing here places orders." footer={<Button variant="primary" onClick={() => save("Risk settings")}>Save changes</Button>}>
+      <Section title="Risk and limits" description="Sizing and account limits for proposed plans (TRD-05). A reached limit blocks new plans for the rest of the session. Nothing here places orders." footer={<Button variant="primary" onClick={() => save("Risk settings")}>Save changes</Button>}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input label="Trading capital (₹)" inputMode="numeric" value={risk.capital} onChange={(e) => setRisk((r) => ({ ...r, capital: e.target.value }))} />
-          <Input label="Max risk per trade (%)" inputMode="decimal" value={risk.perTrade} onChange={(e) => setRisk((r) => ({ ...r, perTrade: e.target.value }))} hint={`≈ ₹${Math.round((Number(risk.capital) * Number(risk.perTrade)) / 100).toLocaleString("en-IN")} per trade`} />
+          <Input label="Risk per trade (%)" inputMode="decimal" value={risk.perTrade} onChange={(e) => setRisk((r) => ({ ...r, perTrade: e.target.value }))} hint={`${rupees(risk.perTrade)} per trade`} />
+          <Input label="Max position value (₹)" inputMode="numeric" value={risk.maxPositionValue} onChange={(e) => setRisk((r) => ({ ...r, maxPositionValue: e.target.value }))} hint="Caps the quantity when the stop is tight" />
+          <Input label="Daily loss limit (%)" inputMode="decimal" value={risk.dailyLoss} onChange={(e) => setRisk((r) => ({ ...r, dailyLoss: e.target.value }))} hint={`${rupees(risk.dailyLoss)} realised net loss blocks the day`} />
+          <Input label="Max consecutive losses" inputMode="numeric" value={risk.maxLosses} onChange={(e) => setRisk((r) => ({ ...r, maxLosses: e.target.value }))} hint="Losing trades in a row before the day is blocked" />
           <Input label="Max open positions" inputMode="numeric" value={risk.maxOpen} onChange={(e) => setRisk((r) => ({ ...r, maxOpen: e.target.value }))} />
-          <Input label="Max portfolio heat (%)" inputMode="decimal" value={risk.maxDaily} onChange={(e) => setRisk((r) => ({ ...r, maxDaily: e.target.value }))} hint="Combined open risk to stops" />
+          <Input label="Max open risk (%)" inputMode="decimal" value={risk.openRisk} onChange={(e) => setRisk((r) => ({ ...r, openRisk: e.target.value }))} hint={`${rupees(risk.openRisk)} combined risk to stops`} />
         </div>
+        <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+          {[
+            ["Opening range", "First 15 minutes"],
+            ["Entry cutoff", "14:45 IST"],
+            ["Session-end exit", "15:15 IST"],
+          ].map(([label, value]) => (
+            <div key={label} className="flex flex-col gap-1">
+              <dt className="text-xs text-muted-foreground">{label}</dt>
+              <dd className="tabular-nums">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="text-xs text-muted-foreground">Session rules come from ruleset pa-intraday 0.1.0 and are not editable. Every value here is a hypothesis until backtested.</p>
         <Switch checked label="Require a stop-loss on every plan" description="Plans without a stop cannot be saved." onChange={() => toast({ title: "Stop-loss requirement is always on", tone: "info" })} />
       </Section>
     ),

@@ -1,0 +1,9 @@
+{
+  "verified": false,
+  "source": null,
+  "note": "Holiday and special-session lists are NOT loaded yet. Fill them from the official NSE holiday circular, set verified to true and record the source. Until then every weekday in the range is seeded as a normal session and labelled unverified.",
+  "range": { "from": "2025-12-01", "to": "2026-12-31" },
+  "normal_session": { "open": "09:15", "close": "15:30" },
+  "holidays": [],
+  "special_sessions": []
+}

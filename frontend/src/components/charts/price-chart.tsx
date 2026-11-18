@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CandlestickSeries,
   ColorType,
@@ -18,12 +18,12 @@ import {
   type SeriesMarker,
   type Time,
 } from "lightweight-charts";
-import { aggregate, bucketFor } from "@/lib/chart/aggregate";
 import { chartPalette, onThemeChange, type ChartPalette } from "@/lib/chart/theme";
-import { formatCompact, formatPrice } from "@/lib/format";
+import { chartTime, isIntraday, sessionStarts } from "@/lib/chart/time";
+import { formatCompact, formatDate, formatDateTime, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Candle, ChartEvent, PriceZone, StructureBreak, SwingPoint, Timeframe, TradeLevels } from "@/types";
-import { BreaksPrimitive, ZonesPrimitive, setPrimitiveFont } from "./primitives";
+import type { Candle, ChartEvent, PriceZone, SessionLevels, StructureBreak, SwingPoint, Timeframe, TradeLevels } from "@/types";
+import { BreaksPrimitive, SessionSeparatorsPrimitive, ZonesPrimitive, setPrimitiveFont } from "./primitives";
 
 export interface ChartOverlays {
   swings: boolean;
@@ -31,6 +31,7 @@ export interface ChartOverlays {
   breaks: boolean;
   events: boolean;
   levels: boolean;
+  session: boolean;
   volume: boolean;
 }
 
@@ -40,12 +41,16 @@ export const DEFAULT_OVERLAYS: ChartOverlays = {
   breaks: true,
   events: true,
   levels: true,
+  session: true,
   volume: true,
 };
 
 interface PriceChartProps {
+  /** Bars of the selected timeframe (5m and 15m are timestamps, 1D are session dates). */
   candles: Candle[];
   timeframe?: Timeframe;
+  /** Session levels for intraday views: PDH/PDL/PDC lines and the opening-range box. */
+  session?: SessionLevels;
   swings?: SwingPoint[];
   breaks?: StructureBreak[];
   zones?: PriceZone[];
@@ -62,8 +67,6 @@ interface PriceChartProps {
   className?: string;
 }
 
-const toTime = (day: string) => day as Time;
-
 interface Legend {
   time: string;
   open: number;
@@ -79,7 +82,8 @@ interface Legend {
  */
 export function PriceChart({
   candles,
-  timeframe = "1D",
+  timeframe = "5m",
+  session,
   swings = [],
   breaks = [],
   zones = [],
@@ -97,10 +101,15 @@ export function PriceChart({
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const zonesRef = useRef<ZonesPrimitive | null>(null);
   const breaksRef = useRef<BreaksPrimitive | null>(null);
+  const orRef = useRef<ZonesPrimitive | null>(null);
+  const separatorsRef = useRef<SessionSeparatorsPrimitive | null>(null);
+  /** Chart time → original bar start, so the legend shows IST time, not the shifted chart value. */
+  const timesRef = useRef<Map<string, string>>(new Map());
   const priceLinesRef = useRef<IPriceLine[]>([]);
   const [palette, setPalette] = useState<ChartPalette | null>(null);
 
-  const bars = useMemo(() => aggregate(candles, timeframe), [candles, timeframe]);
+  const bars = candles;
+  const intraday = timeframe !== "1D";
   const lastBar = bars[bars.length - 1];
   const [legend, setLegend] = useState<Legend | null>(null);
   const shown = legend ?? lastBar;
@@ -151,7 +160,11 @@ export function PriceChart({
 
     const zp = new ZonesPrimitive();
     const bp = new BreaksPrimitive();
+    const op = new ZonesPrimitive();
+    const sp = new SessionSeparatorsPrimitive();
+    candleSeries.attachPrimitive(sp);
     candleSeries.attachPrimitive(zp);
+    candleSeries.attachPrimitive(op);
     candleSeries.attachPrimitive(bp);
 
     chartRef.current = chart;
@@ -159,6 +172,8 @@ export function PriceChart({
     volumeRef.current = volumeSeries;
     zonesRef.current = zp;
     breaksRef.current = bp;
+    orRef.current = op;
+    separatorsRef.current = sp;
     markersRef.current = createSeriesMarkers(candleSeries, []);
     setPalette(p);
 
@@ -169,7 +184,7 @@ export function PriceChart({
         setLegend(null);
         return;
       }
-      setLegend({ time: String(param.time), open: d.open, high: d.high, low: d.low, close: d.close, volume: v?.value ?? 0 });
+      setLegend({ time: timesRef.current.get(String(param.time)) ?? String(param.time), open: d.open, high: d.high, low: d.low, close: d.close, volume: v?.value ?? 0 });
     });
 
     const offTheme = onThemeChange(() => {
@@ -199,6 +214,8 @@ export function PriceChart({
       markersRef.current = null;
       zonesRef.current = null;
       breaksRef.current = null;
+      orRef.current = null;
+      separatorsRef.current = null;
       priceLinesRef.current = [];
     };
   }, []);
@@ -210,19 +227,21 @@ export function PriceChart({
     const vs = volumeRef.current;
     if (!chart || !cs || !vs || !palette) return;
     const p = palette;
-    const bucket = bucketFor(timeframe);
-    const t = (day: string) => toTime(bucket(day));
+    const t = chartTime;
+    timesRef.current = new Map(bars.map((b) => [String(chartTime(b.time)), b.time]));
 
-    cs.setData(bars.map((b) => ({ time: toTime(b.time), open: b.open, high: b.high, low: b.low, close: b.close })));
+    cs.setData(bars.map((b) => ({ time: t(b.time), open: b.open, high: b.high, low: b.low, close: b.close })));
     vs.setData(
       overlays.volume
-        ? bars.map((b) => ({ time: toTime(b.time), value: b.volume, color: b.close >= b.open ? p.bullVolume : p.bearVolume }))
+        ? bars.map((b) => ({ time: t(b.time), value: b.volume, color: b.close >= b.open ? p.bullVolume : p.bearVolume }))
         : [],
     );
 
-    // Markers: swings + events (daily only — weekly bars merge swing bars).
+    // Swings, breaks and events of the sample analysis are dated on daily bars, so they draw on the daily view only.
+    // Intraday views draw session separators, session levels and the zones as price bands.
+    separatorsRef.current?.setData(intraday ? sessionStarts(bars).map(t) : [], p.separator);
     const markers: SeriesMarker<Time>[] = [];
-    if (overlays.swings && timeframe === "1D") {
+    if (overlays.swings && !intraday) {
       for (const s of swings) {
         const bullish = s.label === "HH" || s.label === "HL";
         markers.push({
@@ -235,7 +254,7 @@ export function PriceChart({
         });
       }
     }
-    if (overlays.events) {
+    if (overlays.events && !intraday) {
       for (const e of events) {
         markers.push({
           time: t(e.time),
@@ -248,12 +267,13 @@ export function PriceChart({
       }
     }
     markers.sort((a, b) => String(a.time).localeCompare(String(b.time)));
+    const firstBar = bars[0]?.time;
     markersRef.current?.setMarkers(markers);
 
     zonesRef.current?.setData(
       overlays.zones
         ? zones.map((z) => ({
-            from: t(z.fromTime),
+            from: intraday && firstBar ? t(firstBar) : t(z.fromTime),
             low: z.low,
             high: z.high,
             label: `${z.kind === "support" ? "S" : "R"} · ${z.label}`,
@@ -266,7 +286,7 @@ export function PriceChart({
     );
 
     breaksRef.current?.setData(
-      overlays.breaks && timeframe === "1D"
+      overlays.breaks && !intraday
         ? breaks.map((b) => ({
             from: t(b.fromTime),
             to: t(b.toTime),
@@ -275,6 +295,15 @@ export function PriceChart({
             color: b.kind === "CHoCH" ? p.choch : b.direction === "bullish" ? p.bull : p.bear,
             dash: b.kind === "CHoCH" ? [2, 3] : [5, 3],
           }))
+        : [],
+      p.labelBg,
+    );
+
+    // Opening range: a box over its bars, extended to the right once complete (TRD-03 §8).
+    const today = session && intraday ? bars.filter((b) => b.time.startsWith(session.entryCutoffAt.slice(0, 10))) : [];
+    orRef.current?.setData(
+      overlays.session && session && intraday && session.orHigh !== null && session.orLow !== null && today.length > 0
+        ? [{ from: t(today[0].time), low: session.orLow, high: session.orHigh, label: "Opening range", fill: p.orFill, line: p.orLine, text: p.event }]
         : [],
       p.labelBg,
     );
@@ -316,9 +345,15 @@ export function PriceChart({
         mk(levels.target, p.bull, "Target", LineStyle.Dotted),
       ];
     }
-  }, [bars, timeframe, swings, breaks, zones, events, levels, overlays, palette, referenceLevels]);
+    if (overlays.session && session && intraday) {
+      // Previous-day levels: thin sparse-dotted lines, labelled, so they never read as trade levels.
+      const lvl = (price: number, title: string) =>
+        cs.createPriceLine({ price, color: p.sessionLine, title, lineStyle: LineStyle.SparseDotted, lineWidth: 1, axisLabelVisible: true });
+      priceLinesRef.current.push(lvl(session.pdh, "PDH"), lvl(session.pdl, "PDL"), lvl(session.pdc, "PDC"));
+    }
+  }, [bars, intraday, swings, breaks, zones, events, levels, overlays, palette, referenceLevels, session]);
 
-  // Show roughly the last 9 months on first render / timeframe change. Waits
+  // Show the recent bars on first render / timeframe change. Waits
   // until the palette is ready (the data effect above sets the series in the
   // same commit), so the range is never applied to an empty series. Keyed on
   // readiness, not the palette itself, so a theme switch keeps the user's pan.
@@ -326,9 +361,11 @@ export function PriceChart({
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart || !ready || bars.length === 0) return;
-    // ~6px per daily bar keeps candle bodies (and their colour) readable on phones.
+    // ~6px per bar keeps candle bodies (and their colour) readable on phones. Intraday: about two sessions of 5m bars
+    // or four sessions of 15m bars.
     const width = container.current?.clientWidth ?? 1000;
-    const visible = timeframe === "1D" ? Math.min(170, Math.max(45, Math.floor(width / 6))) : bars.length;
+    const cap = timeframe === "1D" ? 170 : timeframe === "5m" ? 150 : 100;
+    const visible = Math.min(cap, Math.max(45, Math.floor(width / 6)));
     chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, bars.length - visible), to: bars.length + 6 });
   }, [bars.length, timeframe, ready]);
 
@@ -346,7 +383,7 @@ export function PriceChart({
           className="pointer-events-none absolute left-3 top-2 z-10 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-card/80 px-1.5 py-0.5 text-2xs tabular-nums"
           aria-live="off"
         >
-          <span className="text-muted-foreground">{shown.time}</span>
+          <span className="text-muted-foreground">{isIntraday(shown.time) ? formatDateTime(shown.time) : formatDate(shown.time)}</span>
           {(["open", "high", "low", "close"] as const).map((k) => (
             <span key={k} className="text-muted-foreground">
               {k[0].toUpperCase()}{" "}

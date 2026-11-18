@@ -121,3 +121,29 @@ export interface BacktestStrategy {
   name: string;
   description: string;
 }
+
+export type Book = "paper" | "actual";
+
+/** First failed account rule (TRD-05 §8); null while the book may plan. */
+export type AccountBlockReason =
+  | "daily-loss-limit"
+  | "max-consecutive-losses"
+  | "max-open-positions"
+  | "open-risk-limit"
+  | "entry-cutoff-passed"
+  | "session-closed";
+
+/** Account state of one book for the current session (TRD-05 §8.1, ARC-04 R2). Amounts in INR. */
+export interface RiskToday {
+  book: Book;
+  sessionDate: string;
+  realisedNetPnl: number;
+  openRisk: number;
+  losingStreak: number;
+  openPositions: number;
+  dailyLossLimit: number;
+  remainingDailyLoss: number;
+  maxConsecutiveLosses: number;
+  maxOpenPositions: number;
+  blockedReason: AccountBlockReason | null;
+}

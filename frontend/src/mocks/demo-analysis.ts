@@ -28,7 +28,8 @@ import { formatDate, formatPrice } from "@/lib/format";
 import { clamp } from "@/lib/utils";
 import { toTick } from "./rng";
 import { generateSeries, type GeneratedSeries } from "./demo-series";
-import { SAMPLE_AS_OF, UNIVERSE, type UniverseEntry } from "./universe";
+import { intradayFor, sessionLevelsFor } from "./demo-session";
+import { SAMPLE_AS_OF, SAMPLE_AS_OF_TS, UNIVERSE, type UniverseEntry } from "./universe";
 
 const ZIGZAG_THRESHOLD = 0.03;
 
@@ -489,10 +490,10 @@ function biasFor(structure: MarketStructure, direction: "long" | "short", signal
 
 const cache = new Map<string, StockAnalysis>();
 
-function toStock(entry: UniverseEntry, candles: Candle[]): Stock {
-  const last = candles[candles.length - 1];
-  const prev = candles[candles.length - 2];
-  const change = Math.round((last.close - prev.close) * 100) / 100;
+/** Price and change at the snapshot: last closed 5m bar vs the previous session's close. */
+function toStock(entry: UniverseEntry, previous: Candle, today: Candle[]): Stock {
+  const last = today[today.length - 1];
+  const change = Math.round((last.close - previous.close) * 100) / 100;
   return {
     symbol: entry.symbol,
     name: entry.name,
@@ -501,8 +502,8 @@ function toStock(entry: UniverseEntry, candles: Candle[]): Stock {
     indices: entry.indices,
     price: last.close,
     change,
-    changePct: Math.round((change / prev.close) * 10000) / 100,
-    volume: last.volume,
+    changePct: Math.round((change / previous.close) * 10000) / 100,
+    volume: today.reduce((sum, b) => sum + b.volume, 0),
   };
 }
 
@@ -520,22 +521,36 @@ export function buildDemoAnalysis(symbol: string): StockAnalysis | null {
   const structure = entry.template === "range" ? "range" : classify(swings, breaks);
   const build = BUILDERS[entry.template](g);
   const zones = zonesFrom(g);
-  const stock = toStock(entry, g.candles);
+  // The snapshot session is still open at SAMPLE_AS_OF_TS: its daily bar is not complete, so it is left out of the
+  // daily view, and nothing derived from it is shown (no look-ahead in sample data either).
+  const closedDaily = g.candles.filter((c) => c.time < SAMPLE_AS_OF);
+  const previous = closedDaily[closedDaily.length - 1];
+  const intraday = intradayFor(entry.symbol, g.candles);
+  const today = intraday["5m"].filter((b) => b.time.startsWith(SAMPLE_AS_OF));
+  const session = sessionLevelsFor(previous, today);
+  const stock = toStock(entry, previous, today);
   const factors = qualityFactors(structure, build, zones, stock.price);
   const qualityScore = Math.round(factors.reduce((a, f) => a + f.score, 0) / factors.length);
 
+  const live = build.signal === "buy-watch" || build.signal === "entry-confirmed";
   const analysis: StockAnalysis = {
     stock,
-    timeframe: "1D",
-    asOf: SAMPLE_AS_OF,
-    candles: g.candles,
+    timeframe: "5m",
+    asOf: SAMPLE_AS_OF_TS,
+    candles: closedDaily,
+    intraday,
+    session,
+    htfStructure: structure,
+    signalAt: live ? SAMPLE_AS_OF_TS : null,
+    // BUY WATCH lasts until the entry cutoff; ENTRY CONFIRMED only for the next 5m bar (TRD-04 §12).
+    validUntil: build.signal === "buy-watch" ? session.entryCutoffAt : build.signal === "entry-confirmed" ? addMinutes(SAMPLE_AS_OF_TS, 5) : null,
     structure,
     bias: biasFor(structure, build.direction, build.signal),
     trendSummary: trendSummary(structure, swings),
-    swings,
-    breaks,
-    zones,
-    events: build.events,
+    swings: swings.filter((x) => x.time < SAMPLE_AS_OF),
+    breaks: breaks.filter((x) => x.toTime < SAMPLE_AS_OF),
+    zones: zones.filter((x) => x.fromTime < SAMPLE_AS_OF),
+    events: build.events.filter((x) => x.time < SAMPLE_AS_OF),
     setup: {
       type: build.type,
       direction: build.direction,
@@ -552,6 +567,11 @@ export function buildDemoAnalysis(symbol: string): StockAnalysis | null {
   };
   cache.set(key, analysis);
   return analysis;
+}
+
+function addMinutes(iso: string, minutes: number) {
+  const t = Number(iso.slice(11, 13)) * 60 + Number(iso.slice(14, 16)) + minutes;
+  return `${iso.slice(0, 11)}${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}:00+05:30`;
 }
 
 export function allDemoSymbols() {

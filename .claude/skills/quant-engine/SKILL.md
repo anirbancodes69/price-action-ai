@@ -7,7 +7,7 @@ description: Implementation and review workflow for the PriceAction AI determini
 
 Workflow for building the trading engine so that its output is deterministic, reproducible and free of look-ahead. **What** the rules are is owned by `docs/trading/` (see the `price-action-domain` skill). **How** the code is laid out and tested is owned by [ENG-04](../../../docs/engineering/04_PYTHON_ENGINE_ARCHITECTURE.md). This skill applies both.
 
-> Current state: `python-engine/app/domain/` is **empty**. Pivots and structure arrive in M3, zones and BOS/CHoCH in M4, setups and risk in M5, backtesting and paper trading in M9 (ROADMAP.md). The layout in ENG-04 §2 is the target. Create modules there; do not invent another layout.
+> Current state: `python-engine/app/domain/` is **empty**. The engine has its contract models (`app/schemas`, intraday risk and analysis shapes), the 34-table read model (`app/db/tables.py`) and ruleset `pa-intraday 0.1.0` (`rulesets/`). Pivots, structure and 15m→5m alignment arrive in I3, session levels, zones and setups in I4, intraday risk in I5, intraday backtesting in I8 (ROADMAP.md). The layout in ENG-04 §2 is the target. Create modules there; do not invent another layout.
 
 ## Required context
 
@@ -20,7 +20,7 @@ Workflow for building the trading engine so that its output is deterministic, re
 
 1. **Tests first, from the spec.** For each rule, write the TRD-08 vectors as hand-built CSV fixtures with hand-computed expected outputs (TV-R1). Include below/at/above boundary cases for every threshold (TV-R2). Cite the spec in each docstring, e.g. `"""TRD-02 §3.4"""` (TV-R5). Never derive expected values by running the code under test.
 2. **Implement as pure functions** in `app/domain/` with the ENG-04 §4 signatures.
-3. **Wire parameters** only through `RulesetParams`, loaded from `python-engine/rulesets/pa-core/<version>.json`. That JSON must stay hash-identical to the seeded `ruleset_versions` row.
+3. **Wire parameters** only through `RulesetParams`, loaded from `python-engine/rulesets/<code>/<version>.json` (active: `pa-intraday`). That JSON must stay hash-identical to the seeded `ruleset_versions` row.
 4. **Add invariant tests:** a property-based test for no look-ahead (a fresh run on the series truncated at `t` equals the incremental state at `t`), determinism (same input gives byte-identical canonical output and `result_hash`), and rounding direction.
 5. **Golden outputs.** If golden JSON changes, that is an output change: bump the ruleset version (or the patch version for a documented bug fix in `rulesets/CHANGELOG.md`), update the TRD docs, and record why.
 6. **Run quality gates** (`quality-gate` skill): ruff, ruff format, mypy (strict on `domain/`), pytest.
@@ -37,7 +37,7 @@ Workflow for building the trading engine so that its output is deterministic, re
 | No numeric literals as thresholds in rule code. Values come from `RulesetParams` | PE-06 |
 | Canonical serialisation (sorted keys, fixed decimal strings) so `result_hash` is stable | PE-07 |
 | Analysis consumes an **immutable candle snapshot** and records snapshot id, ruleset version and engine version. Never read live candle tables inside a domain function | C-08, ARC-03 §7.2 |
-| Only closed daily candles. Reject invalid snapshots (`INVALID_INPUT`) and short ones (`INSUFFICIENT_HISTORY` → `NO_TRADE`) | TRD-01 §4 |
+| Only closed bars (5m primary, 15m and daily context, higher-timeframe bars only once closed: TRD-01 MP-03, MP-10). Reject invalid snapshots (`INVALID_INPUT`) and short ones (`INSUFFICIENT_HISTORY` → `NO_TRADE`) | TRD-01 §4 |
 | Backtests and paper trading call the **same** domain functions as live analysis. No re-implementation | TRD-06 BT-03 |
 | Risk sizing is per user at plan time, not part of the shared analysis run | TRD-01 §3 |
 | The engine writes only the tables ARC-01 §6 lists for it | ARC-01 §6 |
