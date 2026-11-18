@@ -209,6 +209,8 @@ def test_scan_returns_sized_actionable_rows(client: TestClient) -> None:
     [row] = body["rows"]  # B is NO_TRADE and hidden by default
     assert (row["symbol"], row["signal"], row["paqs"], row["quantity"]) == ("A", "ENTRY_CONFIRMED", 80, 500)
     assert (row["entry"], row["stop"], row["target"], row["risk_amount"]) == ("100", "99", "103", "500.0")
+    assert (row["last_close"], row["prev_day_close"], row["structure_state"]) == ("100", None, None)
+    assert (row["direction"], row["trigger_price"]) == ("LONG", "100")
     assert fake.calls == [("universe", "NIFTY50", True, 5)]
     both = client.post(
         "/internal/v1/scan", json=scan_body(as_of_ts=now, include_no_trade=True), headers=AUTH

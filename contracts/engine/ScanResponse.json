@@ -14,6 +14,18 @@
           ],
           "title": "Binding Constraint"
         },
+        "direction": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "LONG, or SHORT for informational setups.",
+          "title": "Direction"
+        },
         "entry": {
           "anyOf": [
             {
@@ -35,12 +47,26 @@
               "type": "null"
             }
           ],
+          "description": "15m structure state at the last 5m bar.",
           "title": "Htf State"
         },
         "last_bar_end": {
           "format": "date-time",
           "title": "Last Bar End",
           "type": "string"
+        },
+        "last_close": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Close of the last closed 5m bar.",
+          "title": "Last Close"
         },
         "paqs": {
           "anyOf": [
@@ -64,6 +90,19 @@
             }
           ],
           "title": "Position Value"
+        },
+        "prev_day_close": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Previous session close (PDC), null when unknown.",
+          "title": "Prev Day Close"
         },
         "quantity": {
           "anyOf": [
@@ -163,6 +202,18 @@
           ],
           "title": "Stop"
         },
+        "structure_state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "5m structure state.",
+          "title": "Structure State"
+        },
         "symbol": {
           "title": "Symbol",
           "type": "string"
@@ -190,6 +241,18 @@
           ],
           "title": "Target Source"
         },
+        "trigger_price": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Trigger Price"
+        },
         "valid_until": {
           "anyOf": [
             {
@@ -208,6 +271,8 @@
         "signal",
         "setup_type",
         "setup_status",
+        "direction",
+        "trigger_price",
         "paqs",
         "entry",
         "stop",
@@ -223,7 +288,10 @@
         "valid_until",
         "last_bar_end",
         "stale",
-        "htf_state"
+        "htf_state",
+        "structure_state",
+        "last_close",
+        "prev_day_close"
       ],
       "title": "ScanRowModel",
       "type": "object"

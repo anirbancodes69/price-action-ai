@@ -128,6 +128,11 @@ def to_model(r: ScanRow) -> ScanRowModel:
         last_bar_end=r.last_bar_end,
         stale=r.stale,
         htf_state=r.htf_state,
+        structure_state=r.structure_state,
+        last_close=r.last_close,
+        prev_day_close=r.prev_day_close,
+        direction=r.direction,
+        trigger_price=r.trigger_price,
     )
 
 
