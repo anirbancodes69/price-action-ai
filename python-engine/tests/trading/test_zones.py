@@ -231,3 +231,16 @@ def test_equal_highs_tolerance_boundary_and_gap() -> None:
     )  # <= tol
     assert equal_levels(bars, [a, pt(PivotKind.HIGH, "100.11", 6)], 8, D("0.001")) == []
     assert equal_levels(bars, [a, pt(PivotKind.HIGH, "100", 4)], 8, D("0.001")) == []  # 2 bars apart < 3
+
+
+def test_approach_side_restricts_first_break_direction() -> None:
+    """A resistance zone (price below it) is not 'broken' by closes below it; only an upward break counts."""
+    down = closes("99.94")
+    assert evaluate_break(down, ZLOW, ZHIGH, 0, 1, 1, BUF, Direction.UP).status is ZoneStatus.ACTIVE
+    assert evaluate_break(down, ZLOW, ZHIGH, 0, 1, 1, BUF, Direction.DOWN).status is ZoneStatus.BROKEN_FLIPPED
+    up = evaluate_break(closes("99.9", "101.06"), ZLOW, ZHIGH, 0, 2, 1, BUF, Direction.UP)
+    assert (up.status, up.broken_direction, up.broken_at_index) == (
+        ZoneStatus.BROKEN_FLIPPED,
+        Direction.UP,
+        2,
+    )

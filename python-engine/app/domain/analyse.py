@@ -6,16 +6,23 @@ Setups, zones and risk arrive in later milestones (I4, I5).
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from decimal import Decimal
 
 from app.domain.candles import candles_hash
 from app.domain.htf import HtfContext, align_htf
+from app.domain.levels import trade_levels
 from app.domain.liquidity import LiquidityPool, equal_levels
 from app.domain.params import RulesetParams
 from app.domain.pivots import detect_pivots, label_pivots
-from app.domain.session import DailyLevels, SessionLevels, session_levels
+from app.domain.session import DailyLevels, SessionLevels, entry_cutoff, session_levels
+from app.domain.setups.breakout_retest import detect_breakout_retest
+from app.domain.setups.opening_range import detect_opening_range
+from app.domain.setups.prev_day import detect_prev_day
+from app.domain.setups.scoring import score_setup
+from app.domain.setups.signal import ScoredSetup, SignalResult, choose_signal
+from app.domain.setups.types import Setup, SetupContext
 from app.domain.snapshot import SnapshotCheck, SnapshotStatus, check_snapshot
 from app.domain.structure import run_structure
 from app.domain.types import Bar, StructureResult, Timeframe
@@ -36,6 +43,9 @@ class AnalysisResult:
     levels: SessionLevels | None
     zones: tuple[Zone, ...] | None = None
     pools: tuple[LiquidityPool, ...] | None = None
+    setups: tuple[ScoredSetup, ...] | None = None
+    signal: SignalResult | None = None
+    no_setup_reasons: tuple[str, ...] = ()
 
 
 def _structure(bars: Sequence[Bar], tf: Timeframe, params: RulesetParams) -> StructureResult:
@@ -53,6 +63,7 @@ def analyse(
     params: RulesetParams,
     previous_session_open: datetime | None = None,
     tick: Decimal | None = None,
+    session_close: datetime | None = None,
 ) -> AnalysisResult:
     """Pure function of closed bars and the ruleset (bars span `analysis.lookback_sessions` sessions)."""
     check = check_snapshot(bars_5m, bars_15m, params)
@@ -66,6 +77,36 @@ def analyse(
     t = len(bars_5m) - 1
     zones = build_zones(bars_5m, s5.pivots, s15.pivots, t, params, session_open, previous_session_open, tick)
     pools = equal_levels(bars_5m, s5.pivots, t, params.equal_tolerance())
-    return AnalysisResult(
+    result = AnalysisResult(
         params.code, params.version, check, h5, h15, s5, s15, htf, levels, tuple(zones), tuple(pools)
     )
+    first = next((i for i, b in enumerate(bars_5m) if b.start >= session_open), None)
+    if session_close is None or first is None:
+        return result
+    ctx = SetupContext(
+        bars_5m,
+        first,
+        t,
+        session_open,
+        entry_cutoff(session_close, params.int_("session.entry_cutoff_minutes_before_close")),
+        levels,
+        align_htf([b.end for b in bars_5m], bars_15m, s15),
+        s5,
+        s5.pivots,
+        s15.pivots,
+        previous_session_open,
+        params,
+        tick,
+    )
+    found: list[Setup] = []
+    reasons: list[str] = []
+    for detect in (detect_opening_range, detect_prev_day, detect_breakout_retest):
+        got, why = detect(ctx)
+        found += got
+        reasons += why
+    scored = []
+    for st in found:
+        lv = trade_levels(st, ctx, zones)
+        scored.append(ScoredSetup(st, score_setup(st, ctx, zones, lv), lv))
+    sig = choose_signal(scored, ctx, reasons)
+    return replace(result, setups=tuple(scored), signal=sig, no_setup_reasons=tuple(reasons))
