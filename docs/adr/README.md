@@ -34,6 +34,7 @@ Each ADR has: Status, Date, Context, Decision, Alternatives considered, Conseque
 | [ADR-013](ADR-013-DESIGN-STANDARDS.md) | Adopt the Project Design Standards | Accepted | 2026-11-16 |
 | [ADR-014](ADR-014-PERSONAL-INTRADAY-WORKSTATION.md) | Personal Intraday Price-Action Workstation | Accepted | 2026-11-17 |
 | [ADR-015](ADR-015-INTRADAY-TIME-AND-SNAPSHOT-MODEL.md) | Intraday Time Model and Snapshots by Reference | Accepted | 2026-11-17 |
+| [ADR-016](ADR-016-LIVE-ENGINE-PROXY-FOR-SCANNER-AND-ANALYSIS.md) | Live Engine Proxy for the Scanner and Analysis (Personal Mode) | Accepted | 2026-11-18 |
 
 ## Candidate future ADRs
 

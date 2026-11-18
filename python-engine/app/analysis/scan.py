@@ -42,6 +42,11 @@ class ScanRow:
     last_bar_end: datetime
     stale: bool
     htf_state: str | None
+    structure_state: str | None = None  # 5m
+    last_close: Decimal | None = None
+    prev_day_close: Decimal | None = None
+    direction: str | None = None
+    trigger_price: Decimal | None = None
 
 
 _RANK = {"ENTRY_CONFIRMED": 0, "BUY_WATCH": 1}
@@ -63,6 +68,8 @@ def scan_symbol(
     last_end = sym.bars_5m[-1].end
     stale = is_stale(last_end, now)
     res = analyse_fn(sym, len(sym.bars_5m), spec, params)
+    states = res.structure_5m.states if res.structure_5m else ()
+    struct = states[-1].state.value if states else None
     if res.check.status is not SnapshotStatus.VALID or res.signal is None:
         reasons = res.check.problems or (res.check.status.value,)
         return ScanRow(
@@ -86,6 +93,9 @@ def scan_symbol(
             last_end,
             stale,
             None,
+            structure_state=struct,
+            last_close=sym.bars_5m[-1].close,
+            prev_day_close=sym.prev_day.close if sym.prev_day else None,
         )
     sig = res.signal
     prim = sig.primary
@@ -139,6 +149,11 @@ def scan_symbol(
         last_end,
         stale,
         htf,
+        structure_state=struct,
+        last_close=sym.bars_5m[-1].close,
+        prev_day_close=sym.prev_day.close if sym.prev_day else None,
+        direction=prim.setup.direction.value if prim else None,
+        trigger_price=prim.setup.trigger_price if prim else None,
     )
 
 

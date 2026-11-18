@@ -40,6 +40,10 @@ return [
         'url' => env('ENGINE_URL', 'http://engine:8100'),
         'token' => env('ENGINE_SERVICE_TOKEN'),
         'timeout' => (float) env('ENGINE_TIMEOUT_SECONDS', 2),
+        // A scan or analysis reads stored bars and analyses up to the whole universe.
+        'scan_timeout' => (float) env('ENGINE_SCAN_TIMEOUT_SECONDS', 15),
+        // The data_sources row the owner reads (empty: the DEMO source).
+        'data_source_id' => env('ENGINE_DATA_SOURCE_ID', ''),
     ],
 
 ];

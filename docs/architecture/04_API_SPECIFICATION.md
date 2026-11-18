@@ -9,6 +9,17 @@
 | Last updated | 2026-11-15 |
 | Related | [ARC-03 Database](03_DATABASE_DESIGN.md) · [ARC-06 Security](06_SECURITY_ARCHITECTURE.md) · [ARC-08 Internal engine API](08_INTEGRATION_ARCHITECTURE.md) · [ENG-02 Frontend mapping](../engineering/02_FRONTEND_ARCHITECTURE.md#8-route--feature--api--entity-mapping) |
 
+## 0. Personal-mode status (ADR-014, ADR-016)
+
+Implemented so far (T-I82..T-I87): `POST /auth/login`, `POST /auth/logout`, `GET /me`, `GET /scanner`, `POST /risk/calculate`. Everything else in this document is specified but **not built**. Where the personal-mode behaviour differs from the text below:
+
+| Endpoint | Difference |
+|---|---|
+| A3 login, A4 logout, A9 me | One owner account created with `php artisan owner:create` (no registration). `me` and the login response return `user` only; `tenant`, `entitlement`, `onboarding` and `data_source` are omitted. |
+| N1 scanner | Live (ADR-016): each request calls the engine's `/internal/v1/scan` and analyses the universe on the latest closed bars. There is no batch, so no `meta.batch` and no `409 NO_ANALYSIS_AVAILABLE`; `analysis_run_id` and `volume` are `null`, `change` and `change_pct` are `null` when the previous close is unknown, `structure_state` is `null` when history is too short. `near` and `watchlist` are rejected with 422. Errors: 503 `ENGINE_UNAVAILABLE`, 502 `ENGINE_CONTRACT_ERROR`, 409 `NO_DATA_SOURCE` / `RULESET_UNAVAILABLE`. `meta` adds `total`, `ruleset`, `notice`. |
+| R1 risk calculate | Laravel supplies the risk profile (stored, else ruleset defaults with the planning capital `TRADING_CAPITAL_DEFAULT`), the book's account state derived from the trade tables, tick/lot size and the session clock; the engine sizes. A rule violation is a 422 whose `error.details` carries `errors` and the full `calculation`. |
+| `target_source` | Adds the intraday sources `MEASURED_OPENING_RANGE`, `PDH`, `SESSION_HIGH`, `OR_HIGH`, `HTF_SWING_HIGH`. |
+
 ## 1. Purpose and scope
 
 Defines the public HTTP API served by Laravel under `/api/v1` and consumed by the Next.js frontend (and, later, other clients). Contracts are **resource-oriented and independent of frontend components**; the frontend adapter maps them to its view models. Internal engine endpoints are in [ARC-08](08_INTEGRATION_ARCHITECTURE.md).
@@ -219,7 +230,7 @@ Step payloads (`{step}` lower-case id):
 
 | # | Method & path | Auth | Request | Response | Notes / errors |
 |---|---|---|---|---|---|
-| N1 | `GET /api/v1/scanner` | session | `?universe=NIFTY50&watchlist=&q=&htf_state=BULLISH&structure=BULLISH&signal=BUY_WATCH&setup_type=&setup_status=&direction=LONG&min_rr=2&min_score=60&near=SUPPORT&sort=-quality_score&limit&cursor` | `[ScannerRow]` + `meta: {batch: {id, as_of, status, instruments_total, instruments_completed, instruments_late}, data_mode, next_bar_close}` | Reads latest completed analysis batch for selected source; 409 `NO_ANALYSIS_AVAILABLE` when none |
+| N1 | `GET /api/v1/scanner` | session | `?universe=NIFTY50&watchlist=&q=&htf_state=BULLISH&structure=BULLISH&signal=BUY_WATCH&setup_type=&setup_status=&direction=LONG&min_rr=2&min_score=60&near=SUPPORT&sort=-quality_score&limit&cursor` | `[ScannerRow]` + `meta: {batch: {id, as_of, status, instruments_total, instruments_completed, instruments_late}, data_mode, next_bar_close}` | Personal mode: live engine call, no batch (see §0); otherwise the batch description below applies to the persisted model (ADR-016 defers it). |
 | N2 | `GET /api/v1/scanner/export` | session | same filters | `text/csv` | Respects data licensing: disabled (403 `EXPORT_NOT_PERMITTED`) for LICENSED sources unless entitlement allows |
 | N3 | `GET /api/v1/dashboard/summary` | session | — | `{session: {state, entry_cutoff_at, session_end_exit_at, last_bar_close}, books: {PAPER: RiskToday, ACTUAL: RiskToday}, open_positions, stocks_scanned, active_setups, awaiting_confirmation, active_trade_plans, top_setups: [ScannerRow] (6), upcoming_triggers: [{symbol, setup_id, condition, trigger, distance_pct, signal, valid_until}], recent_signals: [{symbol, analysis_run_id, signal, signal_at}]}` (RiskToday = R2 shape) | `active_setups` = LONG setups with status ∈ {FORMING, AWAITING_CONFIRMATION, ENTRY_CONFIRMED-on-as_of} |
 | N4 | `GET /api/v1/activity` | session | `?limit&cursor` | `[{id, kind: "SETUP"|"PLAN"|"TRIGGER"|"INVALIDATED"|"JOURNAL"|"WATCHLIST", title, detail, at, entity}]` | Derived from notifications + audit log (user-facing subset) |

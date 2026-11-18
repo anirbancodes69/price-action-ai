@@ -37,6 +37,8 @@ class ScanRowModel(ContractModel):
     )
     setup_type: str | None
     setup_status: str | None
+    direction: str | None = Field(description="LONG, or SHORT for informational setups.")
+    trigger_price: DecimalStr | None
     paqs: int | None
     entry: DecimalStr | None
     stop: DecimalStr | None
@@ -52,7 +54,10 @@ class ScanRowModel(ContractModel):
     valid_until: datetime | None
     last_bar_end: datetime
     stale: bool
-    htf_state: str | None
+    htf_state: str | None = Field(description="15m structure state at the last 5m bar.")
+    structure_state: str | None = Field(description="5m structure state.")
+    last_close: DecimalStr | None = Field(description="Close of the last closed 5m bar.")
+    prev_day_close: DecimalStr | None = Field(description="Previous session close (PDC), null when unknown.")
 
 
 class ScanResponse(ContractModel):
