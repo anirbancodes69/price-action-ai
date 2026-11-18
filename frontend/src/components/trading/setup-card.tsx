@@ -40,19 +40,19 @@ export function SetupCard({ row, className }: { row: ScannerRow; className?: str
       <dl className="grid grid-cols-3 gap-3 border-t pt-3 tabular-nums">
         <div className="flex flex-col gap-1">
           <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Entry</dt>
-          <dd className="text-sm font-medium text-foreground">{formatPrice(levels.entry)}</dd>
+          <dd className="text-sm font-medium text-foreground">{levels ? formatPrice(levels.entry) : "–"}</dd>
         </div>
         <div className="flex flex-col gap-1">
           <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Stop</dt>
-          <dd className="text-sm font-medium text-bear">{formatPrice(levels.stopLoss)}</dd>
+          <dd className="text-sm font-medium text-bear">{levels ? formatPrice(levels.stopLoss) : "–"}</dd>
         </div>
         <div className="flex flex-col gap-1">
           <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Target</dt>
-          <dd className="text-sm font-medium text-bull">{formatPrice(levels.target)}</dd>
+          <dd className="text-sm font-medium text-bull">{levels ? formatPrice(levels.target) : "–"}</dd>
         </div>
       </dl>
       <div className="flex items-center justify-between">
-        <RiskRewardDisplay levels={levels} variant="compact" />
+        {levels ? <RiskRewardDisplay levels={levels} variant="compact" /> : <span className="text-xs text-muted-foreground">No setup</span>}
         <span className="flex items-center gap-2">
           <QualityScoreBar score={row.qualityScore} />
           <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden />
