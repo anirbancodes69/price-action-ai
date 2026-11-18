@@ -1,0 +1,275 @@
+{
+  "$defs": {
+    "ScanRowModel": {
+      "additionalProperties": false,
+      "properties": {
+        "binding_constraint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Binding Constraint"
+        },
+        "entry": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Entry"
+        },
+        "htf_state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Htf State"
+        },
+        "last_bar_end": {
+          "format": "date-time",
+          "title": "Last Bar End",
+          "type": "string"
+        },
+        "paqs": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Paqs"
+        },
+        "position_value": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Position Value"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Sized with the account limits; null when no plan can be sized.",
+          "title": "Quantity"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "risk_amount": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Risk Amount"
+        },
+        "rr": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rr"
+        },
+        "setup_status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Setup Status"
+        },
+        "setup_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Setup Type"
+        },
+        "signal": {
+          "description": "ENTRY_CONFIRMED, BUY_WATCH, NO_TRADE, INSUFFICIENT_HISTORY or INVALID_INPUT.",
+          "title": "Signal",
+          "type": "string"
+        },
+        "signal_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Signal At"
+        },
+        "stale": {
+          "title": "Stale",
+          "type": "boolean"
+        },
+        "stop": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stop"
+        },
+        "symbol": {
+          "title": "Symbol",
+          "type": "string"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target"
+        },
+        "target_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target Source"
+        },
+        "valid_until": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valid Until"
+        }
+      },
+      "required": [
+        "symbol",
+        "signal",
+        "setup_type",
+        "setup_status",
+        "paqs",
+        "entry",
+        "stop",
+        "target",
+        "target_source",
+        "rr",
+        "quantity",
+        "risk_amount",
+        "position_value",
+        "binding_constraint",
+        "reasons",
+        "signal_at",
+        "valid_until",
+        "last_bar_end",
+        "stale",
+        "htf_state"
+      ],
+      "title": "ScanRowModel",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "as_of_ts": {
+      "format": "date-time",
+      "title": "As Of Ts",
+      "type": "string"
+    },
+    "data_mode": {
+      "description": "DEMO, PERSONAL or LICENSED (ADR-011). DEMO is never presented as live.",
+      "title": "Data Mode",
+      "type": "string"
+    },
+    "notice": {
+      "title": "Notice",
+      "type": "string"
+    },
+    "provider": {
+      "title": "Provider",
+      "type": "string"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/ScanRowModel"
+      },
+      "title": "Rows",
+      "type": "array"
+    },
+    "ruleset_version": {
+      "title": "Ruleset Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "as_of_ts",
+    "data_mode",
+    "provider",
+    "ruleset_version",
+    "notice",
+    "rows"
+  ],
+  "title": "ScanResponse",
+  "type": "object"
+}

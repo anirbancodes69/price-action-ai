@@ -1,13 +1,13 @@
 """FastAPI internal service entry point.
 
 Internal only: bound to the Docker network, never exposed publicly (ARC-01 §8).
-Domain endpoints (/internal/v1/analyse, /risk/*, /jobs) arrive in M5; M0 ships the skeleton.
+Risk (T-I76/T-I77), scan and analysis detail are live; /jobs and analysis persistence are not built.
 """
 
 from fastapi import APIRouter, Depends, FastAPI
 
 from app import __version__
-from app.api import health
+from app.api import health, risk, scan
 from app.api.security import require_service_token
 from app.logging import configure_logging
 from app.settings import get_settings
@@ -33,4 +33,6 @@ async def ping() -> dict[str, str]:
     return {"status": "ok", "engine_version": __version__, "ruleset": settings.active_ruleset}
 
 
+internal.include_router(risk.router)
+internal.include_router(scan.router)
 app.include_router(internal)

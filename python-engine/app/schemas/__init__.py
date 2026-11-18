@@ -8,6 +8,7 @@ Add a model here and re-export to change the contract.
 from pydantic import BaseModel
 
 from app.schemas.analysis import AnalyseAccepted, AnalyseRequest, AnalyseResponse
+from app.schemas.analysis_detail import AnalysisDetail, AnalysisDetailRequest
 from app.schemas.common import AnalysisStatus, BookKind, Direction
 from app.schemas.events import EngineEvent, ProviderAccessToken
 from app.schemas.explanations import ExplanationRequest
@@ -19,6 +20,7 @@ from app.schemas.risk import (
     PositionSizeRequest,
     RiskResult,
 )
+from app.schemas.scan import ScanAccount, ScanRequest, ScanResponse, ScanRowModel
 
 EXPORTED_MODELS: tuple[type[BaseModel], ...] = (
     AnalyseRequest,
@@ -34,6 +36,10 @@ EXPORTED_MODELS: tuple[type[BaseModel], ...] = (
     ExplanationRequest,
     EngineEvent,
     ProviderAccessToken,
+    ScanRequest,
+    ScanResponse,
+    AnalysisDetailRequest,
+    AnalysisDetail,
 )
 """Models whose JSON Schema is part of the Laravel <-> engine contract, in export order."""
 
@@ -43,6 +49,8 @@ __all__ = [
     "AnalyseAccepted",
     "AnalyseRequest",
     "AnalyseResponse",
+    "AnalysisDetail",
+    "AnalysisDetailRequest",
     "AnalysisStatus",
     "BookKind",
     "Direction",
@@ -58,4 +66,8 @@ __all__ = [
     "PositionSizeRequest",
     "ProviderAccessToken",
     "RiskResult",
+    "ScanAccount",
+    "ScanRequest",
+    "ScanResponse",
+    "ScanRowModel",
 ]

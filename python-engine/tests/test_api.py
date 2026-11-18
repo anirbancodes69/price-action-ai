@@ -35,7 +35,7 @@ def test_internal_accepts_current_and_previous_token(client: TestClient) -> None
     for token in ("current-token", "old-token"):
         res = client.get("/internal/v1/ping", headers={"Authorization": f"Bearer {token}"})
         assert res.status_code == 200
-        assert res.json()["ruleset"] == "pa-core@0.1.0"
+        assert res.json()["ruleset"] == "pa-intraday@0.1.0"
 
 
 def test_internal_fails_closed_without_configured_token(client: TestClient) -> None:

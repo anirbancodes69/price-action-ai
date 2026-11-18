@@ -126,13 +126,15 @@ Defined in [ENG-05 §6–8](../engineering/05_DATA_INGESTION_SPECIFICATION.md). 
 
 ## 5. Internal engine API (Laravel → engine)
 
-Base: `http://engine:8100/internal/v1`, header `Authorization: Bearer ${ENGINE_SERVICE_TOKEN}`, `X-Request-Id`, `X-Tenant-Id`/`X-User-Id` (asserted context). Schemas are Pydantic models exported as JSON Schema to `contracts/engine/` (13 files, T-104; `ProviderAccessToken` uses `SecretStr`) and verified by Laravel contract tests (M6).
+Base: `http://engine:8100/internal/v1`, header `Authorization: Bearer ${ENGINE_SERVICE_TOKEN}`, `X-Request-Id`, `X-Tenant-Id`/`X-User-Id` (asserted context). Schemas are Pydantic models exported as JSON Schema to `contracts/engine/` (17 files: 13 from T-104 plus `ScanRequest`, `ScanResponse`, `AnalysisDetailRequest`, `AnalysisDetail`, T-I78/T-I80; `ProviderAccessToken` uses `SecretStr`) and verified by Laravel contract tests (M6).
 
 | Endpoint | Purpose | Sync budget | Response |
 |---|---|---|---|
 | `POST /analyse` | `{data_source_id, instrument_id, as_of?, ruleset_version}` — build snapshot and analyse one instrument | 2 s | `{analysis_run_id, status}` or 202 `{job_id}` |
-| `POST /risk/position-size` | Inputs of TRD-05 §2 (Laravel supplies capital, profile, open positions) | 300 ms | `RiskResult` |
-| `POST /risk/validate-levels` | Validate user-edited levels | 300 ms | `{errors, warnings, rounding}` |
+| `POST /risk/position-size` | **Built (T-I76).** Inputs of TRD-05 §2 (Laravel supplies capital, profile, open positions). Rule violations are `errors` codes with HTTP 200; an unknown ruleset version is 422 `UNKNOWN_RULESET_VERSION`. `est_round_trip_costs` and `rr_after_costs` use the **unverified** TRD-06 §5 schedule and the result carries the warning `COSTS_UNVERIFIED` | 300 ms | `RiskResult` |
+| `POST /risk/validate-levels` | **Built (T-I77).** Validate user-edited levels (stop distance, target above entry, R:R floor; a stricter user floor applies) | 300 ms | `{errors, warnings, rounding}` |
+| `POST /scan` | **Built (T-I79).** `{data_source_id, universe_code, as_of_ts?, account, include_no_trade}`: analyse the universe on stored bars and size each plan with the caller's account state (the engine stores no trades). Rows: signal, setup, PAQS, entry/stop/target, R:R, quantity, risk, validity, reasons, `stale`; plus `data_mode` (DEMO is never presented as live) and the decision-support notice | 5 s | `ScanResponse` |
+| `POST /analysis` | **Built (T-I80/T-I81).** `{data_source_id, symbol, as_of_ts?}`: the full analysis of one symbol (5m/15m structure, session levels, pivots, events, zones, liquidity pools, setups with levels and PAQS components, signal) for chart overlays | 2 s | `AnalysisDetail` |
 | `POST /jobs` | `{kind: INGEST_DAILY|BACKFILL|INSTRUMENT_SYNC|ANALYSE_BATCH|BACKTEST|PAPER_EOD|EXPLAIN, payload}` | 100 ms | 202 `{job_id}` |
 | `GET /jobs/{id}` | Job status | 100 ms | `{status, progress_pct, result_ref, error_code}` |
 | `POST /explanations` | Enqueue explanation | 100 ms | 202 `{job_id}` |

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -17,9 +17,11 @@ class AccountInput:
     closed_today: tuple[ClosedTrade, ...] = ()
     open_positions: tuple[OpenPosition, ...] = ()
     pending_fills: int = 0
+    losing_streak: int | None = None  # caller-supplied streak when the individual trades are not known
 
     def state(self) -> AccountState:
-        return derive_account_state(self.closed_today, self.open_positions, self.pending_fills)
+        st = derive_account_state(self.closed_today, self.open_positions, self.pending_fills)
+        return st if self.losing_streak is None else replace(st, losing_streak=self.losing_streak)
 
 
 def parse_account(data: dict[str, Any]) -> AccountInput:

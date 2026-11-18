@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     redis_url: SecretStr = SecretStr("redis://redis:6379/0")
     engine_service_token: SecretStr = SecretStr("")
     engine_service_token_previous: SecretStr = SecretStr("")
-    active_ruleset: str = "pa-core@0.1.0"
+    active_ruleset: str = "pa-intraday@0.1.0"
     readiness_timeout_s: float = 2.0
     # Intraday ingestion (ENG-05 §12). Personal mode: one data source, a local Kite token file.
     ingest_enabled: bool = False

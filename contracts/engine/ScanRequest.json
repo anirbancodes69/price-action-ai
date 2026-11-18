@@ -1,0 +1,93 @@
+{
+  "$defs": {
+    "ScanAccount": {
+      "additionalProperties": false,
+      "description": "The book's account state, supplied by the caller (the engine stores no trades yet, TRD-05 §8.1).",
+      "properties": {
+        "capital": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Capital",
+          "type": "string"
+        },
+        "losing_streak": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Losing Streak",
+          "type": "integer"
+        },
+        "open_cost_basis": {
+          "default": "0",
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Open Cost Basis",
+          "type": "string"
+        },
+        "open_positions": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Open Positions",
+          "type": "integer"
+        },
+        "open_risk": {
+          "default": "0",
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Open Risk",
+          "type": "string"
+        },
+        "realised_net_pnl_today": {
+          "default": "0",
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Realised Net Pnl Today",
+          "type": "string"
+        }
+      },
+      "required": [
+        "capital"
+      ],
+      "title": "ScanAccount",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "account": {
+      "$ref": "#/$defs/ScanAccount"
+    },
+    "as_of_ts": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Replay a past moment: only bars that ended at or before it are used.",
+      "title": "As Of Ts"
+    },
+    "data_source_id": {
+      "format": "uuid",
+      "title": "Data Source Id",
+      "type": "string"
+    },
+    "include_no_trade": {
+      "default": false,
+      "title": "Include No Trade",
+      "type": "boolean"
+    },
+    "universe_code": {
+      "default": "NIFTY50",
+      "pattern": "^[A-Z0-9_]{1,32}$",
+      "title": "Universe Code",
+      "type": "string"
+    }
+  },
+  "required": [
+    "data_source_id",
+    "account"
+  ],
+  "title": "ScanRequest",
+  "type": "object"
+}
