@@ -451,7 +451,7 @@ Index `(data_source_id, kind, created_at DESC)`. Partial unique `(data_source_id
 
 ### 6.8 `data_quality_issues` (E · retention 1 year)
 
-`id uuid PK, ingestion_run_id FK, instrument_id FK NULL, trade_date date NULL, issue_type CHECK IN (MISSING_SESSION, OHLC_INVALID, DUPLICATE, PRICE_SPIKE, ZERO_VOLUME, STALE_DATA, PROVIDER_GAP), severity CHECK IN (INFO, WARN, ERROR), details jsonb, resolved_at timestamptz NULL`. Index `(instrument_id, trade_date)`.
+`id uuid PK, ingestion_run_id FK, instrument_id FK NULL, trade_date date NULL, issue_type CHECK IN (MISSING_SESSION, OHLC_INVALID, DUPLICATE, PRICE_SPIKE, ZERO_VOLUME, STALE_DATA, PROVIDER_GAP; intraday, migration `2026_11_18_000001`: MISSING_BAR, LATE_BAR, MISALIGNED_BAR, OUTSIDE_SESSION, AGGREGATE_MISMATCH), severity CHECK IN (INFO, WARN, ERROR), details jsonb, resolved_at timestamptz NULL`. Index `(instrument_id, trade_date)`.
 
 ### 6.9 `market_calendar` (E/L seeded · retained indefinitely)
 

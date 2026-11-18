@@ -48,7 +48,7 @@ def test_misaligned_outside_and_invalid_are_rejected() -> None:
     r = check_session_bars(DAY, "5m", [bad_grid, outside, after, bad_ohlc, *FIVE[2:]])
     got = types(r)
     assert got.count("MISALIGNED_BAR") == 1 and got.count("OUTSIDE_SESSION") == 2
-    assert got.count("INVALID_OHLC") == 1 and got.count("MISSING_BAR") == 2  # FIVE[0], FIVE[1]
+    assert got.count("OHLC_INVALID") == 1 and got.count("MISSING_BAR") == 2  # FIVE[0], FIVE[1]
 
 
 def test_special_session_grid_override() -> None:
