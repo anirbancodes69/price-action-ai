@@ -31,6 +31,7 @@ x-backend-env: &backend-env
   QUEUE_CONNECTION: redis
   ENGINE_URL: http://engine:8100
   ENGINE_SERVICE_TOKEN: ${ENGINE_SERVICE_TOKEN:?run ./scripts/setup-env.sh}
+  ENGINE_DATA_SOURCE_ID: ${INGEST_DATA_SOURCE_ID:-}
 
 x-engine-env: &engine-env
   APP_ENV: ${APP_ENV:-local}
