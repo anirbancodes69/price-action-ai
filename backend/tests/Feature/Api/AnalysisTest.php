@@ -54,7 +54,7 @@ class AnalysisTest extends TestCase
     private function detail(): array
     {
         return [
-            'symbol' => 'AAA', 'session_date' => '2026-11-18', 'as_of_ts' => '2026-11-18T05:30:00+00:00', 'status' => 'COMPLETED',
+            'symbol' => 'AAA', 'session_date' => '2026-11-18', 'as_of_ts' => '2026-11-18T05:30:00+00:00', 'status' => 'VALID',
             'problems' => [], 'ruleset_version' => 'pa-intraday 0.1.0', 'state_5m' => 'BULLISH', 'protected_low_5m' => '1480.00',
             'protected_high_5m' => null, 'transition_direction_5m' => null, 'state_15m' => 'SIDEWAYS',
             'levels' => [
@@ -208,6 +208,21 @@ class AnalysisTest extends TestCase
         $this->assertSame('2026-11-18T11:00:00+05:30', $candles[1]['end']);
         $this->assertSame('1498.00', $candles[1]['close']);
         $this->assertSame('DEMO', $res->json('meta.data_mode'));
+    }
+
+    public function test_snapshot_statuses_map_to_run_statuses(): void
+    {
+        $statuses = ['VALID' => 'COMPLETED', 'INSUFFICIENT_HISTORY' => 'INSUFFICIENT_HISTORY', 'INVALID_INPUT' => 'INVALID_INPUT'];
+        $sequence = Http::sequence();
+        foreach (array_keys($statuses) as $engine) {
+            $sequence->push(['status' => $engine] + $this->detail());
+        }
+        Http::fake(['engine.test/internal/v1/analysis' => $sequence]);
+        $u = $this->user();
+
+        foreach ($statuses as $api) {
+            $this->assertSame($api, $this->actingAs($u, 'web')->getJson('/api/v1/analysis/AAA')->assertOk()->json('data.status'));
+        }
     }
 
     public function test_an_unavailable_engine_is_503(): void

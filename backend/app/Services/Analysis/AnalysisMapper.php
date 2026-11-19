@@ -51,7 +51,7 @@ class AnalysisMapper
             'id' => $id('run'),
             'instrument' => $instrument,
             'as_of' => $asOf,
-            'status' => in_array($d['status'], ['COMPLETED', 'INSUFFICIENT_HISTORY', 'INVALID_INPUT'], true) ? $d['status'] : 'FAILED',
+            'status' => self::status((string) $d['status']),
             'timeframe' => '5m',
             'ruleset' => $ruleset,
             'engine_version' => (string) config('trading.engine_version', 'live'),
@@ -105,6 +105,16 @@ class AnalysisMapper
         }
 
         return $out;
+    }
+
+    /** Engine snapshot status (`VALID`, `INSUFFICIENT_HISTORY`, `INVALID_INPUT`) to the API `RunStatus`. */
+    private static function status(string $engine): string
+    {
+        return match ($engine) {
+            'VALID' => 'COMPLETED',
+            'INSUFFICIENT_HISTORY', 'INVALID_INPUT' => $engine,
+            default => 'FAILED',
+        };
     }
 
     /**

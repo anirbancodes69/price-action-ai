@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { PageSkeleton } from "@/components/data/loading-skeleton";
 import { data } from "@/lib/data";
 import { USE_HTTP } from "@/lib/api/config";
 import { LiveAnalysis } from "@/features/analysis/live-analysis";
@@ -15,7 +17,19 @@ export async function generateMetadata({ params }: PageProps<"/analysis/[symbol]
   return { title: `${decodeURIComponent(symbol).toUpperCase()} analysis` };
 }
 
-export default async function StockAnalysisPage({ params }: PageProps<"/analysis/[symbol]">) {
+/**
+ * The URL data (`params`) is read inside a Suspense boundary, so the App Shell stays shared across symbols and
+ * navigation can be instant (Next.js "URL data outside of Suspense" insight).
+ */
+export default function StockAnalysisPage({ params }: PageProps<"/analysis/[symbol]">) {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <StockAnalysis params={params} />
+    </Suspense>
+  );
+}
+
+async function StockAnalysis({ params }: Pick<PageProps<"/analysis/[symbol]">, "params">) {
   const { symbol } = await params;
   // HTTP mode: fetched in the browser with the session cookie and refreshed while the tab is visible.
   if (USE_HTTP) return <LiveAnalysis symbol={decodeURIComponent(symbol)} />;
