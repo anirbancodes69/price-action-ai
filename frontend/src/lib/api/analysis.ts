@@ -1,5 +1,5 @@
 /**
- * `GET /api/v1/analysis/{symbol}?include=candles` (N5) and its mapping to the frontend `StockAnalysis` (ADR-016).
+ * `GET /api/v1/analysis/{symbol}?include=candles,candles_15m,candles_1d` (N5) and its mapping to the frontend `StockAnalysis` (ADR-016).
  * Like the scanner, the canonical vocabulary is mapped at this boundary and only formatting conversions happen
  * (decimal strings to numbers). Nothing is calculated here: entry, stop, target, score and signal come from the engine.
  */
@@ -42,7 +42,18 @@ export interface ApiAnalysisRun {
   swings: { kind: "HIGH" | "LOW"; bar_start: string; price: string; label: string }[];
   events: { type: string; direction: "UP" | "DOWN"; level: string; level_bar_start: string; break_bar_start: string }[];
   zones: { id: string; role: "SUPPORT" | "RESISTANCE"; low: string; high: string; touches: number; strength_bucket: string; formed_at: string }[];
-  candles?: { start: string; open: string; high: string; low: string; close: string; volume: number }[];
+  candles?: ApiCandle[];
+  candles_15m?: ApiCandle[];
+  candles_1d?: ApiCandle[];
+}
+
+interface ApiCandle {
+  start: string;
+  open: string;
+  high: string;
+  low: string;
+  close: string;
+  volume: number;
 }
 
 export interface AnalysisMeta {
@@ -63,14 +74,16 @@ export function analysisProblem(run: ApiAnalysisRun): string | null {
 export function mapAnalysis(run: ApiAnalysisRun): StockAnalysis {
   const s = run.context.session;
   if (!s) throw new Error("Analysis has no session levels");
-  const candles: Candle[] = (run.candles ?? []).map((c) => ({
-    time: c.start,
-    open: num(c.open),
-    high: num(c.high),
-    low: num(c.low),
-    close: num(c.close),
-    volume: c.volume,
-  }));
+  const toCandles = (bars: ApiCandle[] | undefined, daily = false): Candle[] =>
+    (bars ?? []).map((c) => ({
+      time: daily ? c.start.slice(0, 10) : c.start, // daily bars are keyed by session date
+      open: num(c.open),
+      high: num(c.high),
+      low: num(c.low),
+      close: num(c.close),
+      volume: c.volume,
+    }));
+  const candles = toCandles(run.candles);
   const price = candles.length ? candles[candles.length - 1].close : 0;
   const pdc = num(s.pdc);
   const primary = run.setups.find((x) => x.id === run.primary_setup_id) ?? null;
@@ -119,8 +132,8 @@ export function mapAnalysis(run: ApiAnalysisRun): StockAnalysis {
     },
     timeframe: "5m",
     asOf: run.as_of,
-    candles: [],
-    intraday: { "5m": candles, "15m": [] },
+    candles: toCandles(run.candles_1d, true),
+    intraday: { "5m": candles, "15m": toCandles(run.candles_15m) },
     session: {
       pdh: num(s.pdh),
       pdl: num(s.pdl),

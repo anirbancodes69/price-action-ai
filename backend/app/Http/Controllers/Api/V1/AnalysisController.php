@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\DB;
  */
 class AnalysisController extends Controller
 {
+    private const DAILY_BARS = 60;
+
     public function show(
         string $symbol,
         AnalysisRequest $request,
@@ -44,7 +46,17 @@ class AnalysisController extends Controller
         $detail = $engine->analysis($payload);
 
         $asOf = CarbonImmutable::parse($detail['as_of_ts']);
-        $candles = $request->input('include') === 'candles' ? $this->candles($source, $instrument['id'], $detail['session_date'], $asOf) : null;
+        $include = $request->includes();
+        $series = [];
+        if (in_array('candles', $include, true)) {
+            $series['candles'] = $this->candles($source, $instrument['id'], '5m', 5, $detail['session_date'], $asOf);
+        }
+        if (in_array('candles_15m', $include, true)) {
+            $series['candles_15m'] = $this->candles($source, $instrument['id'], '15m', 15, $detail['session_date'], $asOf);
+        }
+        if (in_array('candles_1d', $include, true)) {
+            $series['candles_1d'] = $this->dailyCandles($source, $instrument['id'], $detail['session_date']);
+        }
         $rulesetParts = explode(' ', (string) $detail['ruleset_version'], 2);
         $ruleset = [
             'code' => $rulesetParts[0],
@@ -57,7 +69,7 @@ class AnalysisController extends Controller
             $detail, $instrument, $ruleset,
             ScannerRowMapper::time($clock->entryCutoff($asOf)->toIso8601String()) ?? '',
             ScannerRowMapper::time($clock->sessionEndExit($asOf)->toIso8601String()) ?? '',
-            $candles,
+            $series,
         );
         $mapped = $run['as_of'];
 
@@ -73,23 +85,38 @@ class AnalysisController extends Controller
         return DB::table('data_sources')->where('id', $sourceId)->value('mode');
     }
 
-    /** @return list<array<string, mixed>> */
-    private function candles(string $source, string $instrumentId, string $sessionDate, CarbonImmutable $asOf): array
+    /** Closed bars of the session up to `as_of` (a bar is closed once its end is not after `as_of`). @return list<array<string, mixed>> */
+    private function candles(string $source, string $instrumentId, string $timeframe, int $minutes, string $sessionDate, CarbonImmutable $asOf): array
     {
         $rows = DB::table('candles')
-            ->where('data_source_id', $source)->where('instrument_id', $instrumentId)->where('timeframe', '5m')
-            ->where('trade_date', $sessionDate)->where('bar_start', '<', $asOf->utc()->format('Y-m-d H:i:sP'))
+            ->where('data_source_id', $source)->where('instrument_id', $instrumentId)->where('timeframe', $timeframe)
+            ->where('trade_date', $sessionDate)->where('bar_start', '<=', $asOf->subMinutes($minutes)->utc()->format('Y-m-d H:i:sP'))
             ->orderBy('bar_start')->get(['bar_start', 'open', 'high', 'low', 'close', 'volume']);
 
-        return $rows->map(function ($r) {
-            $start = CarbonImmutable::parse($r->bar_start);
+        return $rows->map(fn ($r) => $this->candle($r, $minutes))->all();
+    }
 
-            return [
-                'start' => ScannerRowMapper::time($start->toIso8601String()),
-                'end' => ScannerRowMapper::time($start->addMinutes(5)->toIso8601String()),
-                'open' => (string) $r->open, 'high' => (string) $r->high, 'low' => (string) $r->low, 'close' => (string) $r->close,
-                'volume' => (int) $r->volume,
-            ];
-        })->all();
+    /** The last {@see DAILY_BARS} completed daily bars before the session (display context only). @return list<array<string, mixed>> */
+    private function dailyCandles(string $source, string $instrumentId, string $sessionDate): array
+    {
+        $rows = DB::table('candles')
+            ->where('data_source_id', $source)->where('instrument_id', $instrumentId)->where('timeframe', '1D')
+            ->where('trade_date', '<', $sessionDate)->orderByDesc('bar_start')->limit(self::DAILY_BARS)
+            ->get(['bar_start', 'open', 'high', 'low', 'close', 'volume']);
+
+        return $rows->reverse()->values()->map(fn ($r) => $this->candle($r, 375))->all(); // 09:15 to 15:30
+    }
+
+    /** @return array<string, mixed> */
+    private function candle(object $r, int $minutes): array
+    {
+        $start = CarbonImmutable::parse($r->bar_start);
+
+        return [
+            'start' => ScannerRowMapper::time($start->toIso8601String()),
+            'end' => ScannerRowMapper::time($start->addMinutes($minutes)->toIso8601String()),
+            'open' => (string) $r->open, 'high' => (string) $r->high, 'low' => (string) $r->low, 'close' => (string) $r->close,
+            'volume' => (int) $r->volume,
+        ];
     }
 }

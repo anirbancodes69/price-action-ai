@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Api\V1;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class AnalysisRequest extends FormRequest
 {
@@ -12,12 +11,18 @@ class AnalysisRequest extends FormRequest
         return true;
     }
 
+    /** @return list<string> the requested `include` parts */
+    public function includes(): array
+    {
+        return array_filter(explode(',', (string) $this->input('include', '')));
+    }
+
     /** @return array<string, array<int, mixed>> */
     public function rules(): array
     {
         return [
             'as_of' => ['sometimes', 'date'],
-            'include' => ['sometimes', Rule::in(['candles'])],
+            'include' => ['sometimes', 'string', 'regex:/^(candles|candles_15m|candles_1d)(,(candles|candles_15m|candles_1d))*$/'],
         ];
     }
 }

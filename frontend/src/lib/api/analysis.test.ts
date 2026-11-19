@@ -61,6 +61,7 @@ describe("mapAnalysis", () => {
     expect(a.stock.volume).toBe(250);
     expect(a.intraday["5m"]).toHaveLength(2);
     expect(a.intraday["15m"]).toEqual([]);
+    expect(a.candles).toEqual([]);
   });
 
   it("keeps only drawable swings and structure breaks", () => {
@@ -84,6 +85,15 @@ describe("mapAnalysis", () => {
   it("keeps the opening range open while it forms", () => {
     const a = mapAnalysis(run);
     expect([a.session.orHigh, a.session.orLow]).toEqual([1496.5, null]);
+  });
+});
+
+describe("mapAnalysis series", () => {
+  it("maps 15m bars as timestamps and daily bars as session dates", () => {
+    const bar = { start: "2026-11-17T09:15:00+05:30", open: "1.00", high: "2.00", low: "0.50", close: "1.50", volume: 5 };
+    const a = mapAnalysis({ ...run, candles_15m: [bar], candles_1d: [bar] });
+    expect(a.intraday["15m"][0]).toEqual({ time: "2026-11-17T09:15:00+05:30", open: 1, high: 2, low: 0.5, close: 1.5, volume: 5 });
+    expect(a.candles[0].time).toBe("2026-11-17");
   });
 });
 

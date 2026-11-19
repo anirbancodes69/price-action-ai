@@ -80,7 +80,7 @@ export function LiveAnalysis({ symbol }: { symbol: string }) {
     );
   }
 
-  return <AnalysisView key={result.run.instrument.symbol} a={mapAnalysis(result.run)} timeframes={["5m"]} mode={result.meta.dataMode} />;
+  return <AnalysisView key={result.run.instrument.symbol} a={mapAnalysis(result.run)} mode={result.meta.dataMode} />;
 }
 
 function message(e: ApiError | Error | null): string {
