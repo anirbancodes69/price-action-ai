@@ -1522,8 +1522,8 @@ paths:
           in: "query"
           schema:
             type: "string"
-            enum:
-              - "candles"
+            pattern: "^(candles|candles_15m|candles_1d)(,(candles|candles_15m|candles_1d))*$"
+          description: "Comma-separated: `candles` (5m bars of the session), `candles_15m` (15m bars of the session), `candles_1d` (up to 60 completed daily bars before the session, context only)."
       security:
         - sessionCookie: []
       responses:
@@ -4130,6 +4130,16 @@ components:
           items:
             "$ref": "#/components/schemas/Candle"
           description: "Present only when ?include=candles."
+        candles_15m:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/Candle"
+          description: "Present only when ?include=candles_15m."
+        candles_1d:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/Candle"
+          description: "Present only when ?include=candles_1d."
       required:
         - "id"
         - "instrument"

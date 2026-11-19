@@ -210,6 +210,41 @@ class AnalysisTest extends TestCase
         $this->assertSame('DEMO', $res->json('meta.data_mode'));
     }
 
+    public function test_include_adds_closed_15m_bars_and_prior_daily_bars(): void
+    {
+        $this->fake();
+        $inst = DB::table('instruments')->where('trading_symbol', 'AAA')->value('id');
+        $run = (string) Str::uuid7();
+        DB::table('ingestion_runs')->insert([
+            'id' => $run, 'data_source_id' => self::SOURCE, 'kind' => 'BACKFILL', 'status' => 'COMPLETED', 'started_at' => now(),
+        ]);
+        $bars = [
+            ['15m', '2026-11-18', '2026-11-18 05:00:00+00', '1490.00'], ['15m', '2026-11-18', '2026-11-18 05:15:00+00', '1495.00'],
+            ['15m', '2026-11-18', '2026-11-18 05:30:00+00', '1499.00'],
+            ['1D', '2026-11-17', '2026-11-17 03:45:00+00', '1480.00'], ['1D', '2026-11-18', '2026-11-18 03:45:00+00', '1499.00'],
+        ];
+        foreach ($bars as [$tf, $date, $t, $c]) {
+            DB::table('candles')->insert([
+                'data_source_id' => self::SOURCE, 'instrument_id' => $inst, 'timeframe' => $tf, 'trade_date' => $date,
+                'bar_start' => $t, 'open' => $c, 'high' => $c, 'low' => $c, 'close' => $c, 'volume' => 10, 'ingestion_run_id' => $run,
+            ]);
+        }
+
+        $d = $this->actingAs($this->user(), 'web')->getJson('/api/v1/analysis/AAA?include=candles_15m,candles_1d')->assertOk()->json('data');
+
+        $this->assertArrayNotHasKey('candles', $d);
+        $this->assertSame(['1490.00', '1495.00'], array_column($d['candles_15m'], 'close'), 'the 11:00 bar is not closed at as_of 11:00');
+        $this->assertSame('2026-11-18T10:45:00+05:30', $d['candles_15m'][1]['start']);
+        $this->assertSame('2026-11-18T11:00:00+05:30', $d['candles_15m'][1]['end']);
+        $this->assertCount(1, $d['candles_1d'], 'only completed days before the session');
+        $this->assertSame('2026-11-17T15:30:00+05:30', $d['candles_1d'][0]['end']);
+    }
+
+    public function test_include_rejects_unknown_parts(): void
+    {
+        $this->actingAs($this->user(), 'web')->getJson('/api/v1/analysis/AAA?include=candles,secrets')->assertStatus(422);
+    }
+
     public function test_snapshot_statuses_map_to_run_statuses(): void
     {
         $statuses = ['VALID' => 'COMPLETED', 'INSUFFICIENT_HISTORY' => 'INSUFFICIENT_HISTORY', 'INVALID_INPUT' => 'INVALID_INPUT'];

@@ -21,10 +21,10 @@ class AnalysisMapper
      * @param  array<string, mixed>  $d  engine `AnalysisDetail`
      * @param  array<string, mixed>  $instrument  `Instrument` schema
      * @param  array{code: string, version: string, validation_status: string}  $ruleset
-     * @param  list<array<string, mixed>>|null  $candles  5m candles of the session when requested
+     * @param  array<string, list<array<string, mixed>>>  $series  requested candle series: `candles` (5m), `candles_15m`, `candles_1d`
      * @return array<string, mixed>
      */
-    public static function map(array $d, array $instrument, array $ruleset, string $entryCutoffAt, string $sessionEndExitAt, ?array $candles = null): array
+    public static function map(array $d, array $instrument, array $ruleset, string $entryCutoffAt, string $sessionEndExitAt, array $series = []): array
     {
         $symbol = (string) $d['symbol'];
         $asOf = ScannerRowMapper::time($d['as_of_ts']);
@@ -100,9 +100,7 @@ class AnalysisMapper
             // Equal-level pools carry no first/last bar in live mode, so none are listed (ADR-016).
             'liquidity' => [],
         ];
-        if ($candles !== null) {
-            $out['candles'] = $candles;
-        }
+        $out += $series;
 
         return $out;
     }
