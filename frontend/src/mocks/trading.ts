@@ -45,6 +45,7 @@ function planFromAnalysis(
   extra: Partial<TradePlan> = {},
 ): TradePlan {
   const a = analysis(symbol);
+  if (!a.levels) throw new Error(`Sample analysis for ${symbol} has no levels`);
   const { entry, stopLoss, target, riskReward } = a.levels;
   const perShare = Math.abs(entry - stopLoss);
   const quantity = Math.max(1, Math.floor(riskBudget / perShare));
@@ -169,6 +170,7 @@ export function buildActivity(): ActivityItem[] {
 export function buildTriggers(): TriggerAlert[] {
   const make = (id: string, symbol: string, condition: string): TriggerAlert => {
     const a = analysis(symbol);
+    if (!a.levels) throw new Error(`Sample analysis for ${symbol} has no levels`);
     return {
       id,
       symbol,

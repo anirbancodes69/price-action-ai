@@ -6,19 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\ScannerRequest;
 use App\Services\DataSourceResolver;
 use App\Services\Engine\EngineClient;
+use App\Services\InstrumentCatalog;
 use App\Services\Scanner\ScannerRowMapper;
 use App\Support\ApiException;
 use App\Support\ApiResponse;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
 /**
  * `GET /api/v1/scanner`, served live from the engine (ADR-016): one scan of the universe per request.
  */
 class ScannerController extends Controller
 {
-    public function index(ScannerRequest $request, EngineClient $engine, DataSourceResolver $sources): JsonResponse
+    public function index(ScannerRequest $request, EngineClient $engine, DataSourceResolver $sources, InstrumentCatalog $catalog): JsonResponse
     {
         $scan = $engine->scan([
             'data_source_id' => $sources->id(),
@@ -28,7 +28,7 @@ class ScannerController extends Controller
         ]);
 
         $rows = $scan['rows'] ?? [];
-        $instruments = $this->instruments(array_column($rows, 'symbol'));
+        $instruments = $catalog->bySymbols(array_column($rows, 'symbol'));
         $mapped = [];
         foreach ($rows as $row) {
             if (isset($instruments[$row['symbol']])) {
@@ -55,33 +55,6 @@ class ScannerController extends Controller
             'ruleset' => $scan['ruleset_version'] ?? null,
             'notice' => $scan['notice'] ?? null,
         ]);
-    }
-
-    /**
-     * @param  list<string>  $symbols
-     * @return array<string, array<string, mixed>>
-     */
-    private function instruments(array $symbols): array
-    {
-        if ($symbols === []) {
-            return [];
-        }
-        $rows = DB::table('instruments as i')
-            ->leftJoin('instrument_snapshots as s', fn ($j) => $j->on('s.instrument_id', '=', 'i.id')->whereNull('s.effective_to'))
-            ->where('i.exchange', 'NSE')->where('i.status', 'ACTIVE')->whereIn('i.trading_symbol', $symbols)
-            ->get(['i.id', 'i.trading_symbol', 'i.name', 'i.exchange', 'i.segment', 'i.isin', 'i.status', 's.tick_size', 's.lot_size']);
-
-        $out = [];
-        foreach ($rows as $r) {
-            $out[$r->trading_symbol] = [
-                'id' => $r->id, 'symbol' => $r->trading_symbol, 'name' => $r->name, 'exchange' => $r->exchange,
-                'segment' => $r->segment, 'sector' => null, 'isin' => $r->isin, 'status' => $r->status,
-                'tick_size' => $r->tick_size === null ? '0.05' : (string) $r->tick_size,
-                'lot_size' => (int) ($r->lot_size ?? 1),
-            ];
-        }
-
-        return $out;
     }
 
     /** @param  array<string, mixed>  $r */

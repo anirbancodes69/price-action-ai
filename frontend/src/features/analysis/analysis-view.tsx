@@ -6,7 +6,9 @@ import { ClipboardPlus } from "lucide-react";
 import type { StockAnalysis, Timeframe } from "@/types";
 import { DEFAULT_OVERLAYS, PriceChart, type ChartOverlays } from "@/components/charts/price-chart";
 import { Badge } from "@/components/data/badge";
+import { LiveDataBadge } from "@/components/data/live-data-badge";
 import { PriceDisplay } from "@/components/data/price-display";
+import type { DataMode } from "@/lib/api/scanner";
 import { SampleDataBadge } from "@/components/data/sample-data-badge";
 import { PageFrame, PageHeader } from "@/components/layout/page-frame";
 import { AnalysisPanel } from "@/components/trading/analysis-panel";
@@ -22,7 +24,7 @@ import { SetupEvidence } from "./setup-evidence";
  * evidence on the left, the verdict card sticky on the right. Mobile order:
  * chart → verdict → evidence.
  */
-export function AnalysisView({ a }: { a: StockAnalysis }) {
+export function AnalysisView({ a, timeframes, mode = "DEMO" }: { a: StockAnalysis; timeframes?: Timeframe[]; mode?: DataMode }) {
   const [timeframe, setTimeframe] = useState<Timeframe>("5m");
   const [overlays, setOverlays] = useState<ChartOverlays>(DEFAULT_OVERLAYS);
   const [fit, setFit] = useState(0);
@@ -40,7 +42,7 @@ export function AnalysisView({ a }: { a: StockAnalysis }) {
             <Badge variant="outline">{stock.exchange}</Badge>
             <Badge>{stock.sector}</Badge>
             <SignalBadge signal={a.setup.signal} />
-            <SampleDataBadge asOf={a.asOf} />
+            {mode === "DEMO" ? <SampleDataBadge asOf={a.asOf} /> : <LiveDataBadge mode={mode} asOf={a.asOf} />}
           </>
         }
         actions={
@@ -50,7 +52,7 @@ export function AnalysisView({ a }: { a: StockAnalysis }) {
               <span className="text-xs tabular-nums text-muted-foreground">Last 5m close {formatTime(a.asOf)} IST · intraday analysis</span>
             </div>
             <WatchlistToggle symbol={stock.symbol} />
-            <Button variant="primary" onClick={() => setPlanOpen(true)} disabled={a.setup.direction === "short"}>
+            <Button variant="primary" onClick={() => setPlanOpen(true)} disabled={a.setup.direction === "short" || a.levels === null}>
               <ClipboardPlus /> Create trade plan
             </Button>
           </>
@@ -65,6 +67,7 @@ export function AnalysisView({ a }: { a: StockAnalysis }) {
         >
           <ChartToolbar
             timeframe={timeframe}
+            timeframes={timeframes}
             onTimeframe={setTimeframe}
             overlays={overlays}
             onToggle={(k) => setOverlays((o) => ({ ...o, [k]: !o[k] }))}
@@ -79,7 +82,7 @@ export function AnalysisView({ a }: { a: StockAnalysis }) {
               breaks={a.breaks}
               zones={a.zones}
               events={a.events}
-              levels={a.levels}
+              levels={a.levels ?? undefined}
               overlays={overlays}
               referenceLevels={reference}
               fitSignal={fit}

@@ -26,6 +26,7 @@ class EventModel(ContractModel):
     type: str
     direction: str
     level: DecimalStr
+    level_bar_start: datetime = Field(description="Bar start of the pivot whose level was broken.")
     break_bar_start: datetime
     close: DecimalStr
     close_inside_buffer: bool
@@ -41,6 +42,7 @@ class ZoneModel(ContractModel):
     status: str
     role_reversed: bool
     htf_member: bool
+    formed_at: datetime = Field(description="End of the bar at which the zone became known.")
 
 
 class PoolModel(ContractModel):
@@ -99,6 +101,8 @@ class AnalysisDetail(ContractModel):
     problems: list[str]
     ruleset_version: str
     state_5m: str | None
+    protected_low_5m: DecimalStr | None
+    protected_high_5m: DecimalStr | None
     transition_direction_5m: str | None
     state_15m: str | None
     levels: SessionLevelsModel | None

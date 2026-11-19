@@ -6,7 +6,7 @@
 import type { MarketStructure, ScannerRow, SetupStatus, SetupType, SignalState } from "@/types";
 import { apiRequest } from "./client";
 
-type ApiStructure = "BULLISH" | "BEARISH" | "SIDEWAYS" | "TRANSITION";
+export type ApiStructure = "BULLISH" | "BEARISH" | "SIDEWAYS" | "TRANSITION";
 
 export interface ApiScannerRow {
   instrument: { symbol: string; name: string; exchange: string; sector: string | null };
@@ -45,7 +45,7 @@ const STRUCTURE: Record<ApiStructure, MarketStructure> = {
   TRANSITION: "transition",
 };
 
-const SETUP_TYPE: Record<string, SetupType> = {
+export const SETUP_TYPE: Record<string, SetupType> = {
   OPENING_RANGE_BREAKOUT: "opening-range-breakout",
   PREV_DAY_HIGH_BREAK: "prev-day-high-break",
   PREV_DAY_LOW_BREAK: "prev-day-low-break",
@@ -53,7 +53,7 @@ const SETUP_TYPE: Record<string, SetupType> = {
   TREND_CONTINUATION: "trend-continuation",
 };
 
-const SETUP_STATUS: Record<string, SetupStatus> = {
+export const SETUP_STATUS: Record<string, SetupStatus> = {
   FORMING: "detected",
   AWAITING_CONFIRMATION: "awaiting-confirmation",
   ENTRY_CONFIRMED: "entry-confirmed",
@@ -61,7 +61,7 @@ const SETUP_STATUS: Record<string, SetupStatus> = {
   EXPIRED: "invalidated",
 };
 
-const SIGNAL: Record<string, SignalState> = {
+export const SIGNAL: Record<string, SignalState> = {
   BUY_WATCH: "buy-watch",
   ENTRY_CONFIRMED: "entry-confirmed",
   HOLD: "hold",
@@ -69,7 +69,7 @@ const SIGNAL: Record<string, SignalState> = {
   NO_TRADE: "no-trade",
 };
 
-const num = (v: string | null | undefined): number => (v == null ? 0 : Number(v));
+export const num = (v: string | null | undefined): number => (v == null ? 0 : Number(v));
 
 export function mapStructure(s: ApiStructure | null): MarketStructure {
   return s ? STRUCTURE[s] : "range";

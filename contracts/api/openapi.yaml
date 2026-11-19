@@ -4047,7 +4047,7 @@ components:
               - "role"
               - "candle_snapshot_id"
             additionalProperties: false
-          minItems: 1
+          description: "Candle snapshots the run read; empty in live mode (ADR-016: nothing is persisted)."
         context:
           type: "object"
           properties:
@@ -4124,6 +4124,7 @@ components:
           type: "array"
           items:
             "$ref": "#/components/schemas/LiquidityEvent"
+          description: "Empty in live mode (ADR-016): equal-level pools are not itemised with their bars."
         candles:
           type: "array"
           items:
@@ -7465,7 +7466,10 @@ components:
           format: "date-time"
           description: "ISO-8601 timestamp with offset."
         distance_pct:
-          "$ref": "#/components/schemas/Ratio"
+          oneOf:
+            - "$ref": "#/components/schemas/Ratio"
+            - type: "null"
+          description: "Null in live mode (ADR-016): the engine does not supply it."
       required:
         - "id"
         - "role"

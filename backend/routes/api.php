@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AnalysisController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\RiskController;
@@ -17,6 +18,7 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::get('/me', [MeController::class, 'show'])->name('me');
         Route::get('/scanner', [ScannerController::class, 'index'])->middleware('throttle:read')->name('scanner');
+        Route::get('/analysis/{symbol}', [AnalysisController::class, 'show'])->middleware('throttle:read')->name('analysis.show');
         Route::post('/risk/calculate', [RiskController::class, 'calculate'])->middleware('throttle:calc')->name('risk.calculate');
     });
 });

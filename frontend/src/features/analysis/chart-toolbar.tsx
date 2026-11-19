@@ -20,6 +20,8 @@ const TOGGLES: { key: keyof ChartOverlays; label: string; icon: LucideIcon; hint
 
 interface ChartToolbarProps {
   timeframe: Timeframe;
+  /** Timeframes with data; the live analysis serves 5m only. */
+  timeframes?: Timeframe[];
   onTimeframe: (tf: Timeframe) => void;
   overlays: ChartOverlays;
   onToggle: (key: keyof ChartOverlays) => void;
@@ -27,7 +29,7 @@ interface ChartToolbarProps {
 }
 
 /** Chart toolbar: one row, every control the same height (design-standards §9). */
-export function ChartToolbar({ timeframe, onTimeframe, overlays, onToggle, onFit }: ChartToolbarProps) {
+export function ChartToolbar({ timeframe, onTimeframe, overlays, onToggle, onFit, timeframes = ["5m", "15m", "1D"] }: ChartToolbarProps) {
   return (
     <div className="flex items-center gap-3 border-b px-3 py-2 sm:px-4">
       <ChoiceGroup
@@ -36,11 +38,7 @@ export function ChartToolbar({ timeframe, onTimeframe, overlays, onToggle, onFit
         value={timeframe}
         onChange={onTimeframe}
         className="flex-nowrap"
-        options={[
-          { value: "5m", label: "5m" },
-          { value: "15m", label: "15m" },
-          { value: "1D", label: "1D" },
-        ]}
+        options={timeframes.map((t) => ({ value: t, label: t }))}
       />
       <span className="h-5 w-px shrink-0 bg-border" aria-hidden />
       <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto" role="group" aria-label="Chart overlays">
