@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { WatchlistProvider } from "@/features/watchlists/watchlist-store";
 import { SessionGate } from "@/features/auth/session-gate";
+import { USE_HTTP } from "@/lib/api/config";
 import { data } from "@/lib/data";
 
 export default async function AuthenticatedLayout({ children }: LayoutProps<"/">) {
@@ -12,7 +13,7 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/">
   ]);
   return (
     <SessionGate>
-    <WatchlistProvider initial={watchlists}>
+    <WatchlistProvider initial={USE_HTTP ? [] : watchlists} remote={USE_HTTP}>
       <AppShell
         user={user}
         notifications={notifications}

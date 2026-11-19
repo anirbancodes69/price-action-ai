@@ -7386,6 +7386,10 @@ components:
           type: "string"
           minLength: 1
           maxLength: 60
+        id:
+          type: "string"
+          format: "uuid"
+          description: "Optional client-generated id, so a retried request cannot create the list twice."
       required:
         - "name"
       additionalProperties: false
