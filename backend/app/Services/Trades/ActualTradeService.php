@@ -3,6 +3,7 @@
 namespace App\Services\Trades;
 
 use App\Models\User;
+use App\Services\PersonalTenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,7 +22,7 @@ class ActualTradeService
         return DB::transaction(function () use ($user, $instrumentId, $planId, $fill) {
             $id = (string) Str::uuid7();
             DB::table('actual_trades')->insert([
-                'id' => $id, 'tenant_id' => $this->tenantId($user), 'user_id' => $user->getKey(), 'instrument_id' => $instrumentId,
+                'id' => $id, 'tenant_id' => app(PersonalTenant::class)->idFor($user), 'user_id' => $user->getKey(), 'instrument_id' => $instrumentId,
                 'trade_plan_id' => $planId, 'direction' => 'LONG', 'status' => 'OPEN', 'quantity_open' => 0, 'source' => 'MANUAL',
             ]);
             $this->addFill($id, $fill);
@@ -80,19 +81,5 @@ class ActualTradeService
             'id' => (string) Str::uuid7(), 'tenant_id' => $t->tenant_id, 'user_id' => $t->user_id, 'trade_kind' => 'ACTUAL',
             'actual_trade_id' => $tradeId, 'status' => 'DRAFT',
         ]);
-    }
-
-    /** The owner's personal tenant, created on first use (personal mode has exactly one). */
-    private function tenantId(User $user): string
-    {
-        $existing = DB::table('tenant_memberships')->where('user_id', $user->getKey())->value('tenant_id');
-        if ($existing !== null) {
-            return (string) $existing;
-        }
-        $id = (string) Str::uuid7();
-        DB::table('tenants')->insert(['id' => $id, 'name' => 'Personal', 'slug' => 'personal-'.substr(str_replace('-', '', (string) $user->getKey()), 0, 12), 'kind' => 'PERSONAL']);
-        DB::table('tenant_memberships')->insert(['id' => (string) Str::uuid7(), 'tenant_id' => $id, 'user_id' => $user->getKey(), 'role' => 'OWNER']);
-
-        return $id;
     }
 }

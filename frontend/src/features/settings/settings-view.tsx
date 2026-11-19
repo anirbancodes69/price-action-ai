@@ -75,22 +75,40 @@ function ThemePreview({ theme }: { theme: "light" | "dark" }) {
   );
 }
 
-export function SettingsView({ user }: { user: UserProfile }) {
+import type { RiskForm } from "@/lib/api/risk-profile";
+import { validateRisk } from "@/lib/api/risk-profile";
+import { ApiError } from "@/lib/api/client";
+
+export interface LiveRisk {
+  initial: RiskForm;
+  /** Saves the form; resolves with the stored values, rejects with an `ApiError`. */
+  onSave: (form: RiskForm) => Promise<RiskForm>;
+}
+
+export function SettingsView({ user, liveRisk }: { user: UserProfile; liveRisk?: LiveRisk }) {
   const toast = useToast();
   const [section, setSection] = useState<SectionId>("profile");
   const [theme, setTheme] = useTheme();
   const [profile, setProfile] = useState({ name: user.name, email: user.email });
   const [notif, setNotif] = useState({ triggers: true, invalidations: true, digest: false, email: true, push: false });
   // Defaults: the pa-intraday registry (TRD-01 §6) and the owner's planning values (ADR-014). All HYPOTHESIS.
-  const [risk, setRisk] = useState({
-    capital: "100000",
-    perTrade: "0.5",
-    maxPositionValue: "50000",
-    dailyLoss: "1.5",
-    maxLosses: "3",
-    maxOpen: "2",
-    openRisk: "1.0",
-  });
+  const [risk, setRisk] = useState<RiskForm>(
+    liveRisk?.initial ?? { capital: "100000", perTrade: "0.5", maxPositionValue: "50000", dailyLoss: "1.5", maxLosses: "3", maxOpen: "2", openRisk: "1.0" },
+  );
+  const [riskErrors, setRiskErrors] = useState<Partial<Record<keyof RiskForm, string>>>({});
+  const saveRisk = async () => {
+    if (!liveRisk) return save("Risk settings");
+    const errors = validateRisk(risk);
+    setRiskErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+    try {
+      setRisk(await liveRisk.onSave(risk));
+      toast({ title: "Risk settings saved", description: "New plans and the scanner use these limits from now on." });
+    } catch (e) {
+      const detail = e instanceof ApiError ? Object.values(e.fieldErrors).flat()[0] ?? e.message : "Nothing was changed. Try again.";
+      toast({ title: "Risk settings not saved", description: detail, tone: "warn" });
+    }
+  };
   const rupees = (pct: string) => `≈ ₹${Math.round((Number(risk.capital) * Number(pct)) / 100).toLocaleString("en-IN")}`;
   const save = (what: string) => toast({ title: `${what} saved`, description: "Demo mode — stored for this session only." });
 
@@ -121,15 +139,15 @@ export function SettingsView({ user }: { user: UserProfile }) {
       </Section>
     ),
     risk: (
-      <Section title="Risk and limits" description="Sizing and account limits for proposed plans (TRD-05). A reached limit blocks new plans for the rest of the session. Nothing here places orders." footer={<Button variant="primary" onClick={() => save("Risk settings")}>Save changes</Button>}>
+      <Section title="Risk and limits" description="Sizing and account limits for proposed plans (TRD-05). A reached limit blocks new plans for the rest of the session. Nothing here places orders." footer={<Button variant="primary" onClick={() => void saveRisk()}>Save changes</Button>}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input label="Trading capital (₹)" inputMode="numeric" value={risk.capital} onChange={(e) => setRisk((r) => ({ ...r, capital: e.target.value }))} />
-          <Input label="Risk per trade (%)" inputMode="decimal" value={risk.perTrade} onChange={(e) => setRisk((r) => ({ ...r, perTrade: e.target.value }))} hint={`${rupees(risk.perTrade)} per trade`} />
-          <Input label="Max position value (₹)" inputMode="numeric" value={risk.maxPositionValue} onChange={(e) => setRisk((r) => ({ ...r, maxPositionValue: e.target.value }))} hint="Caps the quantity when the stop is tight" />
-          <Input label="Daily loss limit (%)" inputMode="decimal" value={risk.dailyLoss} onChange={(e) => setRisk((r) => ({ ...r, dailyLoss: e.target.value }))} hint={`${rupees(risk.dailyLoss)} realised net loss blocks the day`} />
-          <Input label="Max consecutive losses" inputMode="numeric" value={risk.maxLosses} onChange={(e) => setRisk((r) => ({ ...r, maxLosses: e.target.value }))} hint="Losing trades in a row before the day is blocked" />
-          <Input label="Max open positions" inputMode="numeric" value={risk.maxOpen} onChange={(e) => setRisk((r) => ({ ...r, maxOpen: e.target.value }))} />
-          <Input label="Max open risk (%)" inputMode="decimal" value={risk.openRisk} onChange={(e) => setRisk((r) => ({ ...r, openRisk: e.target.value }))} hint={`${rupees(risk.openRisk)} combined risk to stops`} />
+          <Input label="Trading capital (₹)" inputMode="numeric" value={risk.capital} onChange={(e) => setRisk((r) => ({ ...r, capital: e.target.value }))} error={riskErrors.capital} />
+          <Input label="Risk per trade (%)" inputMode="decimal" value={risk.perTrade} onChange={(e) => setRisk((r) => ({ ...r, perTrade: e.target.value }))} error={riskErrors.perTrade} hint={`${rupees(risk.perTrade)} per trade`} />
+          <Input label="Max position value (₹)" inputMode="numeric" value={risk.maxPositionValue} onChange={(e) => setRisk((r) => ({ ...r, maxPositionValue: e.target.value }))} error={riskErrors.maxPositionValue} hint="Caps the quantity when the stop is tight" />
+          <Input label="Daily loss limit (%)" inputMode="decimal" value={risk.dailyLoss} onChange={(e) => setRisk((r) => ({ ...r, dailyLoss: e.target.value }))} error={riskErrors.dailyLoss} hint={`${rupees(risk.dailyLoss)} realised net loss blocks the day`} />
+          <Input label="Max consecutive losses" inputMode="numeric" value={risk.maxLosses} onChange={(e) => setRisk((r) => ({ ...r, maxLosses: e.target.value }))} error={riskErrors.maxLosses} hint="Losing trades in a row before the day is blocked" />
+          <Input label="Max open positions" inputMode="numeric" value={risk.maxOpen} onChange={(e) => setRisk((r) => ({ ...r, maxOpen: e.target.value }))} error={riskErrors.maxOpen} />
+          <Input label="Max open risk (%)" inputMode="decimal" value={risk.openRisk} onChange={(e) => setRisk((r) => ({ ...r, openRisk: e.target.value }))} error={riskErrors.openRisk} hint={`${rupees(risk.openRisk)} combined risk to stops`} />
         </div>
         <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
           {[

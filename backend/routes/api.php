@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\PositionController;
 use App\Http\Controllers\Api\V1\RiskController;
+use App\Http\Controllers\Api\V1\RiskProfileController;
 use App\Http\Controllers\Api\V1\RiskTodayController;
 use App\Http\Controllers\Api\V1\ScannerController;
 use App\Http\Controllers\HealthController;
@@ -31,6 +32,8 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('/journal', [JournalController::class, 'index'])->middleware('throttle:read')->name('journal.index');
         Route::get('/journal/{id}', [JournalController::class, 'show'])->whereUuid('id')->middleware('throttle:read')->name('journal.show');
         Route::patch('/journal/{id}', [JournalController::class, 'update'])->whereUuid('id')->middleware('throttle:calc')->name('journal.update');
+        Route::get('/risk-profile', [RiskProfileController::class, 'show'])->middleware('throttle:read')->name('risk-profile.show');
+        Route::put('/risk-profile', [RiskProfileController::class, 'update'])->middleware('throttle:calc')->name('risk-profile.update');
         Route::post('/risk/calculate', [RiskController::class, 'calculate'])->middleware('throttle:calc')->name('risk.calculate');
     });
 });

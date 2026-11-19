@@ -13,6 +13,14 @@ class RiskProfileResolver
 {
     public function __construct(private readonly RulesetParameters $ruleset) {}
 
+    /** The trading capital alone: the stored profile's, else the planning default (needs no ruleset). */
+    public function capital(User $user): string
+    {
+        $stored = DB::table('risk_profiles')->where('user_id', $user->getKey())->where('is_current', true)->value('trading_capital');
+
+        return $stored === null ? (string) config('trading.capital') : (string) $stored;
+    }
+
     /**
      * @return array{capital: string, risk_pct: string, max_position_value: string, daily_loss_limit_pct: string,
      *     max_consecutive_losses: int, max_open_positions: int, max_open_risk_pct: string, min_rr: string|null}
