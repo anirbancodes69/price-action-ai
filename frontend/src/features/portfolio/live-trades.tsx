@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import { fetchRiskToday } from "@/lib/api/risk";
 import {
+  EXIT_REASONS,
   fetchPositions,
   fetchTrades,
   type LivePosition,
@@ -30,6 +31,7 @@ import { ErrorState } from "@/components/data/error-state";
 import { LiveDataBadge } from "@/components/data/live-data-badge";
 import { SampleDataBadge } from "@/components/data/sample-data-badge";
 import { Stat, StatGrid } from "@/components/data/stat";
+import { SignalBadge } from "@/components/trading/signal-badge";
 import { TableSkeleton } from "@/components/data/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { ChoiceGroup } from "@/components/ui/choice-group";
@@ -269,6 +271,20 @@ export function LiveTrades() {
           <span className="text-muted-foreground">Not set</span>
         ) : (
           <span className="text-bull">{formatPrice(p.target)}</span>
+        ),
+    },
+    {
+      key: "signal",
+      header: "Signal",
+      hideBelow: "md",
+      render: (p) =>
+        p.signal === null ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          <span className="flex flex-col items-start gap-1 leading-tight">
+            <SignalBadge signal={p.signal} explain={false} />
+            {p.exitReason && <span className="text-xs text-muted-foreground">{EXIT_REASONS[p.exitReason] ?? p.exitReason}</span>}
+          </span>
         ),
     },
     {

@@ -5550,7 +5550,17 @@ components:
                 - "HOLD"
                 - "EXIT"
             - type: "null"
-          description: "Null until the engine evaluates open positions (not built); never guessed by the API."
+          description: "The engine's position monitor on closed 5m bars (TRD-07 §7.1); null when the engine could not answer or the symbol has no stored bars; never guessed by the API."
+        exit_reason:
+          oneOf:
+            - type: "string"
+              enum:
+                - "STOP"
+                - "TARGET"
+                - "STRUCTURE_EXIT"
+                - "SESSION_END"
+            - type: "null"
+          description: "Why the signal is EXIT; null for HOLD or no signal."
       required:
         - "position_id"
         - "symbol"
@@ -5565,6 +5575,7 @@ components:
         - "distance_to_stop_pct"
         - "distance_to_target_pct"
         - "signal"
+        - "exit_reason"
       description: "Current prices are display-only and never change analysis (ENG-05 §12)."
       additionalProperties: false
     LoginRequest:

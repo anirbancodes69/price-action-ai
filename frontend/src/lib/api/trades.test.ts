@@ -37,10 +37,11 @@ describe("mapPosition", () => {
   it("keeps a missing price, stop and target as null instead of zero", () => {
     const p = mapPosition({
       position_id: "p1", symbol: "AAA", quantity: 3, entry_price: "50.00", entry_at: "2026-11-18T10:00:00+05:30",
-      current_price: null, price_at: null, unrealised_pnl: null, stop: null, target: null,
+      current_price: null, price_at: null, unrealised_pnl: null, stop: null, target: null, signal: null, exit_reason: null,
     });
     expect([p.currentPrice, p.unrealisedPnl, p.stop, p.target]).toEqual([null, null, null, null]);
     expect(p.entryPrice).toBe(50);
+    expect([p.signal, p.exitReason]).toEqual([null, null]);
   });
 });
 
@@ -87,5 +88,17 @@ describe("levels", () => {
       stop: expect.any(String),
       target: expect.any(String),
     });
+  });
+});
+
+describe("position signal", () => {
+  const base = {
+    position_id: "p1", symbol: "AAA", quantity: 3, entry_price: "50.00", entry_at: "2026-11-18T10:00:00+05:30",
+    current_price: "49.00", price_at: "2026-11-18T10:05:00+05:30", unrealised_pnl: "-3.00", stop: "49.50", target: null,
+  };
+
+  it("maps the engine's HOLD and EXIT with the reason", () => {
+    expect(mapPosition({ ...base, signal: "HOLD", exit_reason: null })).toMatchObject({ signal: "hold", exitReason: null });
+    expect(mapPosition({ ...base, signal: "EXIT", exit_reason: "STOP" })).toMatchObject({ signal: "exit", exitReason: "STOP" });
   });
 });
