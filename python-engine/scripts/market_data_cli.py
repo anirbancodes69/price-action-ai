@@ -3,7 +3,8 @@
 
   sync-instruments --symbols FILE            instrument master -> instruments, refs, snapshots
   load-universe --code NIFTY50 --symbols FILE --from YYYY-MM-DD
-  backfill --code NIFTY50 --timeframe 5m --from YYYY-MM-DD --to YYYY-MM-DD
+  backfill --code NIFTY50 --timeframe 5m|15m|1D --from YYYY-MM-DD --to YYYY-MM-DD
+                                             (1D feeds the daily chart context; history-check is 5m/15m only)
   history-check --code NIFTY50 --timeframe 5m --from YYYY-MM-DD --to YYYY-MM-DD
 
 Needs DATABASE_URL (an engine-role URL), KITE_API_KEY and a fresh `.kite_token` (scripts/kite_login.py).
@@ -47,7 +48,7 @@ def _parser() -> argparse.ArgumentParser:
     b.add_argument("--from", dest="from_", type=date.fromisoformat, required=True)
     c = sub.add_parser("backfill")
     c.add_argument("--code", default="NIFTY50")
-    c.add_argument("--timeframe", choices=["5m", "15m"], default="5m")
+    c.add_argument("--timeframe", choices=["5m", "15m", "1D"], default="5m")
     c.add_argument("--from", dest="from_", type=date.fromisoformat, required=True)
     c.add_argument("--to", type=date.fromisoformat, required=True)
     d = sub.add_parser("history-check")
