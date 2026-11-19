@@ -158,6 +158,8 @@ export interface FillForm {
   /** Optional levels of a new trade. */
   stop: string;
   target: string;
+  /** Optional: the trade plan this trade follows (empty for none). */
+  planId: string;
 }
 
 /** Field errors of a fill form, keyed by field; empty when the form is valid. */
@@ -202,6 +204,7 @@ export async function logTrade(f: FillForm): Promise<LoggedTrade> {
       fill: { side: "BUY", ...fillBody(f) },
       ...(f.stop.trim() === "" ? {} : { stop: f.stop.trim() }),
       ...(f.target.trim() === "" ? {} : { target: f.target.trim() }),
+      ...(f.planId === "" ? {} : { trade_plan_id: f.planId }),
     },
   });
   return mapTrade(res.data);

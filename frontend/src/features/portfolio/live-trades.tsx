@@ -15,6 +15,8 @@ import {
 import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import { fetchRiskToday } from "@/lib/api/risk";
+import { fetchTradePlans } from "@/lib/api/trade-plans";
+import type { TradePlan } from "@/types";
 import {
   EXIT_REASONS,
   fetchPositions,
@@ -55,6 +57,7 @@ export function LiveTrades() {
     positions: LivePosition[];
     mode: DataMode;
     risk: RiskToday;
+    plans: TradePlan[];
   } | null>(null);
   const [error, setError] = useState<ApiError | Error | null>(null);
   const [tab, setTab] = useState<"positions" | "trades">("positions");
@@ -64,16 +67,18 @@ export function LiveTrades() {
   const load = useCallback(
     async (signal?: AbortSignal) => {
       try {
-        const [trades, live, risk] = await Promise.all([
+        const [trades, live, risk, plans] = await Promise.all([
           fetchTrades(signal),
           fetchPositions(signal),
           fetchRiskToday("actual", signal),
+          fetchTradePlans(signal),
         ]);
         setData({
           trades,
           positions: live.positions,
           mode: live.dataMode,
           risk,
+          plans,
         });
         setError(null);
         warned.current = false;
@@ -491,6 +496,7 @@ export function LiveTrades() {
         mode={dialog}
         onClose={() => setDialog(null)}
         onDone={() => void load()}
+        plans={data.plans}
       />
     </PageFrame>
   );

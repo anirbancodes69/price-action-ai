@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Save } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
+import type { TradePlan } from "@/types";
 import { addFill, logTrade, nowIstLocal, setLevels, validateFill, validateLevels, type FillForm, type LevelsForm, type LoggedTrade } from "@/lib/api/trades";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -16,7 +17,7 @@ export type TradeDialogMode = { kind: "open" } | { kind: "fill"; trade: LoggedTr
  * Records a fill the owner got at the broker: the first BUY of a new trade, or a later BUY or SELL of an existing one.
  * Nothing here places an order (ADR-010). The form is mounted per open, so it always starts from its defaults.
  */
-export function TradeDialog({ mode, onClose, onDone }: { mode: TradeDialogMode | null; onClose: () => void; onDone: () => void }) {
+export function TradeDialog({ mode, onClose, onDone, plans = [] }: { mode: TradeDialogMode | null; onClose: () => void; onDone: () => void; plans?: TradePlan[] }) {
   return (
     <Dialog
       open={mode !== null}
@@ -29,12 +30,12 @@ export function TradeDialog({ mode, onClose, onDone }: { mode: TradeDialogMode |
       }
     >
       {mode?.kind === "levels" && <LevelsForm key={mode.trade.id} trade={mode.trade} onClose={onClose} onDone={onDone} />}
-      {mode && mode.kind !== "levels" && <TradeForm key={mode.kind === "fill" ? `${mode.trade.id}:${mode.side}` : "open"} mode={mode} onClose={onClose} onDone={onDone} />}
+      {mode && mode.kind !== "levels" && <TradeForm key={mode.kind === "fill" ? `${mode.trade.id}:${mode.side}` : "open"} mode={mode} onClose={onClose} onDone={onDone} plans={plans} />}
     </Dialog>
   );
 }
 
-function TradeForm({ mode, onClose, onDone }: { mode: Exclude<TradeDialogMode, { kind: "levels" }>; onClose: () => void; onDone: () => void }) {
+function TradeForm({ mode, onClose, onDone, plans }: { mode: Exclude<TradeDialogMode, { kind: "levels" }>; onClose: () => void; onDone: () => void; plans: TradePlan[] }) {
   const toast = useToast();
   const fill = mode.kind === "fill";
   const [form, setForm] = useState<FillForm>({
@@ -46,7 +47,18 @@ function TradeForm({ mode, onClose, onDone }: { mode: Exclude<TradeDialogMode, {
     fees: "",
     stop: "",
     target: "",
+    planId: "",
   });
+  const openPlans = plans.filter((p) => p.apiId && (p.status === "pending" || p.status === "entry-confirmed"));
+  /** Choosing a plan fills the symbol, the price (if empty) and the plan's stop and target. */
+  const choosePlan = (apiId: string) => {
+    const plan = openPlans.find((p) => p.apiId === apiId);
+    setForm((f) =>
+      plan
+        ? { ...f, planId: apiId, symbol: plan.symbol, price: f.price || String(plan.entry), stop: String(plan.stopLoss), target: String(plan.target) }
+        : { ...f, planId: "" },
+    );
+  };
   const [serverError, setServerError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [touched, setTouched] = useState(false);
@@ -87,6 +99,14 @@ function TradeForm({ mode, onClose, onDone }: { mode: Exclude<TradeDialogMode, {
         void submit();
       }}
     >
+      {!fill && openPlans.length > 0 && (
+        <Select
+          label="Following a plan (optional)"
+          value={form.planId}
+          onChange={(e) => choosePlan(e.target.value)}
+          options={[{ value: "", label: "No plan" }, ...openPlans.map((p) => ({ value: p.apiId ?? "", label: `${p.id} · ${p.symbol} · entry ${p.entry}` }))]}
+        />
+      )}
       {!fill && <Input label="Symbol" value={form.symbol} onChange={(e) => set("symbol", e.target.value.toUpperCase())} error={errors.symbol} placeholder="RELIANCE" autoFocus />}
       {fill && (
         <Select
