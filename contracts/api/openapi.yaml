@@ -5452,9 +5452,15 @@ components:
             - "$ref": "#/components/schemas/Money"
             - type: "null"
         stop:
-          "$ref": "#/components/schemas/Price"
+          oneOf:
+            - "$ref": "#/components/schemas/Price"
+            - type: "null"
+          description: "The linked plan's stop; null for a trade logged without a plan."
         target:
-          "$ref": "#/components/schemas/Price"
+          oneOf:
+            - "$ref": "#/components/schemas/Price"
+            - type: "null"
+          description: "The linked plan's target; null for a trade logged without a plan."
         distance_to_stop_pct:
           oneOf:
             - "$ref": "#/components/schemas/Ratio"
@@ -5464,10 +5470,13 @@ components:
             - "$ref": "#/components/schemas/Ratio"
             - type: "null"
         signal:
-          type: "string"
-          enum:
-            - "HOLD"
-            - "EXIT"
+          oneOf:
+            - type: "string"
+              enum:
+                - "HOLD"
+                - "EXIT"
+            - type: "null"
+          description: "Null until the engine evaluates open positions (not built); never guessed by the API."
       required:
         - "position_id"
         - "symbol"

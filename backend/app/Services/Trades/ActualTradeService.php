@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Services\Trades;
+
+use App\Models\User;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+/**
+ * Records the trades the owner placed at the broker (ADR-010: the app never places orders). Every fill is stored and the
+ * trade row is recomputed from all its fills in one transaction, so the row can never drift from the fills.
+ */
+class ActualTradeService
+{
+    /**
+     * @param  array{side: string, quantity: int, price: string, executed_at: string, broker_order_id?: string|null, broker_trade_id?: string|null, fees?: string|null}  $fill
+     */
+    public function open(User $user, string $instrumentId, ?string $planId, array $fill): string
+    {
+        return DB::transaction(function () use ($user, $instrumentId, $planId, $fill) {
+            $id = (string) Str::uuid7();
+            DB::table('actual_trades')->insert([
+                'id' => $id, 'tenant_id' => $this->tenantId($user), 'user_id' => $user->getKey(), 'instrument_id' => $instrumentId,
+                'trade_plan_id' => $planId, 'direction' => 'LONG', 'status' => 'OPEN', 'quantity_open' => 0, 'source' => 'MANUAL',
+            ]);
+            $this->addFill($id, $fill);
+
+            return $id;
+        });
+    }
+
+    /**
+     * @param  array{side: string, quantity: int, price: string, executed_at: string, broker_order_id?: string|null, broker_trade_id?: string|null, fees?: string|null}  $fill
+     */
+    public function addFill(string $tradeId, array $fill): void
+    {
+        DB::transaction(function () use ($tradeId, $fill) {
+            DB::table('actual_trades')->where('id', $tradeId)->lockForUpdate()->first(['id']);
+            DB::table('actual_trade_fills')->insert([
+                'id' => (string) Str::uuid7(), 'actual_trade_id' => $tradeId, 'side' => $fill['side'], 'quantity' => $fill['quantity'],
+                'price' => $fill['price'], 'executed_at' => $fill['executed_at'], 'broker_order_id' => $fill['broker_order_id'] ?? null,
+                'broker_trade_id' => $fill['broker_trade_id'] ?? null, 'fees' => $fill['fees'] ?? null,
+            ]);
+            $this->recompute($tradeId);
+        });
+    }
+
+    private function recompute(string $tradeId): void
+    {
+        $rows = DB::table('actual_trade_fills')->where('actual_trade_id', $tradeId)->orderBy('executed_at')->orderBy('created_at')->orderBy('id')->get();
+        $fills = $rows->map(fn ($r) => [
+            'side' => $r->side, 'quantity' => (int) $r->quantity, 'price' => (string) $r->price, 'fees' => $r->fees === null ? null : (string) $r->fees,
+        ])->all();
+        $s = FillLedger::summarise($fills); // throws OVERSELL_NOT_ALLOWED, which rolls the transaction back
+
+        $firstBuy = $rows->firstWhere('side', 'BUY');
+        $closed = $s['quantity_open'] === 0;
+        DB::table('actual_trades')->where('id', $tradeId)->update([
+            'status' => $closed ? 'CLOSED' : 'OPEN',
+            'quantity_open' => $s['quantity_open'],
+            'avg_entry_price' => $s['avg_entry_price'],
+            'avg_exit_price' => $s['avg_exit_price'],
+            'realized_pnl' => $s['realized_pnl'],
+            'charges' => $s['charges'],
+            'opened_at' => $firstBuy?->executed_at,
+            'closed_at' => $closed ? $rows->last()->executed_at : null,
+            'updated_at' => CarbonImmutable::now(),
+        ]);
+    }
+
+    /** The owner's personal tenant, created on first use (personal mode has exactly one). */
+    private function tenantId(User $user): string
+    {
+        $existing = DB::table('tenant_memberships')->where('user_id', $user->getKey())->value('tenant_id');
+        if ($existing !== null) {
+            return (string) $existing;
+        }
+        $id = (string) Str::uuid7();
+        DB::table('tenants')->insert(['id' => $id, 'name' => 'Personal', 'slug' => 'personal-'.substr(str_replace('-', '', (string) $user->getKey()), 0, 12), 'kind' => 'PERSONAL']);
+        DB::table('tenant_memberships')->insert(['id' => (string) Str::uuid7(), 'tenant_id' => $id, 'user_id' => $user->getKey(), 'role' => 'OWNER']);
+
+        return $id;
+    }
+}

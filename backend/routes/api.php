@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ActualTradeController;
 use App\Http\Controllers\Api\V1\AnalysisController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\MeController;
+use App\Http\Controllers\Api\V1\PositionController;
 use App\Http\Controllers\Api\V1\RiskController;
 use App\Http\Controllers\Api\V1\ScannerController;
 use App\Http\Controllers\HealthController;
@@ -19,6 +21,10 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::get('/me', [MeController::class, 'show'])->name('me');
         Route::get('/scanner', [ScannerController::class, 'index'])->middleware('throttle:read')->name('scanner');
         Route::get('/analysis/{symbol}', [AnalysisController::class, 'show'])->middleware('throttle:read')->name('analysis.show');
+        Route::get('/actual-trades', [ActualTradeController::class, 'index'])->middleware('throttle:read')->name('actual-trades.index');
+        Route::post('/actual-trades', [ActualTradeController::class, 'store'])->middleware('throttle:calc')->name('actual-trades.store');
+        Route::post('/actual-trades/{id}/fills', [ActualTradeController::class, 'fill'])->whereUuid('id')->middleware('throttle:calc')->name('actual-trades.fill');
+        Route::get('/positions/live', [PositionController::class, 'live'])->middleware('throttle:read')->name('positions.live');
         Route::post('/risk/calculate', [RiskController::class, 'calculate'])->middleware('throttle:calc')->name('risk.calculate');
     });
 });

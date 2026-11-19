@@ -8,8 +8,8 @@ use App\Services\DataSourceResolver;
 use App\Services\Engine\EngineClient;
 use App\Services\InstrumentCatalog;
 use App\Services\Scanner\ScannerRowMapper;
-use App\Support\ApiException;
 use App\Support\ApiResponse;
+use App\Support\Cursor;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 
@@ -40,9 +40,9 @@ class ScannerController extends Controller
         $sorted = $this->sort($filtered, (string) $request->input('sort', ''));
 
         $limit = (int) $request->input('limit', 25);
-        $offset = $this->offset((string) $request->input('cursor', ''));
+        $offset = Cursor::decode((string) $request->input('cursor', ''));
         $page = array_slice($sorted, $offset, $limit);
-        $next = $offset + $limit < count($sorted) ? $this->cursor($offset + $limit) : null;
+        $next = $offset + $limit < count($sorted) ? Cursor::encode($offset + $limit) : null;
 
         $asOf = $this->latest(array_column($mapped, 'as_of'));
 
@@ -102,24 +102,6 @@ class ScannerController extends Controller
         usort($rows, fn (array $a, array $b) => $desc ? $key($b) <=> $key($a) : $key($a) <=> $key($b));
 
         return $rows;
-    }
-
-    private function cursor(int $offset): string
-    {
-        return rtrim(strtr(base64_encode((string) json_encode(['o' => $offset])), '+/', '-_'), '=');
-    }
-
-    private function offset(string $cursor): int
-    {
-        if ($cursor === '') {
-            return 0;
-        }
-        $decoded = json_decode((string) base64_decode(strtr($cursor, '-_', '+/'), true), true);
-        if (! is_array($decoded) || ! isset($decoded['o']) || ! is_int($decoded['o']) || $decoded['o'] < 0) {
-            throw new ApiException('INVALID_CURSOR', 'The cursor is not valid.', 400);
-        }
-
-        return $decoded['o'];
     }
 
     /** @param  list<string|null>  $times */
