@@ -54,7 +54,7 @@
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "``POST /internal/v1/risk/account-state``: the account limits of one book for the session (TRD-05 §8).",
+  "description": "``POST /internal/v1/risk/account-state``: account limits of one book for the session (TRD-05 §8).",
   "properties": {
     "account_state": {
       "$ref": "#/$defs/AccountState"
