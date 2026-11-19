@@ -116,6 +116,15 @@ Defines the mandatory test catalogue for the trading engine. Every test ID below
 | TV-RSK-07 | User min_rr lower than ruleset | Ruleset value used |
 | TV-RSK-08 | SHORT direction | `SHORT_NOT_SUPPORTED` |
 | TV-RSK-09 | Realised net loss today equals the limit | `DAILY_LOSS_LIMIT_REACHED`; unfilled plans cancelled `ACCOUNT_LIMIT` |
+| TV-MON-01 | Open position, no exit condition (stop 99, target 103, flat bars 99.5–100.5) | `HOLD` |
+| TV-MON-02 | A bar after entry with `low = 99` (equals the stop) | `EXIT`, `STOP`, at that bar's end |
+| TV-MON-03 | A bar after entry with `high = 103` (equals the target) | `EXIT`, `TARGET` |
+| TV-MON-04 | One bar with `low 98` and `high 104` | `STOP` (the stop wins) |
+| TV-MON-05 | A stop breach on a bar that started before the entry | ignored (`HOLD`); the same breach on the entry bar's own start counts |
+| TV-MON-06 | A target bar before a CHoCH bar, and the reverse | the earlier bar's reason wins |
+| TV-MON-07 | Bearish 5m CHoCH on a bar after entry; before entry; structure exit disabled | `STRUCTURE_EXIT`; `HOLD`; `HOLD` |
+| TV-MON-08 | Latest bar ends at the session-end exit time; five minutes earlier; disabled | `SESSION_END`; `HOLD`; `HOLD` |
+| TV-MON-09 | No stop, or no target, or no bars | that level is never hit; `HOLD` |
 | TV-RSK-10 | Losing streak 2 vs 3 (limit 3); a breakeven trade resets it | Allowed / blocked; reset to 0 |
 | TV-RSK-11 | Two open positions (limit 2) | `MAX_POSITIONS_REACHED` |
 | TV-RSK-12 | Request at the entry cutoff bar | `ENTRY_CUTOFF_PASSED` |

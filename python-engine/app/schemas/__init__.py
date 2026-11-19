@@ -13,6 +13,7 @@ from app.schemas.common import AnalysisStatus, BookKind, Direction
 from app.schemas.events import EngineEvent, ProviderAccessToken
 from app.schemas.explanations import ExplanationRequest
 from app.schemas.jobs import JobAccepted, JobCreate, JobKind, JobState, JobStatusResponse
+from app.schemas.positions import PositionsEvaluation, PositionsEvaluationRequest
 from app.schemas.risk import (
     AccountLimitsRequest,
     AccountLimitsResult,
@@ -40,6 +41,8 @@ EXPORTED_MODELS: tuple[type[BaseModel], ...] = (
     ExplanationRequest,
     EngineEvent,
     ProviderAccessToken,
+    PositionsEvaluationRequest,
+    PositionsEvaluation,
     ScanRequest,
     ScanResponse,
     AnalysisDetailRequest,

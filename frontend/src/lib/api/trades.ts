@@ -41,6 +41,8 @@ export interface ApiPosition {
   unrealised_pnl: string | null;
   stop: string | null;
   target: string | null;
+  signal: "HOLD" | "EXIT" | null;
+  exit_reason: string | null;
 }
 
 export interface TradeFill {
@@ -82,7 +84,19 @@ export interface LivePosition {
   unrealisedPnl: number | null;
   stop: number | null;
   target: number | null;
+  /** The engine's position monitor on closed 5m bars; `null` when it could not answer. */
+  signal: "hold" | "exit" | null;
+  /** Why the signal is `exit`. */
+  exitReason: string | null;
 }
+
+/** Plain words for the engine's exit reasons (TRD-07 §7.1). */
+export const EXIT_REASONS: Record<string, string> = {
+  STOP: "Stop hit",
+  TARGET: "Target reached",
+  STRUCTURE_EXIT: "Bearish structure break",
+  SESSION_END: "Session-end exit time",
+};
 
 const opt = (v: string | null): number | null => (v === null ? null : Number(v));
 
@@ -118,6 +132,8 @@ export function mapPosition(p: ApiPosition): LivePosition {
     unrealisedPnl: opt(p.unrealised_pnl),
     stop: opt(p.stop),
     target: opt(p.target),
+    signal: p.signal === "HOLD" ? "hold" : p.signal === "EXIT" ? "exit" : null,
+    exitReason: p.exit_reason,
   };
 }
 

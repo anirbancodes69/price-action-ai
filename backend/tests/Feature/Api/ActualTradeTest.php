@@ -4,7 +4,9 @@ namespace Tests\Feature\Api;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -21,7 +23,7 @@ class ActualTradeTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['services.engine.data_source_id' => self::SOURCE]);
+        config(['services.engine.data_source_id' => self::SOURCE, 'services.engine.url' => 'http://engine.test', 'services.engine.token' => 'tkn']);
         DB::table('data_sources')->insert(['id' => self::SOURCE, 'mode' => 'DEMO', 'provider' => 'DEMO', 'name' => 'Demo']);
         $this->instrument = (string) Str::uuid7();
         DB::table('instruments')->insert([
@@ -144,6 +146,35 @@ class ActualTradeTest extends TestCase
         $this->assertSame(['95.00', '120.00', '-5', '20'], [$p['stop'], $p['target'], $p['distance_to_stop_pct'], $p['distance_to_target_pct']]);
     }
 
+    public function test_the_engines_hold_or_exit_signal_and_reason_are_passed_through(): void
+    {
+        $u = $this->user();
+        $id = $this->open($u, ['stop' => '95.00', 'target' => '120.00'])->assertCreated()->json('data.id');
+        Http::fake(['engine.test/internal/v1/positions/evaluate' => Http::response(['ruleset_version' => 'pa-intraday 0.1.0', 'positions' => [
+            ['id' => $id, 'symbol' => 'AAA', 'signal' => 'EXIT', 'reason' => 'STOP', 'bar_end' => '2026-11-18T05:30:00Z', 'as_of_ts' => '2026-11-18T05:30:00Z'],
+        ]])]);
+
+        $p = $this->actingAs($u, 'web')->getJson('/api/v1/positions/live?book=ACTUAL')->assertOk()->json('data.0');
+
+        $this->assertSame(['EXIT', 'STOP'], [$p['signal'], $p['exit_reason']]);
+        Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/positions/evaluate') && $r->data() === [
+            'data_source_id' => self::SOURCE,
+            // the fill at 10:00 IST, in UTC, with the trade's own levels
+            'positions' => [['id' => $id, 'symbol' => 'AAA', 'entry_at' => '2026-11-18T04:30:00Z', 'stop' => '95.00', 'target' => '120.00']],
+        ]);
+    }
+
+    public function test_without_an_engine_answer_the_positions_are_listed_with_no_signal(): void
+    {
+        $u = $this->user();
+        $this->open($u, ['stop' => '95.00'])->assertCreated();
+        Http::fake(['engine.test/*' => Http::response([], 500)]);
+
+        $p = $this->actingAs($u, 'web')->getJson('/api/v1/positions/live?book=ACTUAL')->assertOk()->json('data.0');
+
+        $this->assertSame([null, null, 'AAA'], [$p['signal'], $p['exit_reason'], $p['symbol']]);
+    }
+
     public function test_overselling_is_rejected_and_nothing_is_stored(): void
     {
         $u = $this->user();
@@ -217,7 +248,10 @@ class ActualTradeTest extends TestCase
     public function test_live_positions_price_open_trades_at_the_latest_stored_5m_close(): void
     {
         $u = $this->user();
-        $this->open($u)->assertCreated();
+        $id = $this->open($u)->assertCreated()->json('data.id');
+        Http::fake(['engine.test/internal/v1/positions/evaluate' => Http::response(['ruleset_version' => 'pa-intraday 0.1.0', 'positions' => [
+            ['id' => $id, 'symbol' => 'AAA', 'signal' => 'HOLD', 'reason' => null, 'bar_end' => null, 'as_of_ts' => '2026-11-18T05:30:00Z'],
+        ]])]);
         $run = (string) Str::uuid7();
         DB::table('ingestion_runs')->insert(['id' => $run, 'data_source_id' => self::SOURCE, 'kind' => 'BACKFILL', 'status' => 'COMPLETED', 'started_at' => now()]);
         foreach (['2026-11-18 05:25:00+00' => '104.00', '2026-11-18 05:30:00+00' => '103.00'] as $t => $c) {
@@ -235,7 +269,7 @@ class ActualTradeTest extends TestCase
         $this->assertSame('2026-11-18T11:05:00+05:30', $p['price_at']);
         $this->assertSame('30.00', $p['unrealised_pnl']); // (103 - 100) x 10
         $this->assertNull($p['stop']);
-        $this->assertNull($p['signal']);
+        $this->assertSame(['HOLD', null], [$p['signal'], $p['exit_reason']]);
         $this->assertSame('DEMO', $res->json('meta.data_mode'));
         $this->actingAs($u, 'web')->getJson('/api/v1/positions/live?book=PAPER')->assertOk()->assertJsonCount(0, 'data');
         $this->actingAs($u, 'web')->getJson('/api/v1/positions/live')->assertStatus(422)->assertJsonPath('error.code', 'BOOK_REQUIRED');

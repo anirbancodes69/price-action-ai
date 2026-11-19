@@ -127,6 +127,21 @@ The `/portfolio` page shows the paper book or the actual book via an explicit to
 - Actual trades consist of fills (`actual_trade_fills`) so partial exits are supported; position status derives from net quantity.
 - Intraday expectations: the app warns from the entry cutoff when an actual position is still open and again at the session-end exit time. It does not close it (ADR-010); an actual position still open after the close is flagged `CARRIED_OVER` for the owner to resolve.
 - Live unrealised P&L for open actual positions uses the current-price cache (display only).
+
+### 7.1 Signal on open actual positions (position monitor)
+
+The monitor gives each open actual position `HOLD` or `EXIT` from **closed 5m bars** only, with the owner's own stop and target (either may be absent: an absent level is never hit). It is decision support: `EXIT` means an exit condition has been met and the exit is due now; the owner exits on the broker platform (ADR-010).
+
+Only bars that start at or after the position's entry time count (the entry bar itself is partly before the fill). The bars are checked in time order and the first condition wins:
+
+| Order | Condition on a closed bar | Reason |
+|---|---|---|
+| 1 | `low <= stop` (also wins a bar that touches both) | `STOP` |
+| 2 | `high >= target` | `TARGET` |
+| 3 | a bearish 5m CHoCH closed on the bar and `exit.structure_exit_enabled` | `STRUCTURE_EXIT` |
+| after the last bar | the latest bar ended at or after the session-end exit time and `exit.session_end_exit_enabled` | `SESSION_END` |
+
+Otherwise `HOLD`. A symbol with no stored bars has no signal (`null`), never a guessed one. Test vectors: [TRD-08](08_TRADING_ENGINE_VALIDATION.md) TV-MON-01..09.
 - Broker order/trade sync is **future scope** (read-only import, never order placement).
 
 ## 8. Journal integration

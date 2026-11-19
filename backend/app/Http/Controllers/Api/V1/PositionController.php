@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\DataSourceResolver;
+use App\Services\Engine\EngineClient;
 use App\Services\Scanner\ScannerRowMapper;
 use App\Support\ApiException;
 use App\Support\ApiResponse;
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  */
 class PositionController extends Controller
 {
-    public function live(Request $request, DataSourceResolver $sources): JsonResponse
+    public function live(Request $request, DataSourceResolver $sources, EngineClient $engine): JsonResponse
     {
         $book = $request->query('book');
         if (! in_array($book, ['PAPER', 'ACTUAL'], true)) {
@@ -42,6 +43,7 @@ class PositionController extends Controller
             ->orderBy('t.opened_at')
             ->get(['t.id', 't.instrument_id', 'i.trading_symbol', 't.quantity_open', 't.avg_entry_price', 't.opened_at', 't.stop_price as own_stop', 't.target_price as own_target', 'p.stop_price', 'p.target_price']);
 
+        $signals = $this->signals($engine, $source, $rows);
         $out = [];
         foreach ($rows as $r) {
             $bar = DB::table('candles')->where('data_source_id', $source)->where('instrument_id', $r->instrument_id)->where('timeframe', '5m')
@@ -63,10 +65,45 @@ class PositionController extends Controller
                 'target' => Decimals::money($target),
                 'distance_to_stop_pct' => $price === null || $stop === null ? null : Decimals::changePct($stop, $price),
                 'distance_to_target_pct' => $price === null || $target === null ? null : Decimals::changePct($target, $price),
-                'signal' => null,
+                'signal' => $signals[$r->id]['signal'] ?? null,
+                'exit_reason' => $signals[$r->id]['reason'] ?? null,
             ];
         }
 
         return ApiResponse::ok($out, $meta);
+    }
+
+    /**
+     * HOLD or EXIT per position from the engine's monitor (TRD-07 §7.1). If the engine cannot answer, the list is still
+     * returned with no signal: a missing signal is never replaced by a guess.
+     *
+     * @param  iterable<object>  $rows
+     * @return array<string, array{signal: string|null, reason: string|null}>
+     */
+    private function signals(EngineClient $engine, string $source, iterable $rows): array
+    {
+        $positions = [];
+        foreach ($rows as $r) {
+            $stop = $r->own_stop ?? $r->stop_price;
+            $target = $r->own_target ?? $r->target_price;
+            $positions[] = [
+                'id' => (string) $r->id, 'symbol' => $r->trading_symbol, 'entry_at' => CarbonImmutable::parse($r->opened_at)->utc()->format('Y-m-d\TH:i:s\Z'),
+                'stop' => $stop === null ? null : (string) $stop, 'target' => $target === null ? null : (string) $target,
+            ];
+        }
+        if ($positions === []) {
+            return [];
+        }
+        try {
+            $result = $engine->evaluatePositions(['data_source_id' => $source, 'positions' => $positions]);
+        } catch (ApiException) {
+            return [];
+        }
+        $out = [];
+        foreach ($result['positions'] ?? [] as $p) {
+            $out[(string) $p['id']] = ['signal' => $p['signal'] ?? null, 'reason' => $p['reason'] ?? null];
+        }
+
+        return $out;
     }
 }
