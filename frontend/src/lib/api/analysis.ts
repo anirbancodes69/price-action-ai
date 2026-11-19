@@ -175,7 +175,7 @@ export function mapAnalysis(run: ApiAnalysisRun): StockAnalysis {
 
 export async function fetchAnalysis(symbol: string, signal?: AbortSignal): Promise<{ run: ApiAnalysisRun; meta: AnalysisMeta }> {
   const res = await apiRequest<ApiAnalysisRun, { data_mode?: DataMode; next_bar_close?: string | null }>(
-    `/api/v1/analysis/${encodeURIComponent(symbol)}?include=candles`,
+    `/api/v1/analysis/${encodeURIComponent(symbol)}?include=candles,candles_15m,candles_1d`,
     { signal },
   );
   return { run: res.data, meta: { dataMode: res.meta.data_mode ?? "DEMO", nextBarClose: res.meta.next_bar_close ?? null } };
