@@ -5,7 +5,9 @@ import { PageFrame, PageHeader } from "@/components/layout/page-frame";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel, PanelLink } from "@/components/ui/panel";
 import { Disclaimer } from "@/components/data/disclaimer";
+import { LiveDataBadge } from "@/components/data/live-data-badge";
 import { SampleDataBadge } from "@/components/data/sample-data-badge";
+import type { DataMode } from "@/lib/api/scanner";
 import { Stat, StatGrid } from "@/components/data/stat";
 import { SetupCard } from "@/components/trading/setup-card";
 import { StockTable } from "@/components/trading/stock-table";
@@ -24,6 +26,10 @@ export interface DashboardData {
   recentAnalyses: StockAnalysis[];
   activity: ActivityItem[];
   riskToday: RiskToday[];
+  /** Data mode of the source; `DEMO` (default) is labelled as sample data. */
+  mode?: DataMode;
+  /** HTTP mode: open logged positions, shown instead of the (not yet built) open trade plans. */
+  openPositions?: number;
 }
 
 /**
@@ -38,7 +44,7 @@ export function DashboardView({ d }: { d: DashboardData }) {
       <PageHeader
         title="Dashboard"
         description="Today's session: setups near their trigger, your risk budget and open plans."
-        meta={<SampleDataBadge asOf={d.asOf} />}
+        meta={d.mode && d.mode !== "DEMO" ? <LiveDataBadge mode={d.mode} asOf={d.asOf} /> : <SampleDataBadge asOf={d.asOf} />}
         actions={
           <>
             <ButtonLink href="/trade-plans" variant="outline">
@@ -59,7 +65,11 @@ export function DashboardView({ d }: { d: DashboardData }) {
           href="/market-scanner"
         />
         <Stat label="Awaiting confirmation" value={d.summary.awaitingConfirmation} hint="Near trigger, no confirming close yet" href="/market-scanner" />
-        <Stat label="Open trade plans" value={d.summary.activeTradePlans} hint="Pending, confirmed or active" href="/trade-plans" />
+        {d.openPositions !== undefined ? (
+          <Stat label="Open positions" value={d.openPositions} hint="Trades you logged and have not closed" href="/portfolio" />
+        ) : (
+          <Stat label="Open trade plans" value={d.summary.activeTradePlans} hint="Pending, confirmed or active" href="/trade-plans" />
+        )}
       </StatGrid>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
