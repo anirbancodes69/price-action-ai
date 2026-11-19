@@ -67,6 +67,19 @@ class ActualTradeService
             'closed_at' => $closed ? $rows->last()->executed_at : null,
             'updated_at' => CarbonImmutable::now(),
         ]);
+        if ($closed) {
+            $this->ensureJournalEntry($tradeId);
+        }
+    }
+
+    /** Every closed actual trade has one journal entry, created as a draft the first time it closes. */
+    private function ensureJournalEntry(string $tradeId): void
+    {
+        $t = DB::table('actual_trades')->where('id', $tradeId)->first(['tenant_id', 'user_id']);
+        DB::table('journal_entries')->insertOrIgnore([
+            'id' => (string) Str::uuid7(), 'tenant_id' => $t->tenant_id, 'user_id' => $t->user_id, 'trade_kind' => 'ACTUAL',
+            'actual_trade_id' => $tradeId, 'status' => 'DRAFT',
+        ]);
     }
 
     /** The owner's personal tenant, created on first use (personal mode has exactly one). */

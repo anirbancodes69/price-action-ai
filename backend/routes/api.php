@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\ActualTradeController;
 use App\Http\Controllers\Api\V1\AnalysisController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\PositionController;
 use App\Http\Controllers\Api\V1\RiskController;
@@ -27,6 +28,9 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::post('/actual-trades/{id}/fills', [ActualTradeController::class, 'fill'])->whereUuid('id')->middleware('throttle:calc')->name('actual-trades.fill');
         Route::get('/positions/live', [PositionController::class, 'live'])->middleware('throttle:read')->name('positions.live');
         Route::get('/risk/today', [RiskTodayController::class, 'show'])->middleware('throttle:read')->name('risk.today');
+        Route::get('/journal', [JournalController::class, 'index'])->middleware('throttle:read')->name('journal.index');
+        Route::get('/journal/{id}', [JournalController::class, 'show'])->whereUuid('id')->middleware('throttle:read')->name('journal.show');
+        Route::patch('/journal/{id}', [JournalController::class, 'update'])->whereUuid('id')->middleware('throttle:calc')->name('journal.update');
         Route::post('/risk/calculate', [RiskController::class, 'calculate'])->middleware('throttle:calc')->name('risk.calculate');
     });
 });
