@@ -96,6 +96,31 @@ class RiskResult(ContractModel):
     ruleset_version: str = Field(examples=["pa-intraday 0.1.0"])
 
 
+class AccountLimitsRequest(ContractModel):
+    """``POST /internal/v1/risk/account-state``: account limits of one book for the session (TRD-05 §8)."""
+
+    book: BookKind
+    capital: DecimalStr
+    daily_loss_limit_pct: DecimalStr
+    max_consecutive_losses: int = Field(ge=1)
+    max_open_positions: int = Field(ge=1)
+    account_state: AccountState
+    session_open: bool = Field(
+        description="Whether the exchange session is open now (from the calendar and the clock)."
+    )
+    as_of_ts: datetime = Field(description="End of the latest closed 5m bar (ISO-8601 with offset).")
+    entry_cutoff_at: datetime
+
+
+class AccountLimitsResult(ContractModel):
+    """The state as evaluated, with the limit values it was checked against."""
+
+    account_state: AccountStateResult
+    daily_loss_limit: DecimalStr
+    max_consecutive_losses: int
+    max_open_positions: int
+
+
 class LevelsValidationRequest(ContractModel):
     """Validate user-edited levels against the ruleset and the tick size."""
 

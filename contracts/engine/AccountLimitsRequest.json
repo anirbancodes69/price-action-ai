@@ -1,0 +1,115 @@
+{
+  "$defs": {
+    "AccountState": {
+      "additionalProperties": false,
+      "description": "Derived state of one book for the current session (TRD-05 §8.1).\n\nLaravel computes it from the trade tables.",
+      "properties": {
+        "losing_streak": {
+          "minimum": 0,
+          "title": "Losing Streak",
+          "type": "integer"
+        },
+        "open_cost_basis": {
+          "description": "Σ cost basis of open positions in this book.",
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Open Cost Basis",
+          "type": "string"
+        },
+        "open_positions": {
+          "description": "Open positions plus TRIGGERED plans awaiting fill.",
+          "minimum": 0,
+          "title": "Open Positions",
+          "type": "integer"
+        },
+        "open_risk": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Open Risk",
+          "type": "string"
+        },
+        "realised_net_pnl_today": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Realised Net Pnl Today",
+          "type": "string"
+        }
+      },
+      "required": [
+        "realised_net_pnl_today",
+        "open_risk",
+        "open_cost_basis",
+        "open_positions",
+        "losing_streak"
+      ],
+      "title": "AccountState",
+      "type": "object"
+    },
+    "BookKind": {
+      "description": "The paper and actual books are never mixed (constraint C-11).",
+      "enum": [
+        "PAPER",
+        "ACTUAL"
+      ],
+      "title": "BookKind",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "``POST /internal/v1/risk/account-state``: the account limits of one book for the session (TRD-05 §8).",
+  "properties": {
+    "account_state": {
+      "$ref": "#/$defs/AccountState"
+    },
+    "as_of_ts": {
+      "description": "End of the latest closed 5m bar (ISO-8601 with offset).",
+      "format": "date-time",
+      "title": "As Of Ts",
+      "type": "string"
+    },
+    "book": {
+      "$ref": "#/$defs/BookKind"
+    },
+    "capital": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Capital",
+      "type": "string"
+    },
+    "daily_loss_limit_pct": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Daily Loss Limit Pct",
+      "type": "string"
+    },
+    "entry_cutoff_at": {
+      "format": "date-time",
+      "title": "Entry Cutoff At",
+      "type": "string"
+    },
+    "max_consecutive_losses": {
+      "minimum": 1,
+      "title": "Max Consecutive Losses",
+      "type": "integer"
+    },
+    "max_open_positions": {
+      "minimum": 1,
+      "title": "Max Open Positions",
+      "type": "integer"
+    },
+    "session_open": {
+      "description": "Whether the exchange session is open now (from the calendar and the clock).",
+      "title": "Session Open",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "book",
+    "capital",
+    "daily_loss_limit_pct",
+    "max_consecutive_losses",
+    "max_open_positions",
+    "account_state",
+    "session_open",
+    "as_of_ts",
+    "entry_cutoff_at"
+  ],
+  "title": "AccountLimitsRequest",
+  "type": "object"
+}

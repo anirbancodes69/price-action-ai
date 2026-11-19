@@ -116,6 +116,49 @@ def test_position_size_rejections_are_error_codes_not_http_errors(client: TestCl
     ] == ["ENTRY_CUTOFF_PASSED"]
 
 
+def account_body(**over: Any) -> dict[str, Any]:
+    body: dict[str, Any] = {
+        "book": "ACTUAL",
+        "capital": "100000",
+        "daily_loss_limit_pct": "1.5",
+        "max_consecutive_losses": 3,
+        "max_open_positions": 2,
+        "account_state": sizing_body()["account_state"],
+        "session_open": True,
+        "as_of_ts": "2026-11-18T05:00:00+00:00",
+        "entry_cutoff_at": "2026-11-18T09:15:00+00:00",
+    }
+    body.update(over)
+    return body
+
+
+def test_account_state_reports_what_remains_and_the_first_blocking_rule(client: TestClient) -> None:
+    def call(**over: Any) -> dict[str, Any]:
+        res = client.post("/internal/v1/risk/account-state", json=account_body(**over), headers=AUTH)
+        assert res.status_code == 200
+        return res.json()  # type: ignore[no-any-return]
+
+    ok = call()
+    assert ok["daily_loss_limit"] == "1500.0" and ok["account_state"]["remaining_daily_loss"] == "1500.0"
+    assert ok["account_state"]["blocked_reason"] is None
+
+    # A 400 loss with 250 of open risk leaves 1500 - 650 = 850.
+    used = sizing_body()["account_state"] | {"realised_net_pnl_today": "-400", "open_risk": "250"}
+    assert call(account_state=used)["account_state"]["remaining_daily_loss"] == "850.0"
+
+    # Only realised losses trip the daily limit; the first failing rule is reported (TRD-05 §8 order).
+    lost = sizing_body()["account_state"] | {"realised_net_pnl_today": "-1500", "losing_streak": 3}
+    assert call(account_state=lost)["account_state"]["blocked_reason"] == "DAILY_LOSS_LIMIT_REACHED"
+    streak = sizing_body()["account_state"] | {"losing_streak": 3}
+    assert call(account_state=streak)["account_state"]["blocked_reason"] == "MAX_CONSECUTIVE_LOSSES_REACHED"
+    full = sizing_body()["account_state"] | {"open_positions": 2}
+    assert call(account_state=full)["account_state"]["blocked_reason"] == "MAX_POSITIONS_REACHED"
+    assert call(session_open=False)["account_state"]["blocked_reason"] == "SESSION_CLOSED"
+    late = call(as_of_ts="2026-11-18T09:20:00+00:00")
+    assert late["account_state"]["blocked_reason"] == "ENTRY_CUTOFF_PASSED"
+    assert client.post("/internal/v1/risk/account-state", json={}, headers=AUTH).status_code == 422
+
+
 def test_unknown_ruleset_version_and_invalid_body(client: TestClient) -> None:
     res = client.post(
         "/internal/v1/risk/position-size", json=sizing_body(ruleset_version="9.9.9"), headers=AUTH

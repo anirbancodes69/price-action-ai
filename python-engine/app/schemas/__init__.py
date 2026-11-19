@@ -14,6 +14,8 @@ from app.schemas.events import EngineEvent, ProviderAccessToken
 from app.schemas.explanations import ExplanationRequest
 from app.schemas.jobs import JobAccepted, JobCreate, JobKind, JobState, JobStatusResponse
 from app.schemas.risk import (
+    AccountLimitsRequest,
+    AccountLimitsResult,
     AccountState,
     LevelsValidationRequest,
     LevelsValidationResponse,
@@ -28,6 +30,8 @@ EXPORTED_MODELS: tuple[type[BaseModel], ...] = (
     AnalyseAccepted,
     PositionSizeRequest,
     RiskResult,
+    AccountLimitsRequest,
+    AccountLimitsResult,
     LevelsValidationRequest,
     LevelsValidationResponse,
     JobCreate,
