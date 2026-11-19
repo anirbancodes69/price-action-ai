@@ -12,9 +12,9 @@ import { useToast } from "@/components/ui/toast";
 /** Drafts a PROPOSED trade plan from the analysis levels. Never places an order. */
 export function CreatePlanDialog({ a, open, onClose }: { a: StockAnalysis; open: boolean; onClose: () => void }) {
   const toast = useToast();
-  const [entry, setEntry] = useState(String(a.levels.entry));
-  const [stop, setStop] = useState(String(a.levels.stopLoss));
-  const [target, setTarget] = useState(String(a.levels.target));
+  const [entry, setEntry] = useState(a.levels ? String(a.levels.entry) : "");
+  const [stop, setStop] = useState(a.levels ? String(a.levels.stopLoss) : "");
+  const [target, setTarget] = useState(a.levels ? String(a.levels.target) : "");
   const [riskBudget, setRiskBudget] = useState("5000");
 
   const calc = useMemo(() => {
@@ -35,7 +35,7 @@ export function CreatePlanDialog({ a, open, onClose }: { a: StockAnalysis; open:
     return { errors, qty, rr, value: qty * e, valid: Object.keys(errors).length === 0 && qty > 0 };
   }, [entry, stop, target, riskBudget]);
 
-  const disabled = a.setup.direction === "short";
+  const disabled = a.setup.direction === "short" || a.levels === null;
 
   return (
     <Dialog

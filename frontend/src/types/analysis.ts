@@ -148,7 +148,8 @@ export interface StockAnalysis {
     signal: SignalState;
     headline: string;
   };
-  levels: TradeLevels;
+  /** `null` when there is no setup with levels (a NO_TRADE analysis from the live API). */
+  levels: TradeLevels | null;
   qualityScore: number; // 0–100
   qualityFactors: QualityFactor[];
   entryConditions: string[];

@@ -143,9 +143,15 @@ export function AnalysisPanel({ a, className }: { a: StockAnalysis; className?: 
           )
         }
       >
-        <RiskRewardDisplay levels={a.levels} direction={a.setup.direction} />
-        <PriceLevelIndicator price={a.stock.price} levels={a.levels} />
-        <p className="text-xs text-muted-foreground">Levels describe a potential plan. Nothing here is an order.</p>
+        {a.levels ? (
+          <>
+            <RiskRewardDisplay levels={a.levels} direction={a.setup.direction} />
+            <PriceLevelIndicator price={a.stock.price} levels={a.levels} />
+            <p className="text-xs text-muted-foreground">Levels describe a potential plan. Nothing here is an order.</p>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">No setup with levels right now. No-trade is a valid outcome.</p>
+        )}
       </Block>
 
       <Block title="Entry conditions">
