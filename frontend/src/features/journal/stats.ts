@@ -7,8 +7,9 @@ export function journalStats(entries: JournalEntry[]) {
   const grossWin = wins.reduce((a, e) => a + e.pnl, 0);
   const grossLoss = Math.abs(losses.reduce((a, e) => a + e.pnl, 0));
   const net = entries.reduce((a, e) => a + e.pnl, 0);
-  const avgR = entries.length ? entries.reduce((a, e) => a + e.rMultiple, 0) / entries.length : 0;
-  const followed = entries.filter((e) => e.followedPlan);
+  const measured = entries.filter((e) => e.rMultiple !== null);
+  const avgR = measured.length ? measured.reduce((a, e) => a + (e.rMultiple ?? 0), 0) / measured.length : 0;
+  const followed = entries.filter((e) => e.followedPlan === true);
   return {
     trades: entries.length,
     winRate: entries.length ? (wins.length / entries.length) * 100 : 0,
@@ -17,6 +18,6 @@ export function journalStats(entries: JournalEntry[]) {
     avgR,
     planAdherence: entries.length ? (followed.length / entries.length) * 100 : 0,
     followedNet: followed.reduce((a, e) => a + e.pnl, 0),
-    brokenNet: entries.filter((e) => !e.followedPlan).reduce((a, e) => a + e.pnl, 0),
+    brokenNet: entries.filter((e) => e.followedPlan === false).reduce((a, e) => a + e.pnl, 0),
   };
 }

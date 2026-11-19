@@ -78,7 +78,8 @@ export type TradeOutcome = "win" | "loss" | "breakeven";
 export interface JournalEntry {
   id: string;
   symbol: string;
-  setupType: SetupType;
+  /** `null` for a trade logged without a plan (the engine's setup is not stored on the trade). */
+  setupType: SetupType | null;
   direction: "long" | "short";
   entryDate: string;
   exitDate: string;
@@ -86,9 +87,11 @@ export interface JournalEntry {
   exitPrice: number;
   quantity: number;
   pnl: number;
-  rMultiple: number;
+  /** `null` when the trade has no plan stop to measure risk against. */
+  rMultiple: number | null;
   outcome: TradeOutcome;
-  followedPlan: boolean;
+  /** `null` until the owner says whether the plan was followed. */
+  followedPlan: boolean | null;
   notes: string;
   tags: string[];
 }

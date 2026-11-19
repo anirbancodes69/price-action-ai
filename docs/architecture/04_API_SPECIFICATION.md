@@ -328,7 +328,7 @@ Watchlist rows with analysis are obtained via `GET /api/v1/scanner?watchlist={id
 
 | # | Method & path | Auth | Request | Response | Notes |
 |---|---|---|---|---|---|
-| J1 | `GET /api/v1/journal` | session | `?kind=PAPER|ACTUAL&q=&outcome=WIN|LOSS|BREAKEVEN&setup_type=&followed_plan=&from&to&limit&cursor` | `[JournalEntry]` — `{id, kind, status, trade: {symbol, setup_type, direction, entry_date, exit_date, entry_price, exit_price, quantity, net_pnl, r_multiple, outcome}, followed_plan, followed_plan_system, notes, tags, emotions, mistakes, lessons, rating}` | `kind` defaults to `PAPER` |
+| J1 | `GET /api/v1/journal` | session | `?kind=PAPER|ACTUAL&q=&outcome=WIN|LOSS|BREAKEVEN&setup_type=&followed_plan=&from&to&limit&cursor` | `[JournalEntry]` — `{id, kind, status, trade: {symbol, setup_type, direction, entry_date, exit_date, entry_price, exit_price, quantity, net_pnl, r_multiple, outcome}, followed_plan, followed_plan_system, notes, tags, emotions, mistakes, lessons, rating}` | **Personal mode:** only ACTUAL entries exist (a draft is created when a trade closes; PAPER lists nothing); `setup_type` and `r_multiple` are null for trades without a plan; J4 is not built. `kind` defaults to `PAPER` |
 | J2 | `GET /api/v1/journal/{id}` | session | — | `JournalEntry` | |
 | J3 | `PATCH /api/v1/journal/{id}` | session | `{notes?, tags?, emotions?, mistakes?, lessons?, rating?, followed_plan?, status?}` | 200 | tags ≤ 20 × 40 chars |
 | J4 | `GET /api/v1/journal/stats` | session | same filters as J1 | `{trades, win_rate, profit_factor, avg_r, net_pnl, plan_adherence_pct}` | Computed server-side (today computed client-side in `features/journal/stats.ts`) |
