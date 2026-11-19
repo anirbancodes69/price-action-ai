@@ -163,7 +163,8 @@ export interface ScannerRow {
   bias: Bias;
   setupType: SetupType;
   direction: "long" | "short";
-  setupStatus: SetupStatus;
+  /** `null` when there is no setup (a NO_TRADE row from the live API): no badge is shown. */
+  setupStatus: SetupStatus | null;
   signal: SignalState;
   /** `null` when there is no setup with levels (a NO_TRADE row from the live API). */
   levels: TradeLevels | null;

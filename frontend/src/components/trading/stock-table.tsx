@@ -15,6 +15,7 @@ import { QualityScoreBar } from "./quality-score";
 import { SignalBadge } from "./signal-badge";
 
 /** A row without a setup has no levels: no-trade is a valid result, not a missing value. */
+const NO_SETUP = <span className="text-xs text-muted-foreground">No setup</span>;
 const NO_LEVEL = <span className="text-muted-foreground" aria-label="No levels">–</span>;
 
 export type StockColumnKey =
@@ -137,8 +138,8 @@ const ALL: Record<StockColumnKey, Column<ScannerRow>> = {
     key: "status",
     header: "Setup status",
     hideBelow: "md",
-    sortValue: (r) => r.setupStatus,
-    render: (r) => <StatusBadge kind="setup" status={r.setupStatus} />,
+    sortValue: (r) => r.setupStatus ?? "",
+    render: (r) => (r.setupStatus ? <StatusBadge kind="setup" status={r.setupStatus} /> : NO_SETUP),
   },
   signal: {
     key: "signal",

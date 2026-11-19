@@ -32,6 +32,7 @@ None.
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-I94 | A scanner row without a setup has no status: `ScannerRow.setupStatus` is nullable and the table and setup card show "No setup" (or nothing) instead of a misleading "Detected" badge | I6 | 2026-11-18 (46 Vitest tests, ESLint and `tsc` clean; checked in headless Chromium inside the Compose network: login, sidebar navigation, back/forward, no console errors, screenshot reviewed) |
 | T-I93 | Build and run configuration for the HTTP mode: Next rewrites (`/api`, `/sanctum`) to `BACKEND_URL`, `NEXT_PUBLIC_DATA_SOURCE` and `BACKEND_URL` build args in the production image, Compose env for `frontend-dev`, `SANCTUM_STATEFUL_DOMAINS` (3000/3001), `TRADING_UNIVERSE` for the scanner default | I6 | 2026-11-18 (both builds pass; end-to-end through the dev stack: CSRF cookie 204, login 200, me 200, scanner 200 with engine analysis of the DEMO universe, logout 204, me 401, `/login` and `/market-scanner` 200) |
 | T-I92 | Session gate, login form and sign-out wired to the API (generic credential message, 419/429 handling; gate renders children hidden until `/me` succeeds) | I6 | 2026-11-18 (lint, typecheck, build; the redirect and form flows were not exercised in a browser) |
 | T-I91 | Live scanner (`features/scanner/live-scanner.tsx`: browser fetch, 30 s polling while visible, last good result kept on failure, 401 redirects, error and loading states), `LiveDataBadge`, `ScannerView` live props; DEMO stays "Sample data", never "live" | I6 | 2026-11-18 (lint, typecheck, build; not looked at in a browser) |
