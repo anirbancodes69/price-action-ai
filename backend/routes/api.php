@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\RiskController;
 use App\Http\Controllers\Api\V1\RiskProfileController;
 use App\Http\Controllers\Api\V1\RiskTodayController;
 use App\Http\Controllers\Api\V1\ScannerController;
+use App\Http\Controllers\Api\V1\WatchlistController;
 use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +35,12 @@ Route::prefix('v1')->name('v1.')->group(function () {
         Route::patch('/journal/{id}', [JournalController::class, 'update'])->whereUuid('id')->middleware('throttle:calc')->name('journal.update');
         Route::get('/risk-profile', [RiskProfileController::class, 'show'])->middleware('throttle:read')->name('risk-profile.show');
         Route::put('/risk-profile', [RiskProfileController::class, 'update'])->middleware('throttle:calc')->name('risk-profile.update');
+        Route::get('/watchlists', [WatchlistController::class, 'index'])->middleware('throttle:read')->name('watchlists.index');
+        Route::post('/watchlists', [WatchlistController::class, 'store'])->middleware('throttle:calc')->name('watchlists.store');
+        Route::patch('/watchlists/{id}', [WatchlistController::class, 'update'])->whereUuid('id')->middleware('throttle:calc')->name('watchlists.update');
+        Route::delete('/watchlists/{id}', [WatchlistController::class, 'destroy'])->whereUuid('id')->middleware('throttle:calc')->name('watchlists.destroy');
+        Route::put('/watchlists/{id}/items/{symbol}', [WatchlistController::class, 'addItem'])->whereUuid('id')->middleware('throttle:calc')->name('watchlists.items.add');
+        Route::delete('/watchlists/{id}/items/{symbol}', [WatchlistController::class, 'removeItem'])->whereUuid('id')->middleware('throttle:calc')->name('watchlists.items.remove');
         Route::post('/risk/calculate', [RiskController::class, 'calculate'])->middleware('throttle:calc')->name('risk.calculate');
     });
 });
