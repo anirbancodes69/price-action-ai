@@ -298,10 +298,10 @@ There is deliberately **no** endpoint that places, modifies or cancels broker or
 | # | Method & path | Auth | Request | Response | Validation / errors |
 |---|---|---|---|---|---|
 | W1 | `GET /api/v1/watchlists` | session | — | `[{id, name, sort_order, items: [{symbol, added_at}]}]` | — |
-| W2 | `POST /api/v1/watchlists` | session | `{name}` | 201 | name 1–60, unique per user (`NAME_TAKEN`); max per entitlement (`ENTITLEMENT_LIMIT`) |
+| W2 | `POST /api/v1/watchlists` | session | `{name}` | 201 | name 1–60, unique per user ignoring case (`NAME_TAKEN`, 422); max per entitlement (`ENTITLEMENT_LIMIT`, not built). Optional client-generated `id` (uuid). **Personal mode:** the first W1 creates "My watchlist" so one list always exists |
 | W3 | `PATCH /api/v1/watchlists/{id}` | session | `{name?, sort_order?}` | 200 | same |
 | W4 | `DELETE /api/v1/watchlists/{id}` | session | — | 204 | 409 `LAST_WATCHLIST` (UI rule: at least one list remains) |
-| W5 | `PUT /api/v1/watchlists/{id}/items/{symbol}` | session | — | 200 (idempotent add) | 404 unknown symbol; max 200 items |
+| W5 | `PUT /api/v1/watchlists/{id}/items/{symbol}` | session | — | 200 (idempotent add) | 404 unknown symbol; 422 `WATCHLIST_FULL` at 200 items. Returns the list |
 | W6 | `DELETE /api/v1/watchlists/{id}/items/{symbol}` | session | — | 204 | — |
 
 Watchlist rows with analysis are obtained via `GET /api/v1/scanner?watchlist={id}` (scanner accepts `watchlist` filter).
