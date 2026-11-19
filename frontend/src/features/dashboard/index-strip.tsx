@@ -8,7 +8,8 @@ import { Sparkline } from "@/components/data/sparkline";
 /** Market context: key indices (at most five rows) and the NSE session state. */
 export function MarketPanel({ indices }: { indices: MarketIndex[] }) {
   return (
-    <Panel boxed title="Market" hint="Index values are sample data." action={<MarketStatus variant="inline" />}>
+    <Panel boxed title="Market" hint={indices.length > 0 ? "Index values are sample data." : "Index series are not available yet."} action={<MarketStatus variant="inline" />}>
+      {indices.length > 0 && (
       <RowList aria-label="Key indices">
         {indices.slice(0, 5).map((idx) => (
           <li key={idx.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
@@ -23,6 +24,7 @@ export function MarketPanel({ indices }: { indices: MarketIndex[] }) {
           </li>
         ))}
       </RowList>
+      )}
     </Panel>
   );
 }

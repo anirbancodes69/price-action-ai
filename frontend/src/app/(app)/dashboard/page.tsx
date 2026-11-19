@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { data } from "@/lib/data";
+import { USE_HTTP } from "@/lib/api/config";
+import { LiveDashboard } from "@/features/dashboard/live-dashboard";
 import { DashboardView } from "@/features/dashboard/dashboard-view";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -7,6 +9,8 @@ export const metadata: Metadata = { title: "Dashboard" };
 const RECENT = ["RELIANCE", "MARUTI", "HDFCBANK", "HINDUNILVR"];
 
 export default async function DashboardPage() {
+  // HTTP mode: live scan, risk and positions fetched in the browser; blocks without a live source are left out.
+  if (USE_HTTP) return <LiveDashboard />;
   const [indices, summary, rows, watchlists, triggers, activity, paperRisk, actualRisk] = await Promise.all([
     data.getIndices(),
     data.getDashboardSummary(),
