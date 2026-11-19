@@ -7,7 +7,7 @@ Risk (T-I76/T-I77), scan and analysis detail are live; /jobs and analysis persis
 from fastapi import APIRouter, Depends, FastAPI
 
 from app import __version__
-from app.api import health, risk, scan
+from app.api import health, positions, risk, scan
 from app.api.security import require_service_token
 from app.logging import configure_logging
 from app.settings import get_settings
@@ -35,4 +35,5 @@ async def ping() -> dict[str, str]:
 
 internal.include_router(risk.router)
 internal.include_router(scan.router)
+internal.include_router(positions.router)
 app.include_router(internal)

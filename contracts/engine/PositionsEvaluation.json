@@ -1,0 +1,98 @@
+{
+  "$defs": {
+    "PositionSignalModel": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of_ts": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "End of the latest closed 5m bar used.",
+          "title": "As Of Ts"
+        },
+        "bar_end": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "End of the closed bar on which the exit condition was met.",
+          "title": "Bar End"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "STOP, TARGET, STRUCTURE_EXIT or SESSION_END for EXIT; NO_BARS otherwise null.",
+          "title": "Reason"
+        },
+        "signal": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "HOLD or EXIT; null when the symbol has no stored bars.",
+          "title": "Signal"
+        },
+        "symbol": {
+          "title": "Symbol",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "symbol",
+        "signal",
+        "reason",
+        "bar_end",
+        "as_of_ts"
+      ],
+      "title": "PositionSignalModel",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "positions": {
+      "items": {
+        "$ref": "#/$defs/PositionSignalModel"
+      },
+      "title": "Positions",
+      "type": "array"
+    },
+    "ruleset_version": {
+      "title": "Ruleset Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "ruleset_version",
+    "positions"
+  ],
+  "title": "PositionsEvaluation",
+  "type": "object"
+}

@@ -1,0 +1,96 @@
+{
+  "$defs": {
+    "PositionInput": {
+      "additionalProperties": false,
+      "properties": {
+        "entry_at": {
+          "description": "When the position was entered (ISO-8601 with offset).",
+          "format": "date-time",
+          "title": "Entry At",
+          "type": "string"
+        },
+        "id": {
+          "description": "Caller's id, echoed back (the trade id).",
+          "maxLength": 64,
+          "title": "Id",
+          "type": "string"
+        },
+        "stop": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stop"
+        },
+        "symbol": {
+          "pattern": "^[A-Z0-9&_-]{1,32}$",
+          "title": "Symbol",
+          "type": "string"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target"
+        }
+      },
+      "required": [
+        "id",
+        "symbol",
+        "entry_at"
+      ],
+      "title": "PositionInput",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "as_of_ts": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Evaluate as of this bar end (default: latest).",
+      "title": "As Of Ts"
+    },
+    "data_source_id": {
+      "format": "uuid",
+      "title": "Data Source Id",
+      "type": "string"
+    },
+    "positions": {
+      "items": {
+        "$ref": "#/$defs/PositionInput"
+      },
+      "maxItems": 100,
+      "title": "Positions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "data_source_id",
+    "positions"
+  ],
+  "title": "PositionsEvaluationRequest",
+  "type": "object"
+}

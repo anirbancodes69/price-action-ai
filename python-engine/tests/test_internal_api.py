@@ -348,3 +348,38 @@ def test_analysis_detail_carries_setups_and_levels(client: TestClient) -> None:
         "103",
     )
     assert d["signal"]["signal"] == "ENTRY_CONFIRMED" and d["signal"]["reasons"] == []
+
+
+def test_positions_evaluate_reports_hold_exit_and_missing_bars(client: TestClient) -> None:
+    fake = FakeSource()
+    wire(fake, make_analyse({}, chochs={("B", 2): True}))
+    entry = sym("A").bars_5m[0].start.isoformat()
+    body = {
+        "data_source_id": SRC,
+        "positions": [
+            {"id": "t1", "symbol": "A", "entry_at": entry, "stop": "50", "target": "150"},
+            {"id": "t2", "symbol": "B", "entry_at": entry, "stop": None, "target": None},
+            {"id": "t3", "symbol": "NOPE", "entry_at": entry},
+            {"id": "t4", "symbol": "A", "entry_at": entry, "stop": "99.9", "target": None},
+        ],
+    }
+
+    res = client.post("/internal/v1/positions/evaluate", json=body, headers=AUTH)
+
+    assert res.status_code == 200
+    r = {p["id"]: p for p in res.json()["positions"]}
+    assert (r["t1"]["signal"], r["t1"]["reason"]) == ("HOLD", None)
+    assert (r["t2"]["signal"], r["t2"]["reason"]) == ("EXIT", "STRUCTURE_EXIT")  # the bearish CHoCH on bar 2
+    assert r["t2"]["bar_end"] == sym("B").bars_5m[2].end.isoformat().replace("+00:00", "Z")
+    assert (r["t3"]["signal"], r["t3"]["as_of_ts"]) == (None, None)  # no stored bars
+    assert (r["t4"]["signal"], r["t4"]["reason"]) == ("EXIT", "STOP")  # flat bars dip to 99.8, below 99.9
+    assert res.json()["ruleset_version"] == "pa-intraday 0.1.0"
+
+
+def test_positions_evaluate_errors(client: TestClient) -> None:
+    wire(FakeSource(), make_analyse({}))
+    body = {"data_source_id": str(uuid.uuid4()), "positions": []}
+    res = client.post("/internal/v1/positions/evaluate", json=body, headers=AUTH)
+    assert (res.status_code, res.json()["detail"]) == (404, "DATA_SOURCE_NOT_FOUND")
+    assert client.post("/internal/v1/positions/evaluate", json={}, headers=AUTH).status_code == 422
+    assert client.post("/internal/v1/positions/evaluate", json=body).status_code == 401
