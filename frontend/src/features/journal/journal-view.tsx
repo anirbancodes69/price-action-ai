@@ -19,9 +19,22 @@ import { Empty } from "@/components/data/empty";
 import { Stat, StatGrid } from "@/components/data/stat";
 import { SampleDataBadge } from "@/components/data/sample-data-badge";
 import { StatusBadge } from "@/components/data/status-badge";
+import { LiveDataBadge } from "@/components/data/live-data-badge";
+import type { DataMode } from "@/lib/api/scanner";
 import { journalStats } from "./stats";
 
-export function JournalView({ initial, asOf }: { initial: JournalEntry[]; asOf: string }) {
+const setupLabel = (t: SetupType | null) => (t ? SETUP_TYPES[t].label : "No linked plan");
+
+interface JournalViewProps {
+  initial: JournalEntry[];
+  asOf: string;
+  /** HTTP mode: saves the notes on the server before the list is updated. Absent in sample mode. */
+  onSaveNotes?: (id: string, notes: string) => Promise<void>;
+  /** Data mode of the source; `DEMO` (default) is labelled as sample data. */
+  mode?: DataMode;
+}
+
+export function JournalView({ initial, asOf, onSaveNotes, mode = "DEMO" }: JournalViewProps) {
   const toast = useToast();
   const [entries, setEntries] = useState(initial);
   const [query, setQuery] = useState("");
@@ -38,7 +51,7 @@ export function JournalView({ initial, asOf }: { initial: JournalEntry[]; asOf: 
           (!query || e.symbol.toLowerCase().includes(query.toLowerCase()) || e.notes.toLowerCase().includes(query.toLowerCase())) &&
           (outcome === "all" || e.outcome === outcome) &&
           (setup === "all" || e.setupType === setup) &&
-          (adherence === "all" || (adherence === "followed" ? e.followedPlan : !e.followedPlan)),
+          (adherence === "all" || (adherence === "followed" ? e.followedPlan === true : e.followedPlan === false)),
       ),
     [entries, query, outcome, setup, adherence],
   );
@@ -67,19 +80,21 @@ export function JournalView({ initial, asOf }: { initial: JournalEntry[]; asOf: 
         </span>
       ),
     },
-    { key: "setup", header: "Setup", hideBelow: "xl", sortValue: (e) => e.setupType, render: (e) => <span className="text-muted-foreground">{SETUP_TYPES[e.setupType].label}</span> },
+    { key: "setup", header: "Setup", hideBelow: "xl", sortValue: (e) => e.setupType ?? "", render: (e) => <span className="text-muted-foreground">{setupLabel(e.setupType)}</span> },
     { key: "dates", header: "Held", hideBelow: "2xl", sortValue: (e) => e.exitDate, render: (e) => <span className="text-muted-foreground">{formatDate(e.entryDate)} → {formatDate(e.exitDate)}</span> },
     { key: "entry", header: "Entry", align: "right", hideBelow: "lg", render: (e) => formatPrice(e.entryPrice) },
     { key: "exit", header: "Exit", align: "right", hideBelow: "lg", render: (e) => formatPrice(e.exitPrice) },
     { key: "pnl", header: "P&L", align: "right", sortValue: (e) => e.pnl, render: (e) => <span className={e.pnl >= 0 ? "text-bull" : "text-bear"}>{formatSignedInr(e.pnl, { decimals: false })}</span> },
-    { key: "r", header: "R", align: "right", sortValue: (e) => e.rMultiple, render: (e) => <span className={e.rMultiple >= 0 ? "text-bull" : "text-bear"}>{formatR(e.rMultiple)}</span> },
+    { key: "r", header: "R", align: "right", sortValue: (e) => e.rMultiple ?? 0, render: (e) => (e.rMultiple === null ? "—" : <span className={e.rMultiple >= 0 ? "text-bull" : "text-bear"}>{formatR(e.rMultiple)}</span>) },
     { key: "outcome", header: "Outcome", sortValue: (e) => e.outcome, render: (e) => <StatusBadge kind="outcome" status={e.outcome} /> },
     {
       key: "plan",
       header: "Plan",
       hideBelow: "md",
       render: (e) =>
-        e.followedPlan ? (
+        e.followedPlan === null ? (
+          <span className="text-xs text-muted-foreground">Not reviewed</span>
+        ) : e.followedPlan ? (
           <span className="inline-flex items-center gap-1 text-xs text-success"><CheckCircle2 className="size-3.5" aria-hidden /> Followed</span>
         ) : (
           <span className="inline-flex items-center gap-1 text-xs text-warning"><TriangleAlert className="size-3.5" aria-hidden /> Deviated</span>
@@ -93,7 +108,7 @@ export function JournalView({ initial, asOf }: { initial: JournalEntry[]; asOf: 
       <PageHeader
         title="Trading Journal"
         description="Review closed trades, classify setups and learn from your execution."
-        meta={<SampleDataBadge asOf={asOf} />}
+        meta={mode === "DEMO" ? <SampleDataBadge asOf={asOf} /> : <LiveDataBadge mode={mode} asOf={asOf} />}
         actions={
           <Button variant="primary" onClick={() => toast({ title: "Manual entry form coming next phase", description: "Entries will be created automatically from linked orders.", tone: "info" })}>
             <Plus /> Add entry
@@ -179,17 +194,23 @@ export function JournalView({ initial, asOf }: { initial: JournalEntry[]; asOf: 
         open={!!selected}
         onClose={() => setSelected(null)}
         size="lg"
-        title={selected ? `${selected.symbol} · ${SETUP_TYPES[selected.setupType].label}` : ""}
+        title={selected ? `${selected.symbol} · ${setupLabel(selected.setupType)}` : ""}
         description={selected ? `${formatDate(selected.entryDate)} → ${formatDate(selected.exitDate)} · ${selected.id}` : undefined}
         footer={
           <>
             <Button variant="outline" onClick={() => setSelected(null)}>Close</Button>
             <Button
               variant="primary"
-              onClick={() => {
+              onClick={async () => {
                 if (!selected) return;
+                try {
+                  await onSaveNotes?.(selected.id, noteDraft);
+                } catch {
+                  toast({ title: "Notes not saved", description: "Nothing was changed. Try again.", tone: "warn" });
+                  return;
+                }
                 setEntries((es) => es.map((e) => (e.id === selected.id ? { ...e, notes: noteDraft } : e)));
-                toast({ title: "Notes saved", description: "Demo mode: kept for this session." });
+                toast({ title: "Notes saved", description: onSaveNotes ? undefined : "Demo mode: kept for this session." });
                 setSelected(null);
               }}
             >
@@ -205,7 +226,7 @@ export function JournalView({ initial, asOf }: { initial: JournalEntry[]; asOf: 
                 ["Entry", formatPrice(selected.entryPrice)],
                 ["Exit", formatPrice(selected.exitPrice)],
                 ["P&L", formatSignedInr(selected.pnl, { decimals: false })],
-                ["R multiple", formatR(selected.rMultiple)],
+                ["R multiple", selected.rMultiple === null ? "—" : formatR(selected.rMultiple)],
               ].map(([k, v]) => (
                 <div key={k} className="flex flex-col gap-1 rounded-lg bg-muted px-3 py-2">
                   <dt className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{k}</dt>
@@ -215,7 +236,9 @@ export function JournalView({ initial, asOf }: { initial: JournalEntry[]; asOf: 
             </dl>
             <div className="flex flex-wrap gap-1.5">
               <StatusBadge kind="outcome" status={selected.outcome} />
-              <Badge tone={selected.followedPlan ? "success" : "warning"} variant="outline">{selected.followedPlan ? "Followed plan" : "Deviated from plan"}</Badge>
+              {selected.followedPlan !== null && (
+                <Badge tone={selected.followedPlan ? "success" : "warning"} variant="outline">{selected.followedPlan ? "Followed plan" : "Deviated from plan"}</Badge>
+              )}
               {selected.tags.map((t) => (
                 <Badge key={t} tone="neutral">{t}</Badge>
               ))}
