@@ -26,6 +26,12 @@
           "title": "Level",
           "type": "string"
         },
+        "level_bar_start": {
+          "description": "Bar start of the pivot whose level was broken.",
+          "format": "date-time",
+          "title": "Level Bar Start",
+          "type": "string"
+        },
         "type": {
           "title": "Type",
           "type": "string"
@@ -35,6 +41,7 @@
         "type",
         "direction",
         "level",
+        "level_bar_start",
         "break_bar_start",
         "close",
         "close_inside_buffer"
@@ -434,6 +441,12 @@
     "ZoneModel": {
       "additionalProperties": false,
       "properties": {
+        "formed_at": {
+          "description": "End of the bar at which the zone became known.",
+          "format": "date-time",
+          "title": "Formed At",
+          "type": "string"
+        },
         "high": {
           "pattern": "^-?\\d+(\\.\\d+)?$",
           "title": "High",
@@ -483,7 +496,8 @@
         "strength_bucket",
         "status",
         "role_reversed",
-        "htf_member"
+        "htf_member",
+        "formed_at"
       ],
       "title": "ZoneModel",
       "type": "object"
@@ -541,6 +555,30 @@
       },
       "title": "Problems",
       "type": "array"
+    },
+    "protected_high_5m": {
+      "anyOf": [
+        {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Protected High 5M"
+    },
+    "protected_low_5m": {
+      "anyOf": [
+        {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Protected Low 5M"
     },
     "ruleset_version": {
       "title": "Ruleset Version",
@@ -624,6 +662,8 @@
     "problems",
     "ruleset_version",
     "state_5m",
+    "protected_low_5m",
+    "protected_high_5m",
     "transition_direction_5m",
     "state_15m",
     "levels",

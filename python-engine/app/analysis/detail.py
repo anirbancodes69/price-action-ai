@@ -43,6 +43,7 @@ def to_detail(sym: SymbolData, spec: SessionSpec, res: AnalysisResult) -> Analys
                 type=e.type.value,
                 direction=e.direction.value,
                 level=e.level,
+                level_bar_start=bars[e.level_pivot_index].start,
                 break_bar_start=e.break_bar_start,
                 close=e.close,
                 close_inside_buffer=e.close_inside_buffer,
@@ -61,6 +62,7 @@ def to_detail(sym: SymbolData, spec: SessionSpec, res: AnalysisResult) -> Analys
             status=z.status.value,
             role_reversed=z.role_reversed,
             htf_member=z.has_htf_member,
+            formed_at=bars[z.formed_at_index].end,
         )
         for z in (res.zones or ())
     ]
@@ -100,6 +102,8 @@ def to_detail(sym: SymbolData, spec: SessionSpec, res: AnalysisResult) -> Analys
         problems=list(res.check.problems),
         ruleset_version=f"{res.ruleset_code} {res.ruleset_version}",
         state_5m=final.state.value if final else None,
+        protected_low_5m=final.protected_low.price if final and final.protected_low else None,
+        protected_high_5m=final.protected_high.price if final and final.protected_high else None,
         transition_direction_5m=(
             final.transition_direction.value if final and final.transition_direction else None
         ),
