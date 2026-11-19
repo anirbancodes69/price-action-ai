@@ -26,6 +26,10 @@ class ActualTradeService
                 'trade_plan_id' => $planId, 'direction' => 'LONG', 'status' => 'OPEN', 'quantity_open' => 0, 'source' => 'MANUAL', 'stop_price' => $stop, 'target_price' => $target,
             ]);
             $this->addFill($id, $fill);
+            if ($planId !== null) { // the plan has been acted on
+                DB::table('trade_plans')->where('id', $planId)->whereIn('status', ['PENDING', 'TRIGGERED'])
+                    ->update(['status' => 'FILLED', 'status_reason' => 'TRADE_LOGGED', 'lock_version' => DB::raw('lock_version + 1'), 'updated_at' => CarbonImmutable::now()]);
+            }
 
             return $id;
         });

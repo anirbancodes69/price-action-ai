@@ -59,14 +59,26 @@ class ActualTradeController extends Controller
             throw new ApiException('NOT_FOUND', 'Unknown instrument.', 404);
         }
         $planId = $request->input('trade_plan_id');
-        if ($planId !== null && ! DB::table('trade_plans')->where('id', $planId)->where('user_id', $user->getKey())->exists()) {
+        $plan = $planId === null ? null : DB::table('trade_plans')->where('id', $planId)->where('user_id', $user->getKey())->first(['instrument_id', 'stop_price', 'target_price']);
+        if ($planId !== null && $plan === null) {
             throw new ApiException('NOT_FOUND', 'Unknown trade plan.', 404);
         }
+        if ($plan !== null && $plan->instrument_id !== $instrument['id']) {
+            throw new ApiException('VALIDATION_FAILED', 'The plan is for another instrument.', 422, ['field_errors' => ['trade_plan_id' => ['Plan is for another symbol.']]]);
+        }
 
-        $id = $service->open(
-            $user, $instrument['id'], $planId, $this->normaliseFill((array) $request->input('fill'), 'BUY'),
-            $this->level($request->input('stop')), $this->level($request->input('target')),
-        );
+        $fill = $this->normaliseFill((array) $request->input('fill'), 'BUY');
+        $stop = $this->level($request->input('stop'));
+        $target = $this->level($request->input('target'));
+        // A trade logged against a plan takes the plan's levels unless the owner gave their own (when still on the right side).
+        if ($plan !== null && $stop === null && bccomp((string) $plan->stop_price, $fill['price'], 2) < 0) {
+            $stop = $this->level($plan->stop_price);
+        }
+        if ($plan !== null && $target === null && bccomp((string) $plan->target_price, $fill['price'], 2) > 0) {
+            $target = $this->level($plan->target_price);
+        }
+
+        $id = $service->open($user, $instrument['id'], $planId, $fill, $stop, $target);
         if ($key !== null) {
             Cache::put($key, $id, now()->addDay());
         }
