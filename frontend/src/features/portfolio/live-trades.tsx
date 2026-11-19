@@ -155,9 +155,8 @@ export function LiveTrades() {
   }
 
   const { trades, positions } = data;
-  const tradeBySymbol = new Map(
-    trades.filter((t) => t.status === "OPEN").map((t) => [t.symbol, t]),
-  );
+  // A position's id is its trade's id, so two open trades in one symbol each act on their own row.
+  const tradeById = new Map(trades.map((t) => [t.id, t]));
   const priced = positions.filter((p) => p.unrealisedPnl !== null);
   const unrealised = priced.reduce((s, p) => s + (p.unrealisedPnl ?? 0), 0);
   const realised = trades.reduce((s, t) => s + (t.netRealisedPnl ?? 0), 0);
@@ -255,9 +254,21 @@ export function LiveTrades() {
       hideBelow: "lg",
       render: (p) =>
         p.stop === null ? (
-          <span className="text-muted-foreground">Not tracked</span>
+          <span className="text-muted-foreground">Not set</span>
         ) : (
           <span className="text-bear">{formatPrice(p.stop)}</span>
+        ),
+    },
+    {
+      key: "target",
+      header: "Target",
+      align: "right",
+      hideBelow: "xl",
+      render: (p) =>
+        p.target === null ? (
+          <span className="text-muted-foreground">Not set</span>
+        ) : (
+          <span className="text-bull">{formatPrice(p.target)}</span>
         ),
     },
     {
@@ -265,15 +276,16 @@ export function LiveTrades() {
       header: <span className="sr-only">Actions</span>,
       align: "right",
       render: (p) => {
-        const trade = tradeBySymbol.get(p.symbol);
+        const trade = tradeById.get(p.id);
         return trade ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setDialog({ kind: "fill", trade, side: "SELL" })}
-          >
-            Record sell
-          </Button>
+          <span className="flex justify-end gap-1.5">
+            <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "levels", trade })}>
+              Stop / target
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "fill", trade, side: "SELL" })}>
+              Record sell
+            </Button>
+          </span>
         ) : null;
       },
     },
@@ -452,8 +464,8 @@ export function LiveTrades() {
           )}
           <p className="text-xs text-muted-foreground">
             Prices are the latest stored 5m close, shown with their bar time.
-            Stops come from a linked plan; trades logged without a plan have
-            none.
+            The stop and target are the levels you entered for a trade; the
+            stop counts as its open risk in today&apos;s limits.
           </p>
         </section>
         <RiskTodayPanel books={[data.risk]} />

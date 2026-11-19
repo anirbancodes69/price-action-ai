@@ -20,6 +20,8 @@ export interface ApiActualTrade {
   instrument: { symbol: string; name: string } | null;
   trade_plan_id: string | null;
   status: "OPEN" | "CLOSED";
+  stop: string | null;
+  target: string | null;
   quantity_open: number;
   avg_entry_price: string | null;
   avg_exit_price: string | null;
@@ -55,6 +57,9 @@ export interface LoggedTrade {
   symbol: string;
   name: string;
   status: "OPEN" | "CLOSED";
+  /** The stop and target you entered for this trade; `null` when none. */
+  stop: number | null;
+  target: number | null;
   quantityOpen: number;
   avgEntry: number | null;
   avgExit: number | null;
@@ -89,6 +94,8 @@ export function mapTrade(t: ApiActualTrade): LoggedTrade {
     symbol: t.instrument?.symbol ?? "—",
     name: t.instrument?.name ?? "",
     status: t.status,
+    stop: opt(t.stop),
+    target: opt(t.target),
     quantityOpen: t.quantity_open,
     avgEntry: opt(t.avg_entry_price),
     avgExit: opt(t.avg_exit_price),
@@ -132,6 +139,9 @@ export interface FillForm {
   /** `datetime-local` value (`YYYY-MM-DDTHH:mm`), read as IST. */
   executedAt: string;
   fees: string;
+  /** Optional levels of a new trade. */
+  stop: string;
+  target: string;
 }
 
 /** Field errors of a fill form, keyed by field; empty when the form is valid. */
@@ -142,6 +152,11 @@ export function validateFill(f: FillForm, needSymbol: boolean): Partial<Record<k
   if (!/^\d+(\.\d{1,2})?$/.test(f.price.trim()) || Number(f.price) <= 0) e.price = "Enter a price above 0 with at most two decimals";
   if (f.fees.trim() !== "" && !/^\d+(\.\d{1,2})?$/.test(f.fees.trim())) e.fees = "Enter charges as an amount, or leave empty";
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(f.executedAt)) e.executedAt = "Enter the execution time";
+  if (needSymbol) {
+    const price = Number(f.price);
+    if (f.stop.trim() !== "" && (!/^\d+(\.\d{1,2})?$/.test(f.stop.trim()) || Number(f.stop) <= 0 || (!e.price && Number(f.stop) >= price))) e.stop = "Enter a stop below the price";
+    if (f.target.trim() !== "" && (!/^\d+(\.\d{1,2})?$/.test(f.target.trim()) || Number(f.target) <= 0 || (!e.price && Number(f.target) <= price))) e.target = "Enter a target above the price";
+  }
   return e;
 }
 
@@ -166,7 +181,12 @@ export async function logTrade(f: FillForm): Promise<LoggedTrade> {
   const res: ApiEnvelope<ApiActualTrade> = await apiRequest<ApiActualTrade>("/api/v1/actual-trades", {
     method: "POST",
     headers: key(),
-    body: { instrument: f.symbol.trim().toUpperCase(), fill: { side: "BUY", ...fillBody(f) } },
+    body: {
+      instrument: f.symbol.trim().toUpperCase(),
+      fill: { side: "BUY", ...fillBody(f) },
+      ...(f.stop.trim() === "" ? {} : { stop: f.stop.trim() }),
+      ...(f.target.trim() === "" ? {} : { target: f.target.trim() }),
+    },
   });
   return mapTrade(res.data);
 }
@@ -176,6 +196,30 @@ export async function addFill(tradeId: string, f: FillForm): Promise<LoggedTrade
     method: "POST",
     headers: key(),
     body: { side: f.side, ...fillBody(f) },
+  });
+  return mapTrade(res.data);
+}
+
+export interface LevelsForm {
+  stop: string;
+  target: string;
+}
+
+/** Field errors of the stop and target form; each may be empty (cleared). */
+export function validateLevels(f: LevelsForm): Partial<Record<keyof LevelsForm, string>> {
+  const e: Partial<Record<keyof LevelsForm, string>> = {};
+  for (const k of ["stop", "target"] as const) {
+    const v = f[k].trim();
+    if (v !== "" && (!/^\d+(\.\d{1,2})?$/.test(v) || Number(v) <= 0)) e[k] = "Enter a price above 0 with at most two decimals, or leave empty";
+  }
+  return e;
+}
+
+/** Moves or clears the stop and target of a trade; an empty field clears the level. */
+export async function setLevels(tradeId: string, f: LevelsForm): Promise<LoggedTrade> {
+  const res = await apiRequest<ApiActualTrade>(`/api/v1/actual-trades/${encodeURIComponent(tradeId)}`, {
+    method: "PATCH",
+    body: { stop: f.stop.trim() === "" ? null : f.stop.trim(), target: f.target.trim() === "" ? null : f.target.trim() },
   });
   return mapTrade(res.data);
 }
