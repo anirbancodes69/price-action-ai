@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { analysisProblem, mapAnalysis, type ApiAnalysisRun } from "./analysis";
+import { describe, expect, it, vi } from "vitest";
+import { analysisProblem, fetchAnalysis, mapAnalysis, type ApiAnalysisRun } from "./analysis";
 
 const setup = {
   id: "s1",
@@ -102,5 +102,24 @@ describe("analysisProblem", () => {
     expect(analysisProblem(run)).toBeNull();
     expect(analysisProblem({ ...run, status: "INSUFFICIENT_HISTORY" })).toMatch(/Not enough/);
     expect(analysisProblem({ ...run, context: { ...run.context, session: null } })).toMatch(/not available/);
+  });
+});
+
+describe("fetchAnalysis", () => {
+  it("asks for the 5m, 15m and daily bars, so every chart timeframe has data", async () => {
+    const urls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        urls.push(url);
+        return new Response(JSON.stringify({ data: run, meta: { request_id: "r", data_mode: "PERSONAL" } }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }),
+    );
+
+    const { meta } = await fetchAnalysis("M&M");
+
+    expect(urls).toEqual(["/api/v1/analysis/M%26M?include=candles,candles_15m,candles_1d"]);
+    expect(meta.dataMode).toBe("PERSONAL");
+    vi.unstubAllGlobals();
   });
 });
