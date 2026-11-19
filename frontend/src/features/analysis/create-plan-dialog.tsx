@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { FileText } from "lucide-react";
 import { formatInr, formatInt, formatRR } from "@/lib/format";
+import { ApiError } from "@/lib/api/client";
+import { validatePlanLevels, type PlanLevelsForm } from "@/lib/api/trade-plans";
 import type { StockAnalysis } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -10,8 +12,21 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 
 /** Drafts a PROPOSED trade plan from the analysis levels. Never places an order. */
-export function CreatePlanDialog({ a, open, onClose }: { a: StockAnalysis; open: boolean; onClose: () => void }) {
+export function CreatePlanDialog({
+  a,
+  open,
+  onClose,
+  onCreate,
+}: {
+  a: StockAnalysis;
+  open: boolean;
+  onClose: () => void;
+  /** HTTP mode: creates the plan on the server, where the engine sizes it (no client-side sizing). */
+  onCreate?: (levels: PlanLevelsForm) => Promise<{ quantity: number }>;
+}) {
   const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [entry, setEntry] = useState(a.levels ? String(a.levels.entry) : "");
   const [stop, setStop] = useState(a.levels ? String(a.levels.stopLoss) : "");
   const [target, setTarget] = useState(a.levels ? String(a.levels.target) : "");
@@ -36,6 +51,23 @@ export function CreatePlanDialog({ a, open, onClose }: { a: StockAnalysis; open:
   }, [entry, stop, target, riskBudget]);
 
   const disabled = a.setup.direction === "short" || a.levels === null;
+  const liveErrors = onCreate ? validatePlanLevels({ entry, stop, target }) : {};
+  const liveValid = Object.keys(liveErrors).length === 0;
+
+  const saveLive = async () => {
+    if (!onCreate) return;
+    setBusy(true);
+    setServerError(null);
+    try {
+      const { quantity } = await onCreate({ entry, stop, target });
+      toast({ title: "Proposed plan saved", description: `${a.stock.symbol} · ${formatInt(quantity)} shares, sized by the engine from your risk profile.` });
+      onClose();
+    } catch (e) {
+      setServerError(planError(e));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Dialog
@@ -50,8 +82,9 @@ export function CreatePlanDialog({ a, open, onClose }: { a: StockAnalysis; open:
           </Button>
           <Button
             variant="primary"
-            disabled={!calc.valid || disabled}
+            disabled={disabled || busy || (onCreate ? !liveValid : !calc.valid)}
             onClick={() => {
+              if (onCreate) return void saveLive();
               toast({
                 title: "Proposed plan saved",
                 description: `${a.stock.symbol} · ${formatInt(calc.qty)} shares. Demo mode: kept for this session only.`,
@@ -71,10 +104,23 @@ export function CreatePlanDialog({ a, open, onClose }: { a: StockAnalysis; open:
       ) : (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Input label="Entry (₹)" inputMode="decimal" value={entry} onChange={(e) => setEntry(e.target.value)} error={calc.errors.entry} />
-            <Input label="Stop-loss (₹)" inputMode="decimal" value={stop} onChange={(e) => setStop(e.target.value)} error={calc.errors.stop} />
-            <Input label="Target (₹)" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} error={calc.errors.target} />
+            <Input label="Entry (₹)" inputMode="decimal" value={entry} onChange={(e) => setEntry(e.target.value)} error={onCreate ? liveErrors.entry : calc.errors.entry} />
+            <Input label="Stop-loss (₹)" inputMode="decimal" value={stop} onChange={(e) => setStop(e.target.value)} error={onCreate ? liveErrors.stop : calc.errors.stop} />
+            <Input label="Target (₹)" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} error={onCreate ? liveErrors.target : calc.errors.target} />
           </div>
+          {onCreate ? (
+            <>
+              <p className="text-sm text-muted-foreground">
+                The engine sizes the plan from your risk profile and today&apos;s limits. The quantity is shown after saving; a plan that breaks a rule is refused with the reason.
+              </p>
+              {serverError && (
+                <p role="alert" className="text-sm text-destructive">
+                  {serverError}
+                </p>
+              )}
+            </>
+          ) : (
+            <>
           <Input
             label="Risk per trade (₹)"
             inputMode="numeric"
@@ -97,8 +143,30 @@ export function CreatePlanDialog({ a, open, onClose }: { a: StockAnalysis; open:
               <dd className="font-stat text-2xl leading-none text-foreground">{calc.rr > 0 ? formatRR(calc.rr) : "—"}</dd>
             </div>
           </dl>
+            </>
+          )}
         </div>
       )}
     </Dialog>
   );
+}
+
+/** Plain words for the errors a plan can be refused with (TRD-04 §12, TRD-05 §8). */
+export function planError(e: unknown): string {
+  if (!(e instanceof ApiError)) return "The plan could not be saved. Nothing was changed.";
+  const known: Record<string, string> = {
+    SETUP_NOT_ACTIONABLE: "This setup is not actionable (it is forming, a short, or its reward-to-risk is too low).",
+    SETUP_TERMINAL: "This setup has ended.",
+    ENTRY_WINDOW_ELAPSED: "The entry window has closed for today.",
+    DAILY_LOSS_LIMIT_REACHED: "Today's loss limit is reached. No new plans until tomorrow.",
+    MAX_CONSECUTIVE_LOSSES_REACHED: "The consecutive-loss limit is reached for today.",
+    MAX_POSITIONS_REACHED: "The open-position limit is reached.",
+    SESSION_CLOSED: "The market is closed.",
+    ENTRY_CUTOFF_PASSED: "It is past the entry cutoff.",
+    RR_BELOW_MINIMUM: "The reward-to-risk is below the minimum.",
+    STOP_TOO_TIGHT: "The stop is too close to the entry.",
+    STOP_TOO_WIDE: "The stop is too far from the entry.",
+    ENGINE_UNAVAILABLE: "The analysis engine is not reachable. Nothing was changed.",
+  };
+  return known[e.code] ?? "The plan was refused. Check the levels and try again.";
 }

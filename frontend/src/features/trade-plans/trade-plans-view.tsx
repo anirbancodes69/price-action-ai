@@ -17,7 +17,9 @@ import { DataTable, type Column } from "@/components/data/data-table";
 import { Disclaimer } from "@/components/data/disclaimer";
 import { Empty } from "@/components/data/empty";
 import { Stat, StatGrid } from "@/components/data/stat";
+import { LiveDataBadge } from "@/components/data/live-data-badge";
 import { SampleDataBadge } from "@/components/data/sample-data-badge";
+import type { DataMode } from "@/lib/api/scanner";
 import { StatusBadge } from "@/components/data/status-badge";
 import { LifecycleStrip } from "@/components/trading/lifecycle-strip";
 import { SignalBadge } from "@/components/trading/signal-badge";
@@ -26,7 +28,16 @@ import { PlanLevelsInline, TradePlanCard } from "@/components/trading/trade-plan
 type TabValue = "all" | TradePlanStatus;
 const ORDER: TradePlanStatus[] = ["pending", "entry-confirmed", "active", "completed", "invalidated", "cancelled"];
 
-export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: string }) {
+interface TradePlansViewProps {
+  initial: TradePlan[];
+  asOf: string;
+  /** HTTP mode: cancels the plan on the server before the list changes. Absent in sample mode. */
+  onCancel?: (plan: TradePlan) => Promise<void>;
+  /** Data mode of the source; `DEMO` (default) is labelled as sample data. */
+  mode?: DataMode;
+}
+
+export function TradePlansView({ initial, asOf, onCancel, mode = "DEMO" }: TradePlansViewProps) {
   const toast = useToast();
   const [plans, setPlans] = useState(initial);
   const [tab, setTab] = useState<TabValue>("all");
@@ -51,23 +62,27 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
             <MoreHorizontal />
           </Button>
         )}
-        items={[
-          {
-            label: "Link executed order…",
-            icon: Receipt,
-            onSelect: () => toast({ title: "Broker not connected", description: "Orders can be linked once a broker connection is available.", tone: "info" }),
-          },
-          {
-            label: "Mark invalidated",
-            icon: XCircle,
-            onSelect: () => {
-              setStatus(p.id, "invalidated");
-              toast({ title: `${p.id} marked invalidated`, tone: "info" });
-            },
-          },
-          "separator",
-          { label: "Cancel plan", icon: Ban, tone: "danger", onSelect: () => setConfirmCancel(p) },
-        ]}
+        items={
+          onCancel
+            ? [{ label: "Cancel plan", icon: Ban, tone: "danger" as const, onSelect: () => setConfirmCancel(p) }]
+            : [
+                {
+                  label: "Link executed order…",
+                  icon: Receipt,
+                  onSelect: () => toast({ title: "Broker not connected", description: "Orders can be linked once a broker connection is available.", tone: "info" }),
+                },
+                {
+                  label: "Mark invalidated",
+                  icon: XCircle,
+                  onSelect: () => {
+                    setStatus(p.id, "invalidated");
+                    toast({ title: `${p.id} marked invalidated`, tone: "info" });
+                  },
+                },
+                "separator",
+                { label: "Cancel plan", icon: Ban, tone: "danger", onSelect: () => setConfirmCancel(p) },
+              ]
+        }
       />
     );
   };
@@ -86,7 +101,7 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
         </Link>
       ),
     },
-    { key: "setup", header: "Setup", hideBelow: "md", sortValue: (p) => p.setupType, render: (p) => <span className="text-muted-foreground">{SETUP_TYPES[p.setupType].label}</span> },
+    { key: "setup", header: "Setup", hideBelow: "md", sortValue: (p) => p.setupType ?? "", render: (p) => <span className="text-muted-foreground">{p.setupType ? SETUP_TYPES[p.setupType].label : "Manual plan"}</span> },
     { key: "levels", header: "Entry / SL / Target", align: "right", render: (p) => <PlanLevelsInline {...p} /> },
     { key: "rr", header: "R:R", align: "right", hideBelow: "sm", sortValue: (p) => p.riskReward, render: (p) => formatRR(p.riskReward) },
     { key: "qty", header: "Qty", align: "right", hideBelow: "lg", sortValue: (p) => p.quantity, render: (p) => formatInt(p.quantity) },
@@ -107,7 +122,7 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
       <PageHeader
         title="Trade Plans"
         description="Proposed plans you have written against detected setups. A plan is not an order."
-        meta={<SampleDataBadge asOf={asOf} />}
+        meta={mode === "DEMO" ? <SampleDataBadge asOf={asOf} /> : <LiveDataBadge mode={mode} asOf={asOf} />}
         actions={
           <ButtonLink href="/market-scanner" variant="primary">
             <ClipboardList /> New plan from a setup
@@ -171,18 +186,24 @@ export function TradePlansView({ initial, asOf }: { initial: TradePlan[]; asOf: 
         open={!!confirmCancel}
         onClose={() => setConfirmCancel(null)}
         title={`Cancel ${confirmCancel?.id}?`}
-        description={`${confirmCancel?.symbol} · ${confirmCancel ? SETUP_TYPES[confirmCancel.setupType].label : ""}. The plan will move to Cancelled. No orders are affected.`}
+        description={`${confirmCancel?.symbol} · ${confirmCancel?.setupType ? SETUP_TYPES[confirmCancel.setupType].label : "Manual plan"}. The plan will move to Cancelled. No orders are affected.`}
         size="sm"
         footer={
           <>
             <Button variant="outline" onClick={() => setConfirmCancel(null)}>Keep plan</Button>
             <Button
               variant="danger"
-              onClick={() => {
-                if (confirmCancel) {
-                  setStatus(confirmCancel.id, "cancelled");
-                  toast({ title: `${confirmCancel.id} cancelled`, tone: "info" });
+              onClick={async () => {
+                const plan = confirmCancel;
+                if (!plan) return;
+                try {
+                  await onCancel?.(plan);
+                } catch {
+                  toast({ title: `${plan.id} not cancelled`, description: "Nothing was changed. Try again.", tone: "warn" });
+                  return;
                 }
+                setStatus(plan.id, "cancelled");
+                toast({ title: `${plan.id} cancelled`, tone: "info" });
                 setConfirmCancel(null);
               }}
             >
