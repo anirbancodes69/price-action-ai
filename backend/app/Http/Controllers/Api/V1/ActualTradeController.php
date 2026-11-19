@@ -63,12 +63,44 @@ class ActualTradeController extends Controller
             throw new ApiException('NOT_FOUND', 'Unknown trade plan.', 404);
         }
 
-        $id = $service->open($user, $instrument['id'], $planId, $this->normaliseFill((array) $request->input('fill'), 'BUY'));
+        $id = $service->open(
+            $user, $instrument['id'], $planId, $this->normaliseFill((array) $request->input('fill'), 'BUY'),
+            $this->level($request->input('stop')), $this->level($request->input('target')),
+        );
         if ($key !== null) {
             Cache::put($key, $id, now()->addDay());
         }
 
         return ApiResponse::ok($this->trades([$id])[0], [], 201);
+    }
+
+    /** `PATCH /actual-trades/{id}` (X12): move the stop and/or target of an open trade; `null` clears one. */
+    public function levels(string $id, Request $request): JsonResponse
+    {
+        $user = $this->user($request);
+        if (! $this->owns($user, $id)) {
+            throw new ApiException('NOT_FOUND', 'Unknown trade.', 404);
+        }
+        $v = $request->validate([
+            'stop' => ['sometimes', 'nullable', 'numeric', 'gt:0', 'max:10000000', 'decimal:0,2'],
+            'target' => ['sometimes', 'nullable', 'numeric', 'gt:0', 'max:10000000', 'decimal:0,2'],
+        ]);
+        $set = [];
+        foreach (['stop' => 'stop_price', 'target' => 'target_price'] as $field => $column) {
+            if (array_key_exists($field, $v)) {
+                $set[$column] = $this->level($v[$field]);
+            }
+        }
+        if ($set !== []) {
+            DB::table('actual_trades')->where('id', $id)->update($set + ['updated_at' => now()]);
+        }
+
+        return ApiResponse::ok($this->trades([$id])[0]);
+    }
+
+    private function level(mixed $value): ?string
+    {
+        return $value === null ? null : bcadd((string) $value, '0', 2);
     }
 
     public function fill(string $id, FillRequest $request, ActualTradeService $service): JsonResponse
@@ -151,6 +183,8 @@ class ActualTradeController extends Controller
                 'trade_plan_id' => $t->trade_plan_id,
                 'status' => $t->status,
                 'quantity_open' => (int) $t->quantity_open,
+                'stop' => Decimals::money($t->stop_price === null ? null : (string) $t->stop_price),
+                'target' => Decimals::money($t->target_price === null ? null : (string) $t->target_price),
                 'avg_entry_price' => Decimals::money($t->avg_entry_price === null ? null : (string) $t->avg_entry_price),
                 'avg_exit_price' => Decimals::money($t->avg_exit_price === null ? null : (string) $t->avg_exit_price),
                 'realized_pnl' => Decimals::money($t->realized_pnl === null ? null : (string) $t->realized_pnl),

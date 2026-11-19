@@ -93,6 +93,57 @@ class ActualTradeTest extends TestCase
         $this->assertNotNull(DB::table('actual_trades')->where('id', $id)->value('closed_at'));
     }
 
+    public function test_a_trade_keeps_its_own_stop_and_target_and_they_can_be_moved(): void
+    {
+        $u = $this->user();
+        $d = $this->open($u, ['stop' => '95.00', 'target' => '112.50'])->assertCreated()->json('data');
+        $this->assertSame(['95.00', '112.50'], [$d['stop'], $d['target']]);
+
+        $moved = $this->actingAs($u, 'web')->patchJson("/api/v1/actual-trades/{$d['id']}", ['stop' => '101.00'])->assertOk()->json('data');
+        $this->assertSame(['101.00', '112.50'], [$moved['stop'], $moved['target']], 'a trailed stop may sit above the entry; the target is unchanged');
+
+        $cleared = $this->actingAs($u, 'web')->patchJson("/api/v1/actual-trades/{$d['id']}", ['target' => null])->assertOk()->json('data');
+        $this->assertSame(['101.00', null], [$cleared['stop'], $cleared['target']]);
+        $this->actingAs($u, 'web')->patchJson("/api/v1/actual-trades/{$d['id']}", ['stop' => '0'])->assertStatus(422);
+        $this->actingAs($u, 'web')->patchJson("/api/v1/actual-trades/{$d['id']}", ['stop' => '1.234'])->assertStatus(422);
+    }
+
+    public function test_levels_must_sit_on_the_right_side_of_the_first_fill(): void
+    {
+        $u = $this->user();
+
+        $this->open($u, ['stop' => '100.00'])->assertStatus(422); // not below the 100.00 fill
+        $this->open($u, ['stop' => '101.00'])->assertStatus(422);
+        $this->open($u, ['target' => '100.00'])->assertStatus(422); // not above it
+        $this->open($u, ['stop' => '99.95', 'target' => '100.05'])->assertCreated();
+        $this->assertNull($this->open($u)->json('data.stop'), 'levels are optional');
+    }
+
+    public function test_levels_are_owner_scoped(): void
+    {
+        $id = $this->open($this->user(), ['stop' => '95.00'])->json('data.id');
+        $other = $this->user('other@example.test');
+        $this->app['auth']->forgetGuards();
+
+        $this->actingAs($other, 'web')->patchJson("/api/v1/actual-trades/{$id}", ['stop' => '96.00'])->assertStatus(404);
+    }
+
+    public function test_live_positions_use_the_trades_own_stop_and_target(): void
+    {
+        $u = $this->user();
+        $this->open($u, ['stop' => '95.00', 'target' => '120.00'])->assertCreated();
+        $run = (string) Str::uuid7();
+        DB::table('ingestion_runs')->insert(['id' => $run, 'data_source_id' => self::SOURCE, 'kind' => 'BACKFILL', 'status' => 'COMPLETED', 'started_at' => now()]);
+        DB::table('candles')->insert([
+            'data_source_id' => self::SOURCE, 'instrument_id' => $this->instrument, 'timeframe' => '5m', 'trade_date' => '2026-11-18',
+            'bar_start' => '2026-11-18 05:25:00+00', 'open' => '100', 'high' => '100', 'low' => '100', 'close' => '100.00', 'volume' => 1, 'ingestion_run_id' => $run,
+        ]);
+
+        $p = $this->actingAs($u, 'web')->getJson('/api/v1/positions/live?book=ACTUAL')->assertOk()->json('data.0');
+
+        $this->assertSame(['95.00', '120.00', '-5', '20'], [$p['stop'], $p['target'], $p['distance_to_stop_pct'], $p['distance_to_target_pct']]);
+    }
+
     public function test_overselling_is_rejected_and_nothing_is_stored(): void
     {
         $u = $this->user();

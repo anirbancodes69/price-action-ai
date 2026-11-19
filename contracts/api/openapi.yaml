@@ -2878,6 +2878,62 @@ paths:
           "$ref": "#/components/responses/ValidationFailed"
         "429":
           "$ref": "#/components/responses/RateLimited"
+  "/api/v1/actual-trades/{id}":
+    patch:
+      operationId: "updateActualTradeLevels"
+      tags:
+        - "ActualTrades"
+      summary: "Move the stop and/or target of a trade"
+      x-arc04-id: "X12"
+      description: "`null` clears a level. A trailed stop may sit above the average entry (it then carries no open risk)."
+      parameters:
+        - "$ref": "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: "object"
+              properties:
+                stop:
+                  oneOf:
+                    - "$ref": "#/components/schemas/Price"
+                    - type: "null"
+                target:
+                  oneOf:
+                    - "$ref": "#/components/schemas/Price"
+                    - type: "null"
+              additionalProperties: false
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      responses:
+        "200":
+          description: "Updated."
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                required:
+                  - "data"
+                  - "meta"
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/ActualTrade"
+                  meta:
+                    "$ref": "#/components/schemas/Meta"
+        "401":
+          "$ref": "#/components/responses/Unauthenticated"
+        "403":
+          "$ref": "#/components/responses/Forbidden"
+        "404":
+          "$ref": "#/components/responses/NotFound"
+        "419":
+          "$ref": "#/components/responses/CsrfMismatch"
+        "422":
+          "$ref": "#/components/responses/ValidationFailed"
+        "429":
+          "$ref": "#/components/responses/RateLimited"
   "/api/v1/actual-trades/{id}/fills":
     post:
       operationId: "addFill"
@@ -3916,6 +3972,16 @@ components:
           enum:
             - "OPEN"
             - "CLOSED"
+        stop:
+          oneOf:
+            - "$ref": "#/components/schemas/Price"
+            - type: "null"
+          description: "The owner's stop for this trade; null when none was entered."
+        target:
+          oneOf:
+            - "$ref": "#/components/schemas/Price"
+            - type: "null"
+          description: "The owner's target for this trade; null when none was entered."
         quantity_open:
           type: "integer"
           minimum: 0
@@ -3944,6 +4010,8 @@ components:
         - "instrument"
         - "trade_plan_id"
         - "status"
+        - "stop"
+        - "target"
         - "quantity_open"
         - "avg_entry_price"
         - "avg_exit_price"
@@ -3986,6 +4054,12 @@ components:
             - "price"
             - "executed_at"
           additionalProperties: false
+        stop:
+          "$ref": "#/components/schemas/Price"
+          description: "Optional; must be below the fill price. Counts as the trade's open risk in the account limits."
+        target:
+          "$ref": "#/components/schemas/Price"
+          description: "Optional; must be above the fill price."
         notes:
           type: "string"
       required:

@@ -17,13 +17,13 @@ class ActualTradeService
     /**
      * @param  array{side: string, quantity: int, price: string, executed_at: string, broker_order_id?: string|null, broker_trade_id?: string|null, fees?: string|null}  $fill
      */
-    public function open(User $user, string $instrumentId, ?string $planId, array $fill): string
+    public function open(User $user, string $instrumentId, ?string $planId, array $fill, ?string $stop = null, ?string $target = null): string
     {
-        return DB::transaction(function () use ($user, $instrumentId, $planId, $fill) {
+        return DB::transaction(function () use ($user, $instrumentId, $planId, $fill, $stop, $target) {
             $id = (string) Str::uuid7();
             DB::table('actual_trades')->insert([
                 'id' => $id, 'tenant_id' => app(PersonalTenant::class)->idFor($user), 'user_id' => $user->getKey(), 'instrument_id' => $instrumentId,
-                'trade_plan_id' => $planId, 'direction' => 'LONG', 'status' => 'OPEN', 'quantity_open' => 0, 'source' => 'MANUAL',
+                'trade_plan_id' => $planId, 'direction' => 'LONG', 'status' => 'OPEN', 'quantity_open' => 0, 'source' => 'MANUAL', 'stop_price' => $stop, 'target_price' => $target,
             ]);
             $this->addFill($id, $fill);
 
