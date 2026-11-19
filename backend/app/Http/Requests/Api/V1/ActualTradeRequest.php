@@ -20,6 +20,8 @@ class ActualTradeRequest extends FormRequest
             'instrument' => ['required', 'string', 'regex:/^[A-Z0-9&_-]{1,32}$/'],
             'trade_plan_id' => ['sometimes', 'uuid'],
             'notes' => ['sometimes', 'string', 'max:2000'],
+            'stop' => ['sometimes', 'nullable', 'numeric', 'gt:0', 'max:10000000', 'decimal:0,2', 'lt:fill.price'],
+            'target' => ['sometimes', 'nullable', 'numeric', 'gt:0', 'max:10000000', 'decimal:0,2', 'gt:fill.price'],
             'fill' => ['required', 'array:side,quantity,price,executed_at,broker_order_id,fees'],
             'fill.side' => ['required', Rule::in(['BUY'])],
             ...FillRules::rules('fill.'),

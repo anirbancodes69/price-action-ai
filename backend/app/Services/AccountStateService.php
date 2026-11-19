@@ -66,12 +66,12 @@ class AccountStateService
             ->where('closed_at', '>=', $dayStart)->where('closed_at', '<', $dayStart->addDay())
             ->orderBy('closed_at')->get(['realized_pnl', 'charges'])
             ->map(fn ($r) => bcsub((string) $r->realized_pnl, (string) ($r->charges ?? '0'), 8))->all();
-        // The stop of an open actual position is the stop of its plan (the trade row has none); without a plan the
+        // The stop of an open actual position is the one entered on the trade, else its plan's; without either the
         // position contributes cost basis but no open risk.
         $open = (clone $base)->where('actual_trades.status', 'OPEN')->where('quantity_open', '>', 0)
             ->leftJoin('trade_plans', 'trade_plans.id', '=', 'actual_trades.trade_plan_id')
-            ->get(['actual_trades.avg_entry_price', 'trade_plans.stop_price', 'actual_trades.quantity_open'])
-            ->map(fn ($r) => [(string) $r->avg_entry_price, (string) ($r->stop_price ?? $r->avg_entry_price), (int) $r->quantity_open])->all();
+            ->get(['actual_trades.avg_entry_price', 'actual_trades.stop_price as own_stop', 'trade_plans.stop_price', 'actual_trades.quantity_open'])
+            ->map(fn ($r) => [(string) $r->avg_entry_price, (string) ($r->own_stop ?? $r->stop_price ?? $r->avg_entry_price), (int) $r->quantity_open])->all();
 
         return [$closed, $open];
     }

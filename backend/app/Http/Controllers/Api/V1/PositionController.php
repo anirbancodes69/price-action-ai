@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * `GET /api/v1/positions/live` (X11): open actual positions priced at the latest stored 5m close. The price is display
- * only and carries its bar time (`price_at`); it never feeds analysis. Stop and target come from the linked plan, or are
- * null for a trade logged without one. The paper book is not built yet, so it lists nothing.
+ * only and carries its bar time (`price_at`); it never feeds analysis. Stop and target are the ones entered on the trade, else the
+ * linked plan's, else null. The paper book is not built yet, so it lists nothing.
  */
 class PositionController extends Controller
 {
@@ -40,7 +40,7 @@ class PositionController extends Controller
             ->leftJoin('trade_plans as p', 'p.id', '=', 't.trade_plan_id')
             ->where('t.user_id', $user->getKey())->where('t.status', 'OPEN')->where('t.quantity_open', '>', 0)
             ->orderBy('t.opened_at')
-            ->get(['t.id', 't.instrument_id', 'i.trading_symbol', 't.quantity_open', 't.avg_entry_price', 't.opened_at', 'p.stop_price', 'p.target_price']);
+            ->get(['t.id', 't.instrument_id', 'i.trading_symbol', 't.quantity_open', 't.avg_entry_price', 't.opened_at', 't.stop_price as own_stop', 't.target_price as own_target', 'p.stop_price', 'p.target_price']);
 
         $out = [];
         foreach ($rows as $r) {
@@ -48,8 +48,8 @@ class PositionController extends Controller
                 ->orderByDesc('bar_start')->first(['bar_start', 'close']);
             $price = $bar === null ? null : (string) $bar->close;
             $entry = (string) $r->avg_entry_price;
-            $stop = $r->stop_price === null ? null : (string) $r->stop_price;
-            $target = $r->target_price === null ? null : (string) $r->target_price;
+            $stop = ($r->own_stop ?? $r->stop_price) === null ? null : (string) ($r->own_stop ?? $r->stop_price);
+            $target = ($r->own_target ?? $r->target_price) === null ? null : (string) ($r->own_target ?? $r->target_price);
             $out[] = [
                 'position_id' => $r->id,
                 'symbol' => $r->trading_symbol,

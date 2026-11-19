@@ -18,7 +18,7 @@ use Illuminate\Validation\Rule;
 /**
  * Journal of the owner's closed actual trades (J1-J3). Entries are created as drafts when a trade closes; the owner adds
  * notes, tags and lessons. Trade figures are read from the trade rows, never edited here. The paper book is not built,
- * so its journal is empty. Setup type and R-multiple exist only for trades linked to a plan (null otherwise).
+ * so its journal is empty. Setup type and R-multiple exist only when the trade has a stop (its own, else its plan's); null otherwise.
  */
 class JournalController extends Controller
 {
@@ -132,7 +132,7 @@ class JournalController extends Controller
             'j.id', 'j.status', 'j.followed_plan', 'j.followed_plan_system', 'j.notes', 'j.lessons', 'j.rating',
             DB::raw('to_json(j.tags) as tags'), DB::raw('to_json(j.emotions) as emotions'), DB::raw('to_json(j.mistakes) as mistakes'),
             'i.trading_symbol', 't.avg_entry_price', 't.avg_exit_price', 't.realized_pnl', 't.charges', 't.opened_at', 't.closed_at',
-            'p.stop_price',
+            't.stop_price as own_stop', 'p.stop_price',
             DB::raw("(select coalesce(sum(f.quantity), 0) from actual_trade_fills f where f.actual_trade_id = t.id and f.side = 'BUY') as bought"),
         ];
     }
@@ -152,7 +152,8 @@ class JournalController extends Controller
     {
         $net = bcsub((string) ($r->realized_pnl ?? '0'), (string) ($r->charges ?? '0'), 8);
         $qty = (int) $r->bought;
-        $risk = $r->stop_price === null || $r->avg_entry_price === null ? null : bcmul(bcsub((string) $r->avg_entry_price, (string) $r->stop_price, 8), (string) $qty, 8);
+        $stop = $r->own_stop ?? $r->stop_price;
+        $risk = $stop === null || $r->avg_entry_price === null ? null : bcmul(bcsub((string) $r->avg_entry_price, (string) $stop, 8), (string) $qty, 8);
         $closed = $r->closed_at !== null;
 
         return [

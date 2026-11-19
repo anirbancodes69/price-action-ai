@@ -86,6 +86,22 @@ class RiskTodayTest extends TestCase
         ], $res->json('data'));
     }
 
+    public function test_an_open_trades_own_stop_counts_as_open_risk(): void
+    {
+        $u = $this->user();
+        $inst = (string) Str::uuid7();
+        DB::table('instruments')->insert(['id' => $inst, 'exchange' => 'NSE', 'segment' => 'EQ', 'trading_symbol' => 'AAA', 'name' => 'Alpha', 'status' => 'ACTIVE']);
+        app(ActualTradeService::class)->open($u, $inst, null, ['side' => 'BUY', 'quantity' => 10, 'price' => '100.00', 'executed_at' => '2026-11-18T10:00:00+05:30'], '96.00');
+        app(ActualTradeService::class)->open($u, $inst, null, ['side' => 'BUY', 'quantity' => 5, 'price' => '50.00', 'executed_at' => '2026-11-18T10:01:00+05:30']);
+        Http::fake(['engine.test/internal/v1/risk/account-state' => Http::response($this->engineAnswer())]);
+
+        $this->actingAs($u, 'web')->getJson('/api/v1/risk/today?book=ACTUAL')->assertOk();
+
+        // 10 shares x (100 - 96) = 40 of risk; the trade without a stop adds none but still counts as a position
+        Http::assertSent(fn (Request $r) => $r->data()['account_state']['open_risk'] === '40.00'
+            && $r->data()['account_state']['open_positions'] === 2 && $r->data()['account_state']['open_cost_basis'] === '1250.00');
+    }
+
     public function test_the_engines_blocking_reason_is_passed_through(): void
     {
         Http::fake(['engine.test/internal/v1/risk/account-state' => Http::response($this->engineAnswer('DAILY_LOSS_LIMIT_REACHED'))]);
