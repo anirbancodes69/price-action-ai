@@ -25,11 +25,22 @@ class SessionClock
 
     public function entryCutoff(?CarbonImmutable $now = null): CarbonImmutable
     {
+        return $this->beforeClose('session.entry_cutoff_minutes_before_close', $now);
+    }
+
+    /** The forced session-end exit time (TRD-05 §8). */
+    public function sessionEndExit(?CarbonImmutable $now = null): CarbonImmutable
+    {
+        return $this->beforeClose('session.exit_minutes_before_close', $now);
+    }
+
+    private function beforeClose(string $parameter, ?CarbonImmutable $now): CarbonImmutable
+    {
         $day = ($now ?? CarbonImmutable::now())->setTimezone(self::TZ);
         $row = DB::table('market_calendar')->where('exchange', 'NSE')->where('calendar_date', $day->toDateString())->first();
         $close = $row !== null && $row->session_close !== null ? (string) $row->session_close : '15:30:00';
 
         return CarbonImmutable::parse($day->toDateString().' '.$close, self::TZ)
-            ->subMinutes((int) $this->ruleset->get('session.entry_cutoff_minutes_before_close'));
+            ->subMinutes((int) $this->ruleset->get($parameter));
     }
 }
