@@ -38,6 +38,12 @@ class EngineClient
     }
 
     /** @param  array<string, mixed>  $payload @return array<string, mixed> */
+    public function accountState(array $payload): array
+    {
+        return $this->post('/internal/v1/risk/account-state', $payload, (float) config('services.engine.timeout'));
+    }
+
+    /** @param  array<string, mixed>  $payload @return array<string, mixed> */
     private function post(string $path, array $payload, float $timeout): array
     {
         try {

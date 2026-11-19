@@ -1,0 +1,80 @@
+{
+  "$defs": {
+    "AccountStateResult": {
+      "additionalProperties": false,
+      "description": "Account state as evaluated, with what remains (TRD-05 §8.1, §11).",
+      "properties": {
+        "blocked_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "First failed account rule (TRD-05 §8), e.g. DAILY_LOSS_LIMIT_REACHED.",
+          "title": "Blocked Reason"
+        },
+        "losing_streak": {
+          "minimum": 0,
+          "title": "Losing Streak",
+          "type": "integer"
+        },
+        "open_risk": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Open Risk",
+          "type": "string"
+        },
+        "realised_net_pnl_today": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Realised Net Pnl Today",
+          "type": "string"
+        },
+        "remaining_daily_loss": {
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "title": "Remaining Daily Loss",
+          "type": "string"
+        }
+      },
+      "required": [
+        "realised_net_pnl_today",
+        "open_risk",
+        "losing_streak",
+        "remaining_daily_loss"
+      ],
+      "title": "AccountStateResult",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The state as evaluated, with the limit values it was checked against.",
+  "properties": {
+    "account_state": {
+      "$ref": "#/$defs/AccountStateResult"
+    },
+    "daily_loss_limit": {
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "title": "Daily Loss Limit",
+      "type": "string"
+    },
+    "max_consecutive_losses": {
+      "title": "Max Consecutive Losses",
+      "type": "integer"
+    },
+    "max_open_positions": {
+      "title": "Max Open Positions",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "account_state",
+    "daily_loss_limit",
+    "max_consecutive_losses",
+    "max_open_positions"
+  ],
+  "title": "AccountLimitsResult",
+  "type": "object"
+}

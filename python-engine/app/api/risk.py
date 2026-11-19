@@ -10,13 +10,15 @@ from fastapi import APIRouter, Depends
 from app.api.deps import ruleset_for
 from app.backtest.costs import CostSchedule, intraday_costs
 from app.domain.risk.account import AccountState as DomainState
-from app.domain.risk.account import RiskProfile
+from app.domain.risk.account import RiskProfile, check_account_limits
 from app.domain.risk.request import RiskRequest, calculate_risk
 from app.domain.risk.rounding import down_to_tick, entry_up
 from app.domain.risk.validation import effective_min_rr, validate_rr, validate_stop
 from app.domain.setups.types import SetupDirection
 from app.schemas.common import Direction, RoundedLevels
 from app.schemas.risk import (
+    AccountLimitsRequest,
+    AccountLimitsResult,
     AccountStateResult,
     LevelsValidationRequest,
     LevelsValidationResponse,
@@ -146,6 +148,45 @@ def _constraints(c: dict[str, int]) -> SizingConstraints:
         qty_position_cap=c.get("POSITION_CAP", 0),
         qty_open_risk=c.get("OPEN_RISK", 0),
         qty_daily_loss=c.get("DAILY_LOSS", 0),
+    )
+
+
+@router.post("/account-state")
+def account_state(req: AccountLimitsRequest) -> AccountLimitsResult:
+    """Apply the account limits: what remains, and the first rule that blocks new entries."""
+    a = req.account_state
+    loss = max(ZERO, -a.realised_net_pnl_today)
+    state = DomainState(
+        a.realised_net_pnl_today,
+        loss,
+        a.open_risk,
+        loss + a.open_risk,
+        a.losing_streak,
+        a.open_positions,
+        a.open_cost_basis,
+    )
+    profile = RiskProfile(
+        req.capital,
+        ZERO,  # not used by the account limits
+        ZERO,
+        req.daily_loss_limit_pct,
+        req.max_consecutive_losses,
+        req.max_open_positions,
+        ZERO,
+    )
+    return AccountLimitsResult(
+        account_state=AccountStateResult(
+            realised_net_pnl_today=state.realised_net_pnl_today,
+            open_risk=state.open_risk,
+            losing_streak=state.losing_streak,
+            remaining_daily_loss=max(ZERO, profile.daily_loss_limit - state.day_loss_used),
+            blocked_reason=check_account_limits(
+                state, profile, req.session_open, req.as_of_ts, req.entry_cutoff_at
+            ),
+        ),
+        daily_loss_limit=profile.daily_loss_limit,
+        max_consecutive_losses=req.max_consecutive_losses,
+        max_open_positions=req.max_open_positions,
     )
 
 
