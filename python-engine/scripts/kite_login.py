@@ -56,6 +56,10 @@ def main() -> None:
         sys.exit(
             f"Token exchange failed: HTTP {resp.status_code} {body.get('error_type')}: {body.get('message')}"
         )
+    if TOKEN_FILE.is_dir():
+        sys.exit(
+            f"{TOKEN_FILE} is a directory (Docker makes one when the file is missing). Remove it and retry."
+        )
     TOKEN_FILE.write_text(body["data"]["access_token"])
     TOKEN_FILE.chmod(0o600)
     print(
