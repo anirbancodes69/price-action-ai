@@ -4,10 +4,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Wallet } from "lucide-react";
-import { formatDateTime, formatInt, formatPct, formatPrice, formatSignedInr, formatTime } from "@/lib/format";
+import {
+  formatDateTime,
+  formatInt,
+  formatPct,
+  formatPrice,
+  formatSignedInr,
+  formatTime,
+} from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
-import { fetchPositions, fetchTrades, type LivePosition, type LoggedTrade } from "@/lib/api/trades";
+import { fetchRiskToday } from "@/lib/api/risk";
+import {
+  fetchPositions,
+  fetchTrades,
+  type LivePosition,
+  type LoggedTrade,
+} from "@/lib/api/trades";
 import type { DataMode } from "@/lib/api/scanner";
 import { PageFrame, PageHeader } from "@/components/layout/page-frame";
 import { Badge } from "@/components/data/badge";
@@ -22,6 +35,8 @@ import { Button } from "@/components/ui/button";
 import { ChoiceGroup } from "@/components/ui/choice-group";
 import { FilterRow } from "@/components/ui/filter-row";
 import { useToast } from "@/components/ui/toast";
+import { RiskTodayPanel } from "@/features/dashboard/risk-today";
+import type { RiskToday } from "@/types";
 import { TradeDialog, type TradeDialogMode } from "./trade-dialog";
 
 const POLL_MS = 30_000;
@@ -33,7 +48,12 @@ const POLL_MS = 30_000;
 export function LiveTrades() {
   const router = useRouter();
   const toast = useToast();
-  const [data, setData] = useState<{ trades: LoggedTrade[]; positions: LivePosition[]; mode: DataMode } | null>(null);
+  const [data, setData] = useState<{
+    trades: LoggedTrade[];
+    positions: LivePosition[];
+    mode: DataMode;
+    risk: RiskToday;
+  } | null>(null);
   const [error, setError] = useState<ApiError | Error | null>(null);
   const [tab, setTab] = useState<"positions" | "trades">("positions");
   const [dialog, setDialog] = useState<TradeDialogMode | null>(null);
@@ -42,8 +62,17 @@ export function LiveTrades() {
   const load = useCallback(
     async (signal?: AbortSignal) => {
       try {
-        const [trades, live] = await Promise.all([fetchTrades(signal), fetchPositions(signal)]);
-        setData({ trades, positions: live.positions, mode: live.dataMode });
+        const [trades, live, risk] = await Promise.all([
+          fetchTrades(signal),
+          fetchPositions(signal),
+          fetchRiskToday("actual", signal),
+        ]);
+        setData({
+          trades,
+          positions: live.positions,
+          mode: live.dataMode,
+          risk,
+        });
         setError(null);
         warned.current = false;
       } catch (e) {
@@ -55,7 +84,11 @@ export function LiveTrades() {
         setError(e instanceof Error ? e : new Error("Load failed"));
         if (!warned.current) {
           warned.current = true;
-          toast({ title: "Could not refresh your trades", description: "Showing the last result.", tone: "warn" });
+          toast({
+            title: "Could not refresh your trades",
+            description: "Showing the last result.",
+            tone: "warn",
+          });
         }
       }
     },
@@ -82,7 +115,15 @@ export function LiveTrades() {
     <PageHeader
       title="Active trades"
       description="The trades you log from your broker, with live P&L at the latest closed 5m bar. Nothing here places an order."
-      meta={data ? data.mode === "DEMO" ? <SampleDataBadge /> : <LiveDataBadge mode={data.mode} /> : undefined}
+      meta={
+        data ? (
+          data.mode === "DEMO" ? (
+            <SampleDataBadge />
+          ) : (
+            <LiveDataBadge mode={data.mode} />
+          )
+        ) : undefined
+      }
       actions={
         <Button variant="primary" onClick={() => setDialog({ kind: "open" })}>
           <Plus /> Log trade
@@ -95,18 +136,36 @@ export function LiveTrades() {
     return (
       <PageFrame>
         {header}
-        {error ? <ErrorState title="Your trades are not available" message="They could not be loaded. Nothing was changed." onRetry={() => void load()} /> : <TableSkeleton />}
-        <TradeDialog mode={dialog} onClose={() => setDialog(null)} onDone={() => void load()} />
+        {error ? (
+          <ErrorState
+            title="Your trades are not available"
+            message="They could not be loaded. Nothing was changed."
+            onRetry={() => void load()}
+          />
+        ) : (
+          <TableSkeleton />
+        )}
+        <TradeDialog
+          mode={dialog}
+          onClose={() => setDialog(null)}
+          onDone={() => void load()}
+        />
       </PageFrame>
     );
   }
 
   const { trades, positions } = data;
-  const tradeBySymbol = new Map(trades.filter((t) => t.status === "OPEN").map((t) => [t.symbol, t]));
+  const tradeBySymbol = new Map(
+    trades.filter((t) => t.status === "OPEN").map((t) => [t.symbol, t]),
+  );
   const priced = positions.filter((p) => p.unrealisedPnl !== null);
   const unrealised = priced.reduce((s, p) => s + (p.unrealisedPnl ?? 0), 0);
   const realised = trades.reduce((s, t) => s + (t.netRealisedPnl ?? 0), 0);
-  const lastPrice = positions.map((p) => p.priceAt).filter((x): x is string => x !== null).sort().at(-1);
+  const lastPrice = positions
+    .map((p) => p.priceAt)
+    .filter((x): x is string => x !== null)
+    .sort()
+    .at(-1);
 
   const positionCols: Column<LivePosition>[] = [
     {
@@ -116,14 +175,34 @@ export function LiveTrades() {
       grow: true,
       sortValue: (p) => p.symbol,
       render: (p) => (
-        <Link href={`/analysis/${p.symbol}`} className="flex flex-col rounded-lg leading-tight">
-          <span className="text-sm font-medium text-foreground underline-offset-4 hover:underline">{p.symbol}</span>
-          <span className="truncate text-xs text-muted-foreground">Since {formatDateTime(p.entryAt)}</span>
+        <Link
+          href={`/analysis/${p.symbol}`}
+          className="flex flex-col rounded-lg leading-tight"
+        >
+          <span className="text-sm font-medium text-foreground underline-offset-4 hover:underline">
+            {p.symbol}
+          </span>
+          <span className="truncate text-xs text-muted-foreground">
+            Since {formatDateTime(p.entryAt)}
+          </span>
         </Link>
       ),
     },
-    { key: "qty", header: "Qty", align: "right", sortValue: (p) => p.quantity, render: (p) => formatInt(p.quantity) },
-    { key: "avg", header: "Avg price", align: "right", hideBelow: "md", sortValue: (p) => p.entryPrice, render: (p) => formatPrice(p.entryPrice) },
+    {
+      key: "qty",
+      header: "Qty",
+      align: "right",
+      sortValue: (p) => p.quantity,
+      render: (p) => formatInt(p.quantity),
+    },
+    {
+      key: "avg",
+      header: "Avg price",
+      align: "right",
+      hideBelow: "md",
+      sortValue: (p) => p.entryPrice,
+      render: (p) => formatPrice(p.entryPrice),
+    },
     {
       key: "ltp",
       header: "Last close",
@@ -134,8 +213,14 @@ export function LiveTrades() {
           <span className="text-muted-foreground">No bar yet</span>
         ) : (
           <span className="flex flex-col leading-tight">
-            <span className="text-foreground">{formatPrice(p.currentPrice)}</span>
-            {p.priceAt && <span className="text-xs text-muted-foreground">{formatTime(p.priceAt)} IST</span>}
+            <span className="text-foreground">
+              {formatPrice(p.currentPrice)}
+            </span>
+            {p.priceAt && (
+              <span className="text-xs text-muted-foreground">
+                {formatTime(p.priceAt)} IST
+              </span>
+            )}
           </span>
         ),
     },
@@ -146,9 +231,17 @@ export function LiveTrades() {
       sortValue: (p) => p.unrealisedPnl ?? 0,
       render: (p) => {
         if (p.unrealisedPnl === null) return "—";
-        const pct = p.currentPrice === null ? null : ((p.currentPrice - p.entryPrice) / p.entryPrice) * 100;
+        const pct =
+          p.currentPrice === null
+            ? null
+            : ((p.currentPrice - p.entryPrice) / p.entryPrice) * 100;
         return (
-          <span className={cn("flex flex-col leading-tight", p.unrealisedPnl >= 0 ? "text-bull" : "text-bear")}>
+          <span
+            className={cn(
+              "flex flex-col leading-tight",
+              p.unrealisedPnl >= 0 ? "text-bull" : "text-bear",
+            )}
+          >
             <span>{formatSignedInr(p.unrealisedPnl)}</span>
             {pct !== null && <span className="text-xs">{formatPct(pct)}</span>}
           </span>
@@ -160,7 +253,12 @@ export function LiveTrades() {
       header: "Stop",
       align: "right",
       hideBelow: "lg",
-      render: (p) => (p.stop === null ? <span className="text-muted-foreground">Not tracked</span> : <span className="text-bear">{formatPrice(p.stop)}</span>),
+      render: (p) =>
+        p.stop === null ? (
+          <span className="text-muted-foreground">Not tracked</span>
+        ) : (
+          <span className="text-bear">{formatPrice(p.stop)}</span>
+        ),
     },
     {
       key: "act",
@@ -169,7 +267,11 @@ export function LiveTrades() {
       render: (p) => {
         const trade = tradeBySymbol.get(p.symbol);
         return trade ? (
-          <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "fill", trade, side: "SELL" })}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDialog({ kind: "fill", trade, side: "SELL" })}
+          >
             Record sell
           </Button>
         ) : null;
@@ -178,11 +280,49 @@ export function LiveTrades() {
   ];
 
   const tradeCols: Column<LoggedTrade>[] = [
-    { key: "symbol", header: "Symbol", sticky: true, grow: true, sortValue: (t) => t.symbol, render: (t) => <span className="text-sm font-medium text-foreground">{t.symbol}</span> },
-    { key: "status", header: "Status", render: (t) => <Badge tone={t.status === "OPEN" ? "info" : "neutral"} variant="outline">{t.status === "OPEN" ? "Open" : "Closed"}</Badge> },
-    { key: "open", header: "Open qty", align: "right", sortValue: (t) => t.quantityOpen, render: (t) => formatInt(t.quantityOpen) },
-    { key: "entry", header: "Avg entry", align: "right", hideBelow: "md", render: (t) => (t.avgEntry === null ? "—" : formatPrice(t.avgEntry)) },
-    { key: "exit", header: "Avg exit", align: "right", hideBelow: "md", render: (t) => (t.avgExit === null ? "—" : formatPrice(t.avgExit)) },
+    {
+      key: "symbol",
+      header: "Symbol",
+      sticky: true,
+      grow: true,
+      sortValue: (t) => t.symbol,
+      render: (t) => (
+        <span className="text-sm font-medium text-foreground">{t.symbol}</span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (t) => (
+        <Badge
+          tone={t.status === "OPEN" ? "info" : "neutral"}
+          variant="outline"
+        >
+          {t.status === "OPEN" ? "Open" : "Closed"}
+        </Badge>
+      ),
+    },
+    {
+      key: "open",
+      header: "Open qty",
+      align: "right",
+      sortValue: (t) => t.quantityOpen,
+      render: (t) => formatInt(t.quantityOpen),
+    },
+    {
+      key: "entry",
+      header: "Avg entry",
+      align: "right",
+      hideBelow: "md",
+      render: (t) => (t.avgEntry === null ? "—" : formatPrice(t.avgEntry)),
+    },
+    {
+      key: "exit",
+      header: "Avg exit",
+      align: "right",
+      hideBelow: "md",
+      render: (t) => (t.avgExit === null ? "—" : formatPrice(t.avgExit)),
+    },
     {
       key: "net",
       header: "Net realised",
@@ -192,18 +332,37 @@ export function LiveTrades() {
         t.netRealisedPnl === null ? (
           "—"
         ) : (
-          <span className={t.netRealisedPnl >= 0 ? "text-bull" : "text-bear"} title={`Gross ${formatSignedInr(t.realisedPnl ?? 0)} less charges ${formatPrice(t.charges ?? 0)}`}>
+          <span
+            className={t.netRealisedPnl >= 0 ? "text-bull" : "text-bear"}
+            title={`Gross ${formatSignedInr(t.realisedPnl ?? 0)} less charges ${formatPrice(t.charges ?? 0)}`}
+          >
             {formatSignedInr(t.netRealisedPnl)}
           </span>
         ),
     },
-    { key: "fills", header: "Fills", align: "right", hideBelow: "lg", render: (t) => t.fills.length },
+    {
+      key: "fills",
+      header: "Fills",
+      align: "right",
+      hideBelow: "lg",
+      render: (t) => t.fills.length,
+    },
     {
       key: "act",
       header: <span className="sr-only">Actions</span>,
       align: "right",
       render: (t) => (
-        <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "fill", trade: t, side: t.status === "OPEN" ? "SELL" : "BUY" })}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            setDialog({
+              kind: "fill",
+              trade: t,
+              side: t.status === "OPEN" ? "SELL" : "BUY",
+            })
+          }
+        >
           Record fill
         </Button>
       ),
@@ -214,52 +373,97 @@ export function LiveTrades() {
     <PageFrame>
       {header}
       <StatGrid label="Trade figures">
-        <Stat label="Open positions" value={String(positions.length)} hint={lastPrice ? `Priced at the ${formatTime(lastPrice)} IST bar` : "No priced bar yet"} />
+        <Stat
+          label="Open positions"
+          value={String(positions.length)}
+          hint={
+            lastPrice
+              ? `Priced at the ${formatTime(lastPrice)} IST bar`
+              : "No priced bar yet"
+          }
+        />
         <Stat
           label="Unrealised P&L"
           value={formatSignedInr(unrealised)}
           tone={unrealised >= 0 ? "bull" : "bear"}
-          hint={priced.length === positions.length ? "Before charges" : `${positions.length - priced.length} position(s) without a price`}
+          hint={
+            priced.length === positions.length
+              ? "Before charges"
+              : `${positions.length - priced.length} position(s) without a price`
+          }
         />
-        <Stat label="Realised P&L" value={formatSignedInr(realised)} tone={realised >= 0 ? "bull" : "bear"} hint="Net of the charges you entered, all logged trades" />
+        <Stat
+          label="Realised P&L"
+          value={formatSignedInr(realised)}
+          tone={realised >= 0 ? "bull" : "bear"}
+          hint="Net of the charges you entered, all logged trades"
+        />
       </StatGrid>
 
-      <section aria-label="Positions and trades" className="flex min-w-0 flex-col gap-3">
-        <FilterRow label="Trade view">
-          <ChoiceGroup
-            ariaLabel="Trade view"
-            value={tab}
-            onChange={setTab}
-            options={[
-              { value: "positions", label: "Open positions", count: positions.length },
-              { value: "trades", label: "All trades", count: trades.length },
-            ]}
-          />
-        </FilterRow>
-        {tab === "positions" ? (
-          <DataTable
-            columns={positionCols}
-            rows={positions}
-            rowKey={(p) => p.id}
-            initialSort={{ key: "pnl", dir: "desc" }}
-            caption="Open positions"
-            empty={<Empty icon={Wallet} title="No open positions" description="Log a trade after you buy at your broker." />}
-          />
-        ) : (
-          <DataTable
-            columns={tradeCols}
-            rows={trades}
-            rowKey={(t) => t.id}
-            caption="All trades"
-            empty={<Empty icon={Wallet} title="No trades logged yet" description="Use Log trade to record your first fill." />}
-          />
-        )}
-        <p className="text-xs text-muted-foreground">
-          Prices are the latest stored 5m close, shown with their bar time. Stops come from a linked plan; trades logged without a plan have none.
-        </p>
-      </section>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <section
+          aria-label="Positions and trades"
+          className="flex min-w-0 flex-col gap-3"
+        >
+          <FilterRow label="Trade view">
+            <ChoiceGroup
+              ariaLabel="Trade view"
+              value={tab}
+              onChange={setTab}
+              options={[
+                {
+                  value: "positions",
+                  label: "Open positions",
+                  count: positions.length,
+                },
+                { value: "trades", label: "All trades", count: trades.length },
+              ]}
+            />
+          </FilterRow>
+          {tab === "positions" ? (
+            <DataTable
+              columns={positionCols}
+              rows={positions}
+              rowKey={(p) => p.id}
+              initialSort={{ key: "pnl", dir: "desc" }}
+              caption="Open positions"
+              empty={
+                <Empty
+                  icon={Wallet}
+                  title="No open positions"
+                  description="Log a trade after you buy at your broker."
+                />
+              }
+            />
+          ) : (
+            <DataTable
+              columns={tradeCols}
+              rows={trades}
+              rowKey={(t) => t.id}
+              caption="All trades"
+              empty={
+                <Empty
+                  icon={Wallet}
+                  title="No trades logged yet"
+                  description="Use Log trade to record your first fill."
+                />
+              }
+            />
+          )}
+          <p className="text-xs text-muted-foreground">
+            Prices are the latest stored 5m close, shown with their bar time.
+            Stops come from a linked plan; trades logged without a plan have
+            none.
+          </p>
+        </section>
+        <RiskTodayPanel books={[data.risk]} />
+      </div>
 
-      <TradeDialog mode={dialog} onClose={() => setDialog(null)} onDone={() => void load()} />
+      <TradeDialog
+        mode={dialog}
+        onClose={() => setDialog(null)}
+        onDone={() => void load()}
+      />
     </PageFrame>
   );
 }
