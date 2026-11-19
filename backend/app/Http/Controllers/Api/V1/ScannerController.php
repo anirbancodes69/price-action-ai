@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\ScannerRequest;
 use App\Services\DataSourceResolver;
 use App\Services\Engine\EngineClient;
 use App\Services\InstrumentCatalog;
+use App\Services\RiskProfileResolver;
 use App\Services\Scanner\ScannerRowMapper;
 use App\Support\ApiResponse;
 use App\Support\Cursor;
@@ -18,12 +19,12 @@ use Illuminate\Http\JsonResponse;
  */
 class ScannerController extends Controller
 {
-    public function index(ScannerRequest $request, EngineClient $engine, DataSourceResolver $sources, InstrumentCatalog $catalog): JsonResponse
+    public function index(ScannerRequest $request, EngineClient $engine, DataSourceResolver $sources, InstrumentCatalog $catalog, RiskProfileResolver $profiles): JsonResponse
     {
         $scan = $engine->scan([
             'data_source_id' => $sources->id(),
             'universe_code' => $request->input('universe', (string) config('trading.universe')),
-            'account' => ['capital' => (string) config('trading.capital')],
+            'account' => ['capital' => $profiles->capital($request->user())],
             'include_no_trade' => true,
         ]);
 
