@@ -18,7 +18,7 @@ use Illuminate\Validation\Rule;
 /**
  * Journal of the owner's closed actual trades (J1-J3). Entries are created as drafts when a trade closes; the owner adds
  * notes, tags and lessons. Trade figures are read from the trade rows, never edited here. The paper book is not built,
- * so its journal is empty. Setup type and R-multiple exist only when the trade has a stop (its own, else its plan's); null otherwise.
+ * so its journal is empty. The setup type is the linked plan's (null without a plan); the R-multiple needs a stop (the trade's own, else its plan's).
  */
 class JournalController extends Controller
 {
@@ -132,7 +132,7 @@ class JournalController extends Controller
             'j.id', 'j.status', 'j.followed_plan', 'j.followed_plan_system', 'j.notes', 'j.lessons', 'j.rating',
             DB::raw('to_json(j.tags) as tags'), DB::raw('to_json(j.emotions) as emotions'), DB::raw('to_json(j.mistakes) as mistakes'),
             'i.trading_symbol', 't.avg_entry_price', 't.avg_exit_price', 't.realized_pnl', 't.charges', 't.opened_at', 't.closed_at',
-            't.stop_price as own_stop', 'p.stop_price',
+            't.stop_price as own_stop', 'p.stop_price', 'p.setup_type',
             DB::raw("(select coalesce(sum(f.quantity), 0) from actual_trade_fills f where f.actual_trade_id = t.id and f.side = 'BUY') as bought"),
         ];
     }
@@ -159,7 +159,7 @@ class JournalController extends Controller
         return [
             'id' => $r->id, 'kind' => 'ACTUAL', 'status' => $r->status,
             'trade' => [
-                'symbol' => $r->trading_symbol, 'setup_type' => null, 'direction' => 'LONG',
+                'symbol' => $r->trading_symbol, 'setup_type' => $r->setup_type, 'direction' => 'LONG',
                 'entry_at' => ScannerRowMapper::time((string) $r->opened_at),
                 'exit_at' => $closed ? ScannerRowMapper::time((string) $r->closed_at) : null,
                 'entry_price' => Decimals::money((string) $r->avg_entry_price),

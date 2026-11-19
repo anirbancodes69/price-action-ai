@@ -250,6 +250,74 @@ class TradePlanTest extends TestCase
         $this->actingAs($u, 'web')->getJson("/api/v1/trade-plans/{$plan}")->assertJsonPath('data.linked.actual_trade_ids', [$trade]);
     }
 
+    /** @return array<string, mixed> */
+    private function buy(string $plan, array $over = []): array
+    {
+        return $over + [
+            'instrument' => 'AAA', 'trade_plan_id' => $plan,
+            'fill' => ['side' => 'BUY', 'quantity' => 10, 'price' => '1498.10', 'executed_at' => '2026-11-18T10:00:00+05:30'],
+        ];
+    }
+
+    public function test_logging_a_trade_against_a_plan_takes_its_levels_and_marks_it_filled(): void
+    {
+        $this->fakeEngine([$this->orbSetup()]);
+        $u = $this->user();
+        $plan = $this->create($u)->json('data.id');
+
+        $t = $this->actingAs($u, 'web')->postJson('/api/v1/actual-trades', $this->buy($plan))->assertCreated()->json('data');
+
+        $this->assertSame(['1485.25', '1529.00', $plan], [$t['stop'], $t['target'], $t['trade_plan_id']]);
+        $p = $this->actingAs($u, 'web')->getJson("/api/v1/trade-plans/{$plan}")->json('data');
+        $this->assertSame(['FILLED', 'TRADE_LOGGED', 1, [$t['id']]], [$p['status'], $p['status_reason'], $p['lock_version'], $p['linked']['actual_trade_ids']]);
+        $this->actingAs($u, 'web')->postJson("/api/v1/trade-plans/{$plan}/cancel")->assertStatus(409); // already acted on
+    }
+
+    public function test_the_owners_own_levels_beat_the_plans_and_a_stop_above_the_fill_is_not_inherited(): void
+    {
+        $this->fakeEngine([$this->orbSetup()]);
+        $u = $this->user();
+        $plan = $this->create($u)->json('data.id');
+
+        $own = $this->actingAs($u, 'web')->postJson('/api/v1/actual-trades', $this->buy($plan, ['stop' => '1490.00']))->assertCreated()->json('data');
+        $this->assertSame(['1490.00', '1529.00'], [$own['stop'], $own['target']]);
+
+        $plan2 = $this->create($u)->json('data.id');
+        $gap = $this->buy($plan2);
+        $gap['fill']['price'] = '1480.00'; // filled below the plan's stop: the stop is not inherited
+        $t = $this->actingAs($u, 'web')->postJson('/api/v1/actual-trades', $gap)->assertCreated()->json('data');
+        $this->assertSame([null, '1529.00'], [$t['stop'], $t['target']]);
+    }
+
+    public function test_a_plan_cannot_be_used_for_another_instrument(): void
+    {
+        $this->fakeEngine([$this->orbSetup()]);
+        $u = $this->user();
+        $plan = $this->create($u)->json('data.id');
+        DB::table('instruments')->insert(['id' => (string) Str::uuid7(), 'exchange' => 'NSE', 'segment' => 'EQ', 'trading_symbol' => 'BBB', 'name' => 'Beta', 'status' => 'ACTIVE']);
+
+        $this->actingAs($u, 'web')->postJson('/api/v1/actual-trades', $this->buy($plan, ['instrument' => 'BBB']))->assertStatus(422);
+
+        $this->assertSame('PENDING', DB::table('trade_plans')->where('id', $plan)->value('status'));
+        $this->assertSame(0, DB::table('actual_trades')->count());
+    }
+
+    public function test_the_journal_takes_the_setup_type_and_r_multiple_from_the_plan(): void
+    {
+        $this->fakeEngine([$this->orbSetup()]);
+        $u = $this->user();
+        $plan = $this->create($u)->json('data.id');
+        $trade = $this->actingAs($u, 'web')->postJson('/api/v1/actual-trades', $this->buy($plan))->json('data.id');
+
+        $this->actingAs($u, 'web')->postJson("/api/v1/actual-trades/{$trade}/fills", [
+            'side' => 'SELL', 'quantity' => 10, 'price' => '1510.00', 'executed_at' => '2026-11-18T11:00:00+05:30',
+        ])->assertCreated();
+
+        $t = $this->actingAs($u, 'web')->getJson('/api/v1/journal?kind=ACTUAL')->assertOk()->json('data.0.trade');
+        // gross (1510 - 1498.10) x 10 = 119; risk (1498.10 - 1485.25) x 10 = 128.5; 119 / 128.5 truncated to four decimals
+        $this->assertSame(['OPENING_RANGE_BREAKOUT', '119.00', '0.926', 'WIN'], [$t['setup_type'], $t['net_pnl'], $t['r_multiple'], $t['outcome']]);
+    }
+
     public function test_plans_of_another_user_are_invisible(): void
     {
         $this->fakeEngine([$this->orbSetup()]);

@@ -16,7 +16,7 @@ const trade: ApiActualTrade = {
   fills: [{ id: "f1", side: "BUY", quantity: 10, price: "100.00", executed_at: "2026-11-18T10:00:00+05:30", fees: null }],
 };
 
-const form: FillForm = { symbol: "reliance", side: "BUY", quantity: "10", price: "1498.10", executedAt: "2026-11-18T10:00", fees: "", stop: "", target: "" };
+const form: FillForm = { symbol: "reliance", side: "BUY", quantity: "10", price: "1498.10", executedAt: "2026-11-18T10:00", fees: "", stop: "", target: "", planId: "" };
 
 describe("mapTrade", () => {
   it("converts decimals and nets the charges off the realised P&L", () => {
@@ -52,7 +52,7 @@ describe("validateFill", () => {
   });
 
   it("flags each bad field", () => {
-    const e = validateFill({ symbol: "bad symbol!", side: "BUY", quantity: "0", price: "1.234", executedAt: "", fees: "x", stop: "", target: "" }, true);
+    const e = validateFill({ symbol: "bad symbol!", side: "BUY", quantity: "0", price: "1.234", executedAt: "", fees: "x", stop: "", target: "", planId: "" }, true);
     expect(Object.keys(e).sort()).toEqual(["executedAt", "fees", "price", "quantity", "symbol"]);
   });
 
