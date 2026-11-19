@@ -138,7 +138,19 @@ services:
   engine-worker:
     image: priceaction-ai/engine:${IMAGE_TAG:-local}
     command: ["arq", "app.workers.settings.WorkerSettings"]
-    environment: *engine-env
+    # The bar-close ingestion job (ENG-05 §12) runs here and only here; it stays off unless INGEST_ENABLED=true. The Kite
+    # access token is a file written by scripts/kite_login.py, mounted read-only and never put in the environment
+    # (ARC-06 §5); the API key is not the secret (the api secret never enters a container).
+    environment:
+      <<: *engine-env
+      INGEST_ENABLED: ${INGEST_ENABLED:-false}
+      INGEST_PROVIDER: ${INGEST_PROVIDER:-KITE}
+      INGEST_DATA_SOURCE_ID: ${INGEST_DATA_SOURCE_ID:-}
+      INGEST_UNIVERSE_CODE: ${INGEST_UNIVERSE_CODE:-NIFTY50}
+      KITE_API_KEY: ${KITE_API_KEY:-}
+      KITE_TOKEN_FILE: /run/kite/token
+    volumes:
+      - ./.kite_token:/run/kite/token:ro
     healthcheck:
       test: ["CMD", "arq", "--check", "app.workers.settings.WorkerSettings"]
       interval: 30s

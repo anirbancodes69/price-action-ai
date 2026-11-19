@@ -17,10 +17,15 @@ setup: ## Create .env with random dev secrets and build images
 	./scripts/setup-env.sh
 	$(COMPOSE) build
 
+# The worker bind-mounts .kite_token; if the file is missing Docker would create a directory there and break kite_login.py.
+KITE_TOKEN_FILE_GUARD = test -e .kite_token || (umask 077 && : > .kite_token)
+
 up: ## Start the production-like stack and wait until healthy
+	@$(KITE_TOKEN_FILE_GUARD)
 	$(COMPOSE) up -d --build --wait
 
 dev: ## Start the stack with hot reload (frontend on :3001, engine/db/redis on 127.0.0.1)
+	@$(KITE_TOKEN_FILE_GUARD)
 	$(COMPOSE_DEV) up -d --build --wait
 
 down: ## Stop all services (keeps data volumes)
