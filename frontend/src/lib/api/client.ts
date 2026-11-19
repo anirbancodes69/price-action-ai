@@ -54,11 +54,11 @@ export function parseError(status: number, body: unknown, fallbackRequestId?: st
 
 export async function apiRequest<T, M = Record<string, unknown>>(
   path: string,
-  opts: { method?: string; body?: unknown; signal?: AbortSignal } = {},
+  opts: { method?: string; body?: unknown; signal?: AbortSignal; headers?: Record<string, string> } = {},
 ): Promise<ApiEnvelope<T, M>> {
   const method = (opts.method ?? "GET").toUpperCase();
   const send = async () => {
-    const headers: Record<string, string> = { Accept: "application/json" };
+    const headers: Record<string, string> = { Accept: "application/json", ...opts.headers };
     if (opts.body !== undefined) headers["Content-Type"] = "application/json";
     if (!SAFE.has(method)) {
       await ensureCsrf();
