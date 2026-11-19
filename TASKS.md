@@ -32,6 +32,8 @@ None.
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-I101 | Live analysis chart shows 15m and daily context: `lib/api/analysis.ts` maps `candles_15m` (timestamps) and `candles_1d` (session dates); all three timeframes are enabled | I6 | 2026-11-19 (53 Vitest tests, ESLint and `tsc` clean) |
+| T-I100 | `GET /analysis/{symbol}?include=` takes a comma list: `candles` (5m), `candles_15m` (closed bars of the session), `candles_1d` (up to 60 completed days before the session, display context); OpenAPI and ARC-04 updated | I4 | 2026-11-19 (128 backend tests, Pint, Redocly clean) |
 | T-I99 | Fixes found in a browser check of T-I96..T-I98: the engine snapshot status `VALID` maps to the API run status `COMPLETED` (it was reported as `FAILED`, so every analysis showed "not available"); the analysis page reads `params` inside Suspense again (T-I95 had not reached `main`) | I4 | 2026-11-19 (126 backend tests, Pint, `tsc` and ESLint clean; API call through the dev stack returned COMPLETED with 75 bars) |
 | T-I98 | Frontend analysis over HTTP: `lib/api/analysis.ts` maps `AnalysisRun` to `StockAnalysis` (engine vocabulary, decimals to numbers, no calculation); `LiveAnalysis` polls like the scanner (30 s, visible tab, keeps last good result, 401 to sign-in); `StockAnalysis.levels` is nullable (no-trade shows no levels, plan dialog disabled); chart toolbar shows only the timeframes with data (5m live) | I6 | 2026-11-19 (52 Vitest tests, ESLint and `tsc` clean; the analysis API checked against the dev stack's real engine response for CUMMINSIND) |
 | T-I97 | Engine analysis detail carries `level_bar_start` per event, `formed_at` per zone and the 5m protected low/high (contract JSON regenerated) | I3 | 2026-11-19 (engine API tests, ruff, mypy clean) |
