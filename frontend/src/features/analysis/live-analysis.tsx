@@ -7,6 +7,7 @@ import { ErrorState } from "@/components/data/error-state";
 import { useToast } from "@/components/ui/toast";
 import { ApiError } from "@/lib/api/client";
 import { analysisProblem, fetchAnalysis, mapAnalysis, type AnalysisMeta, type ApiAnalysisRun } from "@/lib/api/analysis";
+import { createTradePlan } from "@/lib/api/trade-plans";
 import { AnalysisView } from "./analysis-view";
 
 /** Same cadence as the scanner: a 5m bar changes the analysis at most every 5 minutes. */
@@ -80,7 +81,18 @@ export function LiveAnalysis({ symbol }: { symbol: string }) {
     );
   }
 
-  return <AnalysisView key={result.run.instrument.symbol} a={mapAnalysis(result.run)} mode={result.meta.dataMode} />;
+  const analysis = mapAnalysis(result.run);
+  return (
+    <AnalysisView
+      key={result.run.instrument.symbol}
+      a={analysis}
+      mode={result.meta.dataMode}
+      onCreatePlan={async (levels) => {
+        const plan = await createTradePlan(analysis.stock.symbol, analysis.setup.type, levels);
+        return { quantity: plan.quantity };
+      }}
+    />
+  );
 }
 
 function message(e: ApiError | Error | null): string {

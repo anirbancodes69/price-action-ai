@@ -9,6 +9,7 @@ import { Badge } from "@/components/data/badge";
 import { LiveDataBadge } from "@/components/data/live-data-badge";
 import { PriceDisplay } from "@/components/data/price-display";
 import type { DataMode } from "@/lib/api/scanner";
+import type { PlanLevelsForm } from "@/lib/api/trade-plans";
 import { SampleDataBadge } from "@/components/data/sample-data-badge";
 import { PageFrame, PageHeader } from "@/components/layout/page-frame";
 import { AnalysisPanel } from "@/components/trading/analysis-panel";
@@ -24,7 +25,18 @@ import { SetupEvidence } from "./setup-evidence";
  * evidence on the left, the verdict card sticky on the right. Mobile order:
  * chart → verdict → evidence.
  */
-export function AnalysisView({ a, timeframes, mode = "DEMO" }: { a: StockAnalysis; timeframes?: Timeframe[]; mode?: DataMode }) {
+export function AnalysisView({
+  a,
+  timeframes,
+  mode = "DEMO",
+  onCreatePlan,
+}: {
+  a: StockAnalysis;
+  timeframes?: Timeframe[];
+  mode?: DataMode;
+  /** HTTP mode: creates the plan on the server. */
+  onCreatePlan?: (levels: PlanLevelsForm) => Promise<{ quantity: number }>;
+}) {
   const [timeframe, setTimeframe] = useState<Timeframe>("5m");
   const [overlays, setOverlays] = useState<ChartOverlays>(DEFAULT_OVERLAYS);
   const [fit, setFit] = useState(0);
@@ -104,7 +116,7 @@ export function AnalysisView({ a, timeframes, mode = "DEMO" }: { a: StockAnalysi
         </div>
       </div>
 
-      <CreatePlanDialog a={a} open={planOpen} onClose={() => setPlanOpen(false)} />
+      <CreatePlanDialog a={a} open={planOpen} onClose={() => setPlanOpen(false)} onCreate={onCreatePlan} />
     </PageFrame>
   );
 }

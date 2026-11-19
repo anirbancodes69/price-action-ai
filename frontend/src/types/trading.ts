@@ -13,10 +13,14 @@ export type TradePlanStatus =
   | "cancelled";
 
 export interface TradePlan {
+  /** The label shown for the plan (`TP-0001` from the API). */
   id: string;
+  /** The server's id, used to act on the plan (HTTP mode only). */
+  apiId?: string;
   symbol: string;
   companyName: string;
-  setupType: SetupType;
+  /** `null` for a plan written by hand without a setup. */
+  setupType: SetupType | null;
   status: TradePlanStatus;
   signal: SignalState;
   entry: number;

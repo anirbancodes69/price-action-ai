@@ -27,7 +27,7 @@ export function TradePlanCard({ plan, actions, className }: { plan: TradePlan; a
             <span className="font-mono text-xs text-muted-foreground">{plan.id}</span>
           </div>
           <p className="truncate text-xs text-muted-foreground">
-            {SETUP_TYPES[plan.setupType].label} · {plan.companyName}
+            {plan.setupType ? SETUP_TYPES[plan.setupType].label : "Manual plan"} · {plan.companyName}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
