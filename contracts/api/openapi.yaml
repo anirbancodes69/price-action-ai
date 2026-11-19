@@ -7179,8 +7179,28 @@ components:
             - type: "string"
             - type: "null"
         analysis_run_id:
-          type: "string"
-          format: "uuid"
+          oneOf:
+            - type: "string"
+              format: "uuid"
+            - type: "null"
+          description: "Null in personal mode (ADR-017): the plan records its own setup, levels and bar time instead."
+        setup_type:
+          oneOf:
+            - "$ref": "#/components/schemas/SetupType"
+            - type: "null"
+          description: "The setup the plan was made from; null for a manual plan."
+        paqs:
+          oneOf:
+            - type: "integer"
+              minimum: 0
+              maximum: 100
+            - type: "null"
+        as_of:
+          oneOf:
+            - type: "string"
+              format: "date-time"
+            - type: "null"
+          description: "End of the 5m bar the plan's setup was read at."
         setup_id:
           oneOf:
             - type: "string"
@@ -7251,6 +7271,9 @@ components:
         - "paper_tracking"
         - "note"
         - "analysis_run_id"
+        - "setup_type"
+        - "paqs"
+        - "as_of"
         - "setup_id"
         - "ruleset_version"
         - "triggered_at"
@@ -7266,9 +7289,14 @@ components:
         analysis_run_id:
           type: "string"
           format: "uuid"
+          description: "Persisted-run mode only (ADR-017): not accepted in personal mode."
         setup_id:
           type: "string"
           format: "uuid"
+          description: "Persisted-run mode only: not accepted in personal mode."
+        setup_type:
+          "$ref": "#/components/schemas/SetupType"
+          description: "Personal mode: plan from the live setup of this type (levels are the engine's unless given). Without it the plan is manual and needs entry, stop and target."
         instrument:
           type: "string"
           description: "Trading symbol."
@@ -7285,7 +7313,6 @@ components:
         note:
           type: "string"
       required:
-        - "analysis_run_id"
         - "instrument"
       description: "Levels default to the setup's engine levels. A manual plan needs all three levels and no setup_id. A client-supplied quantity is not accepted."
       additionalProperties: false

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * The owner's current risk profile, or the ruleset defaults with the planning capital when none is stored yet
@@ -56,5 +57,28 @@ class RiskProfileResolver
         }
 
         return $defaults;
+    }
+
+    /**
+     * The id of the owner's current stored profile, creating version 1 from the ruleset defaults when none exists yet
+     * (a trade plan records the profile it was sized with).
+     */
+    public function ensureStored(User $user): string
+    {
+        $existing = DB::table('risk_profiles')->where('user_id', $user->getKey())->where('is_current', true)->value('id');
+        if ($existing !== null) {
+            return (string) $existing;
+        }
+        $p = $this->for($user);
+        $id = (string) Str::uuid7();
+        DB::table('risk_profiles')->insert([
+            'id' => $id, 'tenant_id' => app(PersonalTenant::class)->idFor($user), 'user_id' => $user->getKey(),
+            'version' => 1 + (int) DB::table('risk_profiles')->where('user_id', $user->getKey())->max('version'), 'is_current' => true,
+            'trading_capital' => $p['capital'], 'risk_per_trade_pct' => $p['risk_pct'], 'max_open_positions' => $p['max_open_positions'],
+            'max_position_value' => $p['max_position_value'], 'daily_loss_limit_pct' => $p['daily_loss_limit_pct'],
+            'max_consecutive_losses' => $p['max_consecutive_losses'], 'max_open_risk_pct' => $p['max_open_risk_pct'], 'min_rr' => $p['min_rr'],
+        ]);
+
+        return $id;
     }
 }

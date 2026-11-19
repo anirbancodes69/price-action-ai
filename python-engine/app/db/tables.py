@@ -587,7 +587,7 @@ trade_plans = Table(
     Column("user_id", Uuid(), nullable=False),
     Column("plan_number", Integer(), nullable=False),
     Column("instrument_id", Uuid(), nullable=False),
-    Column("analysis_run_id", Uuid(), nullable=False),
+    Column("analysis_run_id", Uuid(), nullable=True),
     Column("detected_setup_id", Uuid(), nullable=True),
     Column("setup_key", Text(), nullable=True),
     Column("source", Text(), nullable=False),
@@ -617,6 +617,9 @@ trade_plans = Table(
     Column("updated_at", DateTime(timezone=True), nullable=False),
     Column("triggered_at", DateTime(timezone=True), nullable=True),
     Column("valid_until", DateTime(timezone=True), nullable=True),
+    Column("setup_type", Text(), nullable=True),
+    Column("paqs", SmallInteger(), nullable=True),
+    Column("as_of_ts", DateTime(timezone=True), nullable=True),
 )
 
 trading_preferences = Table(

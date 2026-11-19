@@ -145,7 +145,7 @@ class AnalysisMapper
 
         return [
             'id' => $id('setup', $s['type'], $s['direction'], $detected ?? ''),
-            'setup_key' => hash('sha256', implode('|', [$symbol, $s['type'], $s['direction'], $sessionDate])),
+            'setup_key' => self::setupKey($symbol, $s['type'], $s['direction'], $sessionDate),
             'type' => $s['type'],
             'direction' => $s['direction'],
             'informational' => (bool) $s['informational'],
@@ -174,6 +174,12 @@ class AnalysisMapper
             'evidence' => [],
             'reason_codes' => $s['end_reason'] === null ? [] : [(string) $s['end_reason']],
         ];
+    }
+
+    /** Identifies the same setup across runs and in the plans made from it. */
+    public static function setupKey(string $symbol, string $type, string $direction, string $sessionDate): string
+    {
+        return hash('sha256', implode('|', [$symbol, $type, $direction, $sessionDate]));
     }
 
     /**
