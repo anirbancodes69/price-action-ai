@@ -19,6 +19,7 @@ from app.ingestion.session import IST
 from app.providers.base import (
     MarketDataProvider,
     ProviderAuthExpired,
+    ProviderBar,
     ProviderContext,
     ProviderError,
     ProviderInstrumentRef,
@@ -45,7 +46,23 @@ class BackfillReport:
     requests: int = 0
     failed: list[str] = field(default_factory=list)  # "SYMBOL start..end: error class"
     skipped_unmapped: list[str] = field(default_factory=list)
+    rejected_bars: list[str] = field(default_factory=list)  # "SYMBOL bar_start: reason", never stored
     status: str = "COMPLETED"
+
+
+def invalid_bar_reason(bar: ProviderBar) -> str | None:
+    """Why a provider bar cannot be stored (the `candles` check constraints), or None when it can.
+
+    A provider occasionally returns a corrupt bar (for example a high below the open). It is rejected and
+    reported rather than stored, and rather than failing the whole run on the database constraint.
+    """
+    if min(bar.open, bar.high, bar.low, bar.close) <= 0:
+        return "non-positive price"
+    if not (bar.low <= min(bar.open, bar.close) <= max(bar.open, bar.close) <= bar.high):
+        return "OHLC out of order"
+    if bar.volume < 0:
+        return "negative volume"
+    return None
 
 
 def latest_trade_date(
@@ -132,14 +149,23 @@ def backfill(
                 finally:
                     report.requests += 1
                     sleep(1.0 / provider.capabilities().requests_per_second)
-                store.save(ref.symbol, timeframe, bars)
+                good: list[ProviderBar] = []
+                for bar in bars:
+                    reason = invalid_bar_reason(bar)
+                    if reason is None:
+                        good.append(bar)
+                    else:
+                        report.rejected_bars.append(f"{ref.symbol} {bar.bar_start.isoformat()}: {reason}")
+                store.save(ref.symbol, timeframe, good)
             done += 1 if ok else 0
     except ProviderAuthExpired:
         report.status = "FAILED"
         report.failed.append("auth expired")
     report.inserted, report.updated = store.counters.inserted, store.counters.updated
     if report.status != "FAILED":
-        report.status = "PARTIAL" if report.failed or report.skipped_unmapped else "COMPLETED"
+        report.status = (
+            "PARTIAL" if report.failed or report.skipped_unmapped or report.rejected_bars else "COMPLETED"
+        )
     conn.execute(
         update(ingestion_runs)
         .where(ingestion_runs.c.id == report.run_id)
@@ -149,8 +175,13 @@ def backfill(
             instruments_failed=len(refs) - done,
             rows_inserted=report.inserted,
             rows_updated=report.updated,
-            error_summary={"failed": report.failed[:50], "unmapped": report.skipped_unmapped}
-            if report.failed or report.skipped_unmapped
+            error_summary={
+                "failed": report.failed[:50],
+                "unmapped": report.skipped_unmapped,
+                "rejected_bars": report.rejected_bars[:50],
+                "rejected_total": len(report.rejected_bars),
+            }
+            if report.failed or report.skipped_unmapped or report.rejected_bars
             else None,
             finished_at=func.now(),
         )

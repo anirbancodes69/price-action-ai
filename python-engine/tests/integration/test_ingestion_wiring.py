@@ -74,6 +74,7 @@ class FakeProvider:
         self.token_shift = ""
         self.fail_symbol: str | None = None
         self.expired = False
+        self.corrupt_first_bar = False
 
     def capabilities(self) -> ProviderCapabilities:
         return ProviderCapabilities(("5m", "15m"), {"5m": 2, "15m": 2}, 1000.0, False)
@@ -111,6 +112,9 @@ class FakeProvider:
                 # price level encodes the weekday so the previous-day levels are checkable
                 out += five_minute_bars(day, str(100 + day.weekday() * 10))
             day += timedelta(days=1)
+        if self.corrupt_first_bar and out:
+            b = out[0]  # a high below the open: what Kite returned for one real bar
+            out[0] = ProviderBar(b.bar_start, b.timeframe, b.open, b.open - 5, b.low, b.close, b.volume)
         return out
 
 
@@ -301,6 +305,17 @@ def test_backfill_of_history_older_than_the_first_sync_needs_as_of(fx: Fx) -> No
     )
     fx.run_ids.append(got.run_id)
     assert got.status == "COMPLETED" and got.inserted == 3 * 75
+
+
+def test_backfill_rejects_a_corrupt_bar_instead_of_failing_the_run(fx: Fx) -> None:
+    sync_instruments(fx.conn, fx.provider, CTX, fx.symbols[:1], DAYS[0] - timedelta(days=5))
+    refs = [ProviderInstrumentRef(f"{fx.suffix}0", fx.symbols[0])]
+    fx.provider.corrupt_first_bar = True
+    rep = backfill(fx.conn, fx.source, fx.provider, CTX, refs, "5m", DAYS[0], DAYS[0], lambda _: None)
+    fx.run_ids.append(rep.run_id)
+    assert rep.status == "PARTIAL" and not rep.failed
+    assert len(rep.rejected_bars) == 1 and "OHLC out of order" in rep.rejected_bars[0]
+    assert rep.inserted == 74  # the other 74 bars of the day are stored
 
 
 def test_backtest_loader_builds_sessions_with_previous_day_levels(fx: Fx) -> None:
