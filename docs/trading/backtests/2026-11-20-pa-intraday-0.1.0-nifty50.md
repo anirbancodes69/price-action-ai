@@ -99,9 +99,43 @@ Run D in more detail: costs ₹2,061 (about 0.09R per trade, against about 0.2R 
 - D is **not evidence of profitability**: +₹345 over 48 trades is within noise, its in-sample half is still slightly negative net, and D was chosen after seeing A–C on the same days (selection bias). Costs are still assumptions.
 - D is the best **candidate** for a proposed `pa-intraday 0.2.0`. Adopting it needs an owner decision, a ruleset version with the TRD updates, a setup on/off switch in code, and a test on sessions it was not chosen on (more history, or forward paper logging, TRD-07).
 
-## 5. Limits of this run
+## 5. Out-of-sample check of variant D (2026-01-01 to 2026-08-31)
+
+Variant D (BREAKOUT_RETEST off and `risk.min_stop_distance_pct` 0.7, as in §4, applied by a temporary script with no ruleset or engine edit) was replayed on the 164 sessions that precede the September-November days it was chosen on. The bars were backfilled for this purpose (T-I133). Same sizing, costs and slippage as above; 4 chunks of 41 sessions, input hashes `19dc73087ba8`, `59e0a79fa0b1`, `bdf5ea618d3e`, `bc4b3efafab3`. `pa-intraday 0.1.0` itself was **not** replayed on these months, so there is no baseline for them.
+
+| | Jan–Aug (new days) | Sep–Nov (chosen on) |
+|---|---|---|
+| Sessions | 164 | 55 |
+| Trades | 164 | 48 |
+| Win rate | 32.3% | 43.8% |
+| Avg R net / gross | −0.18 / −0.08 | +0.02 / +0.12 |
+| **Net P&L** | **−₹13,310** | +₹345 |
+| Gross P&L | −₹6,106 | +₹2,406 |
+| Costs | ₹7,205 | ₹2,061 |
+| Profit factor | 0.63 | 1.05 |
+| Avg win / loss | +₹431 / −₹326 | |
+| Max drawdown (daily net, fixed sizing) | ₹13,914 (13.9%) | |
+| Positive trading days | 32 of 99 | |
+| Exits | 60 session-end, 54 structure, 38 stop, 12 target | |
+
+| Period | Trades | Win | Avg R net / gross | Net | Profit factor |
+|---|---|---|---|---|---|
+| Jan–Apr | 88 | 34.1% | −0.12 / −0.03 | −₹4,729 | 0.73 |
+| May–Aug | 76 | 30.3% | −0.24 / −0.14 | −₹8,581 | 0.54 |
+
+By setup: OPENING_RANGE_BREAKOUT 75 trades −0.12R, −₹4,021; PREV_DAY_HIGH_BREAK 89 trades −0.23R, −₹9,289. By 15m context: BULLISH −0.28R (63 trades), TRANSITION −0.11R (101). By signal time: 09:30–09:59 −₹8,938 over 85 trades (the largest loss), 10:00–10:29 +₹654 over 27 trades; later windows have too few trades to read. Seven of eight months lost money (only May was positive, +₹145; June −₹5,552). Over all 212 trades of D (January to November): about −₹12,965.
+
+**Reading:**
+
+- D does **not** hold out of sample: it loses before costs (−0.08R gross) and after (−0.18R net), in both halves of the period. The September–November result (+₹345) was within noise and selected on those days.
+- No rule set tested so far is profitable. Neither rule change should be adopted; a `pa-intraday 0.2.0` built from D is not justified by this evidence.
+- The remaining weakness is entry quality (no gross edge), not stop distance or exits (§2 D6). The next useful work is research on entries, not further parameter tuning on these days.
+- Not yet known: `pa-intraday 0.1.0` on these months, to tell whether D is still better than the baseline there. It would take about 1.5–2 hours on this machine (T-I134, remaining part).
+
+## 6. Limits of this run
 
 - 55 sessions in one market period; IS and OOS are 34 and 21 sessions. Any variant tuned on these days must be checked on new days (forward paper logging, TRD-07) before it is trusted.
 - Today's NIFTY 50 list is applied to the whole period (survivorship bias).
 - Costs and slippage are assumptions; verify them against your actual Zerodha contract notes (OQ-BT-02).
 - Kite equity bars end at 15:15, so the last 15 minutes of each session are not replayed.
+- January–August is a single further period of 164 sessions: a better test than 55 days, still one market period. The first sessions of January have a short lookback.
