@@ -144,7 +144,7 @@ Differences between the current frontend and the specified product. None is fixe
 | D-17 | Quality factors | Free-form `QualityFactor[]` | Five fixed PAQS components | Adapter maps components | M7 |
 | D-18 | Levels for NO TRADE | `levels` always present | `levels` null when not applicable | Make optional in types; UI hides | M7 |
 | D-19 | Chart events | `breakout`/`retest`/`breakdown` | `BOS`/`CHOCH`/`WICK_BREACH` + setup stage markers | Adapter + new marker types | M7 |
-| D-20 | Error handling | ~~No `error.tsx`~~ **Partly resolved 2026-11-16:** `app/(app)/error.tsx` (ErrorState + retry, digest only) | Route error boundaries | Add `(auth)` and onboarding boundaries; request id from `ApiError` once the adapter exists | M7 |
+| D-20 | Error handling | ~~No `error.tsx`~~ **Resolved 2026-11-20 (T-903):** `error.tsx` in `(app)`, `(auth)` and `onboarding` (ErrorState + retry); the reference is the `ApiError` request id, else the Next.js digest (`lib/api/error-reference.ts`), never the message | Route error boundaries | Done | M7 |
 | D-21 | Tooling | ~~No tests, no `typecheck` script~~ **Resolved in M0:** Vitest 5 (`npm test`), `npm run typecheck` | Vitest, `tsc --noEmit` in CI | Done | M0 |
 | D-22 | Scanner exchange filter | NSE/BSE filter | Remove (NSE only) | Remove | M7 |
 | D-23 | Plan sizing input | Risk budget ₹5,000 default in dialog | Risk % from profile (₹ shown as derived) | See D-06 | M7 |
