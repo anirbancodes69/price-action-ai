@@ -35,7 +35,7 @@
 | [Product Requirements Document (PRD)](product/03_PRD.md) | Specification ready for intraday (v0.2.0) | PRD-02, TRD-*, ARC-04 | OQ-PRD-01, OQ-PRD-02 | 2026-11-17 |
 | [User Journeys](product/04_USER_JOURNEYS.md) | Specification ready for intraday (v0.2.0) | PRD-03 | — | 2026-11-17 |
 | [Onboarding Specification](product/05_ONBOARDING_SPECIFICATION.md) | Deferred (ADR-014) | PRD-03, ARC-03, ARC-04 | OQ-ONB-01, OQ-ONB-02 | 2026-11-17 |
-| [Feature Catalog](product/06_FEATURE_CATALOG.md) | Revised for intraday (v0.2.0) | PRD-03, ENG-01 | — | 2026-11-17 |
+| [Feature Catalog](product/06_FEATURE_CATALOG.md) | Revised for intraday; feature states verified against the code (v0.3.0) | PRD-03, ENG-01 | — | 2026-11-21 |
 | [UI/UX Specification](product/07_UI_UX_SPECIFICATION.md) | Reflects implemented frontend + additions, revised for intraday (v0.3.0) | ENG-02, design-standards | — | 2026-11-17 |
 | [System Architecture](architecture/01_SYSTEM_ARCHITECTURE.md) | Specification ready (intraday rows revised, ADR-014) | ADR-001..006 | OQ-ARC-01, OQ-ARC-02, OQ-ARC-03 | 2026-11-17 |
 | [Technology Stack](architecture/02_TECHNOLOGY_STACK.md) | Specification ready (versions pinned in M0) | ARC-01 | — | 2026-11-15 |
