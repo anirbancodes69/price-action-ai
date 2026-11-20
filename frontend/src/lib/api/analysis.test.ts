@@ -88,6 +88,32 @@ describe("mapAnalysis", () => {
   });
 });
 
+describe("mapAnalysis evidence", () => {
+  it("restates quality components and engine reason codes, applying no threshold", () => {
+    const comps = [
+      { key: "a", label: "Structure", points: 20, max: 25, missing: false },
+      { key: "b", label: "Volume", points: 0, max: 10, missing: false },
+      { key: "c", label: "Context", points: 0, max: 10, missing: true },
+    ];
+    const a = mapAnalysis({
+      ...run,
+      setups: [{ ...setup, quality: { ...setup.quality, components: comps } }],
+      signal: { ...run.signal, state: "NO_TRADE", reason_codes: ["LOW_SCORE", "SOMETHING_NEW"] },
+    });
+    expect(a.evidence).toEqual([
+      { title: "Structure", detail: "20 of 25 points.", tone: "supporting" },
+      { title: "Volume", detail: "0 of 10 points.", tone: "caution" },
+      { title: "Context", detail: "Not available for this bar.", tone: "caution" },
+      { title: "The quality score is below the minimum", detail: "Reported by the engine.", tone: "caution" },
+      { title: "SOMETHING_NEW", detail: "Reported by the engine.", tone: "caution" },
+    ]);
+  });
+
+  it("has no evidence without a setup or reasons", () => {
+    expect(mapAnalysis({ ...run, primary_setup_id: null, setups: [] }).evidence).toEqual([]);
+  });
+});
+
 describe("mapAnalysis series", () => {
   it("maps 15m bars as timestamps and daily bars as session dates", () => {
     const bar = { start: "2026-11-17T09:15:00+05:30", open: "1.00", high: "2.00", low: "0.50", close: "1.50", volume: 5 };

@@ -169,4 +169,16 @@ export const ACCOUNT_BLOCK_REASONS: Record<AccountBlockReason, string> = {
   "session-closed": "Session closed",
 };
 
+/** Engine reasons a signal is NO_TRADE or a setup was not created (TRD-04 §8). Unknown codes fall back to the code itself. */
+export const SIGNAL_REASONS: Record<string, string> = {
+  NO_SETUP: "No setup on the latest closed bar",
+  LOW_SCORE: "The quality score is below the minimum",
+  RR_BELOW_MINIMUM: "Reward to risk is below the minimum",
+  NO_TARGET: "No target level above the entry",
+  AFTER_ENTRY_CUTOFF: "The entry cutoff has passed",
+  MISSING_CONTEXT: "Previous-day levels are not available",
+  OPENED_ABOVE_LEVEL: "The session opened above the level",
+  OPENED_BELOW_LEVEL: "The session opened below the level",
+};
+
 export const BOOKS: Record<Book, string> = { paper: "Paper", actual: "Actual" };
