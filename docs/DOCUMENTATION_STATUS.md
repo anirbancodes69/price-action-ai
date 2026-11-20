@@ -50,6 +50,7 @@
 | [Support and Resistance Rules](trading/03_SUPPORT_RESISTANCE_RULES.md) | Specification ready | TRD-01, TRD-02 | OQ-SR-01, OQ-SR-02, OQ-SR-03, OQ-SR-04 | 2026-11-15 |
 | [Setup Detection Rules and Price Action Quality Score](trading/04_SETUP_DETECTION_RULES.md) | Specification ready | TRD-01..03, TRD-05 | OQ-SD-01, OQ-SD-02, OQ-SD-03, OQ-SD-04, OQ-SD-05, OQ-SD-06 | 2026-11-15 |
 | [Risk Management Rules](trading/05_RISK_MANAGEMENT_RULES.md) | Specification ready for intraday (v0.2.0, ADR-014) | TRD-01, TRD-04 | OQ-RM-01, OQ-RM-02, OQ-RM-03, OQ-RM-05, OQ-RM-06, OQ-RM-07 | 2026-11-15 |
+| [Backtest log 2026-11-20](trading/backtests/2026-11-20-pa-intraday-0.1.0-nifty50.md) | Record of the first real-bar replay (aggregates and diagnostics; no rule adopted) | TRD-06 | OQ-BT-01, OQ-BT-02 | 2026-11-20 |
 | [Backtesting Methodology](trading/06_BACKTESTING_METHODOLOGY.md) | Specification ready for intraday (v0.2.0; costs and history depth to verify) | TRD-01..05 | OQ-BT-01, OQ-BT-02, OQ-BT-03, OQ-BT-05, OQ-BT-06, OQ-BT-07, OQ-BT-08 | 2026-11-17 |
 | [Paper Trading Specification](trading/07_PAPER_TRADING_SPECIFICATION.md) | Specification ready for intraday (v0.2.0) | TRD-04..06 | OQ-PT-01, OQ-PT-02 | 2026-11-17 |
 | [Trading Engine Validation](trading/08_TRADING_ENGINE_VALIDATION.md) | Specification ready | TRD-02..06 | — | 2026-11-15 |

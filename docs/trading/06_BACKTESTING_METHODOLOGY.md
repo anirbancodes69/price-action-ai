@@ -151,6 +151,12 @@ Metrics with fewer than 30 trades or 60 sessions are shown with a "low sample" w
 
 `backtest_runs` (config, versions, status, metrics JSON, flags) and `backtest_trades` (every simulated trade including skipped entries with reason, signal/entry/exit timestamps, costs, R). The equity curve is stored as a compact end-of-session series in the run row (`equity_curve` JSONB) — recomputable, not authoritative.
 
+### 11.1 Run log
+
+Exploration runs on real bars are recorded in [`backtests/`](backtests/), aggregates only (the trade lists derive from personal-mode data, ADR-011):
+
+- [2026-11-20: pa-intraday 0.1.0, NIFTY 50, 55 sessions](backtests/2026-11-20-pa-intraday-0.1.0-nifty50.md): net −₹16,794, 176 trades, profit factor 0.52; no edge before costs, BREAKOUT_RETEST negative in both halves.
+
 ## 12. Open questions
 
 | ID | Question |
