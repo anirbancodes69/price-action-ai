@@ -7,8 +7,16 @@ Status: `NOT STARTED` · `IN PROGRESS` · `COMPLETED` · `BLOCKED` · `NEEDS REV
 
 ## Ready
 
+From the strategy audit of 2026-11-21 (code read in full, engine suite run; findings in CURRENT.md "Pending decisions and inconsistencies").
+
 | ID | Task | Pri | M | Depends on | Acceptance criteria | Status |
 |---|---|---|---|---|---|---|
+| T-I134 | Out-of-sample replay of exploration variant D (BREAKOUT_RETEST off, `risk.min_stop_distance_pct` 0.7) and of `pa-intraday 0.1.0` on the stored NIFTY 50 bars 2026-01-01..2026-08-31, which D was not chosen on. Exploration only: no ruleset file or engine change | P0 | I8 | T-I133 bars | Run records (input hashes) and aggregates appended to a backtest log under `docs/trading/backtests/`, with IS/OOS halves and the same costs; TRD-06 §11.1 run log updated; result states whether D stays positive net | NOT STARTED |
+| T-I135 | Scanner signal consistent with the risk check: a row whose plan `calculate_risk` rejects is not shown as `ENTRY_CONFIRMED` / `BUY_WATCH` (fix in `analysis/scan.py`, or apply the stop-distance limits in `choose_signal`) | P0 | I4 | Owner decision on where; ruleset version if `analyse` output changes | Test: a confirmed setup with a stop wider than `risk.max_stop_distance_pct` gives a non-actionable row with the reason; Laravel scanner mapping and OpenAPI unchanged or updated; TRD-04 §12 updated if the rule moves | NOT STARTED |
+| T-I136 | Gap check at analysis time: `check_snapshot` uses `missing_bar_starts` so a session with missing 5m/15m bars is marked incomplete (TV-SES-03) instead of being analysed silently | P0 | I3 | — | TV-SES-03 test passes; a gappy snapshot returns a non-VALID status with the missing bar starts; scan and analysis API show it | NOT STARTED |
+| T-I137 | Load the verified NSE holiday and special-session list for 2025-12..2026-12 into `nse-market-calendar.json` (`verified: true`, source recorded) and re-seed | P0 | I2 | Official NSE circular (owner) | `SessionClock::isOpen` false on a listed holiday (test); seeder test passes; F-31 and F-43 in PRD-06 updated | NOT STARTED |
+| T-I138 | Previous-day levels from the previous trading session: `load_symbol_snapshot` and the backtest loader check that the previous stored day is the previous trading session, else report `MISSING_CONTEXT` instead of using an older day | P1 | I4 | T-I137 | Test with a missing previous session gives no PDH/PDL and the reason; the 15:15 limitation stays documented | NOT STARTED |
+| T-I139 | TRD-08 coverage for I3–I5 acceptance: map the 103 TRD-08 vectors to tests (13 IDs referenced today) and add property-based no-look-ahead tests (results for bars up to *t* do not change when later bars are appended) | P1 | I3 | — | Coverage table (vector → test) in ENG-07 or TRD-08; property tests in CI; ROADMAP I3–I5 acceptance re-checked | NOT STARTED |
 
 ## Backlog
 
