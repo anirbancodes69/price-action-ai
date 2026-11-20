@@ -7,7 +7,7 @@ that ended at or before that close (BT-01); entries fill at the next bar's open 
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
@@ -30,6 +30,7 @@ from app.domain.setups.signal import Signal
 from app.domain.setups.types import SetupDirection
 from app.domain.snapshot import SnapshotStatus
 from app.domain.types import Bar, Direction, EventType
+from app.domain.zone_cache import ZoneCache
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +43,8 @@ class SymbolData:
     prev_day: DailyLevels | None
     tick: Decimal
     lot_size: int = 1
+    # Memo of zone builds across this symbol's analyses in a replay: a speed-up only, results are identical.
+    zone_cache: ZoneCache = field(default_factory=ZoneCache, compare=False, repr=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +87,7 @@ def default_analyse(sym: SymbolData, k: int, spec: SessionSpec, params: RulesetP
         spec.previous_session_open,
         sym.tick,
         spec.session_close,
+        sym.zone_cache,
     )
 
 

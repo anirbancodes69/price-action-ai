@@ -12,6 +12,7 @@ from app.domain.htf import HtfContext
 from app.domain.params import RulesetParams
 from app.domain.session import SessionLevels
 from app.domain.types import Bar, StructureResult, SwingPoint
+from app.domain.zone_cache import ZoneCache
 from app.domain.zones import Zone
 
 
@@ -89,3 +90,4 @@ class SetupContext:
     previous_session_open: datetime | None
     params: RulesetParams
     tick: Decimal | None = None
+    zone_cache: ZoneCache | None = None  # optional memo of `build_zones` (a speed-up only)
