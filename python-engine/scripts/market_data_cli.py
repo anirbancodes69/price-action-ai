@@ -133,7 +133,13 @@ def main(argv: list[str] | None = None) -> int:
                 as_of=as_of,
             )
             print(f"{rep.status}: inserted={rep.inserted} updated={rep.updated} requests={rep.requests}")
-            for line in [*rep.failed[:20], *(f"unmapped {x}" for x in rep.skipped_unmapped[:20])]:
+            if rep.rejected_bars:
+                print(f"rejected {len(rep.rejected_bars)} invalid bar(s) from the provider (not stored)")
+            for line in [
+                *rep.failed[:20],
+                *(f"unmapped {x}" for x in rep.skipped_unmapped[:20]),
+                *(f"rejected {x}" for x in rep.rejected_bars[:20]),
+            ]:
                 print(" ", line)
     engine.dispose()
     return 0
