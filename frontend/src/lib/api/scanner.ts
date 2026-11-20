@@ -58,7 +58,7 @@ export const SETUP_STATUS: Record<string, SetupStatus> = {
   AWAITING_CONFIRMATION: "awaiting-confirmation",
   ENTRY_CONFIRMED: "entry-confirmed",
   INVALIDATED: "invalidated",
-  EXPIRED: "invalidated",
+  EXPIRED: "expired",
 };
 
 export const SIGNAL: Record<string, SignalState> = {

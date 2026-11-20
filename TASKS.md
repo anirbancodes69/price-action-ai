@@ -31,6 +31,7 @@ None.
 
 | ID | Task | M | Verified |
 |---|---|---|---|
+| T-I129 | Setup status vocabulary: `expired` added to `SetupStatus` (label, tone, description), the API's `EXPIRED` maps to it instead of `invalidated`, `detected` is labelled "Forming", the lifecycle strip shows an Expired badge; ENG-02 D-02 resolved | M7 | 2026-11-20 (88 Vitest tests, ESLint and `tsc` clean for `src`; not checked in a browser) |
 | T-I128 | NSE only in the frontend: `Exchange` narrowed to `"NSE"`, the scanner's exchange filter removed (filters, view), the API mappers no longer map BSE; ENG-02 D-22 resolved, D-04 partly | M7 | 2026-11-20 (88 Vitest tests, ESLint and `tsc` clean for `src`; not checked in a browser) |
 | T-I127 | Analysis evidence over HTTP: the "Why is this setup considered" panel lists each PAQS component (supporting when it scored, caution when it scored nothing or was missing) and the engine's signal reason codes in words (`SIGNAL_REASONS`; unknown codes shown as is); nothing is calculated or thresholded in the frontend; chart event markers stay unsupplied (the engine's event types do not map to breakout/retest) | I6 | 2026-11-20 (88 Vitest tests, ESLint and `tsc` clean for `src`; not checked in a browser) |
 | T-903 | Error boundaries for `(auth)` and `onboarding`; the reference shown is the `ApiError` request id, else the digest (`errorReference`, shared with `(app)/error.tsx`); ENG-02 D-20 resolved | M7 | 2026-11-20 (86 Vitest tests incl. 4 for `errorReference`; `tsc` clean for `src`; ESLint clean; boundaries not triggered in a browser) |

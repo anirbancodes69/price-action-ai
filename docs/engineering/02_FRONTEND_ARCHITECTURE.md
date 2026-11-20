@@ -126,7 +126,7 @@ Differences between the current frontend and the specified product. None is fixe
 | ID | Area | Current frontend | Specification | Resolution | Milestone |
 |---|---|---|---|---|---|
 | D-01 | Setup types | `breakout-retest`, `pullback-to-support`, `range-breakout`, `breakdown-retest`, `trend-continuation`, `range-bound` | 4 canonical types (TRD-04) | Update `SetupType` + `SETUP_TYPES` labels; mapping table TRD-04 §13 | M7 |
-| D-02 | Setup status | No `expired`; `detected` | `FORMING`, …, `EXPIRED` | Add `expired`; rename label of `detected` → "Forming" | M7 |
+| D-02 | Setup status | ~~No `expired`; `detected`~~ **Resolved 2026-11-20 (T-I129):** `expired` added (API `EXPIRED` no longer folded into `invalidated`); `detected` is labelled "Forming" | `FORMING`, …, `EXPIRED` | Done | M7 |
 | D-03 | Universe options | NIFTY 50/100/200/MIDCAP 150, "All NSE equities"; default NIFTY 100 | NIFTY 500 default; subsets only | Add NIFTY 500, remove All NSE, change default | M7 |
 | D-04 | Types `Exchange`, `IndexMembership` | **Partly resolved 2026-11-20 (T-I128):** `Exchange` is `"NSE"` only; `IndexMembership` still lacks NIFTY 500 | NSE only; universes from API | Use API universes | M7 |
 | D-05 | Analysis logic | Demo zigzag (3% threshold) heuristic in `mocks/demo-analysis.ts` | Fractal pivots L=R=2 etc. (TRD-02) | Engine replaces; mock stays labelled demo heuristic for frontend-only development | M3–M7 |

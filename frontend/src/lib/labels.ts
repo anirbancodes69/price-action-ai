@@ -70,7 +70,7 @@ export const SETUP_TYPES: Record<SetupType, { label: string; short: string }> = 
 
 export const SETUP_STATUS: Record<SetupStatus, LabelMeta> = {
   detected: {
-    label: "Detected",
+    label: "Forming",
     tone: "info",
     description: "Pattern identified by the analysis. No trigger yet.",
   },
@@ -88,6 +88,11 @@ export const SETUP_STATUS: Record<SetupStatus, LabelMeta> = {
     label: "Invalidated",
     tone: "destructive",
     description: "Price violated the setup's invalidation level.",
+  },
+  expired: {
+    label: "Expired",
+    tone: "neutral",
+    description: "The setup's window passed without a trigger (for example, after the entry cutoff).",
   },
 };
 
