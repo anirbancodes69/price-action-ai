@@ -61,13 +61,45 @@ None of these is adopted. Each is a rule change that needs an owner decision, a 
 
 | Candidate | Addresses | Testable today |
 |---|---|---|
-| Disable or rework BREAKOUT_RETEST | D3 | Needs a code change and a ruleset version |
-| Raise `risk.min_stop_distance_pct` (now 0.15) to about 0.5–0.7 so costs are a smaller share of risk | D2 | Yes, a ruleset parameter |
+| Disable or rework BREAKOUT_RETEST | D3 | Tested as run C (§4); adopting it needs a code change and a ruleset version |
+| Raise `risk.min_stop_distance_pct` (now 0.15) to about 0.5–0.7 so costs are a smaller share of risk | D2 | Tested as runs A and B (§4); a ruleset parameter |
 | Prefer `TRANSITION` over `BULLISH` 15m context, or drop late-trend entries | D8 | Needs a code change |
 | Replace PAQS ordering with a measure that predicts outcomes, or re-weight PAQS | D7 | Needs research and a ruleset version |
 | Target and structure-exit rules | D4, D5 | Only together with better entries (D6) |
 
-## 4. Limits of this run
+## 4. Exploration variants A–D (same 55 sessions)
+
+Each variant changes one thing against `pa-intraday 0.1.0` and is otherwise identical: same data, sizing, costs and chunks. The changes were made by a temporary script, with no edits to the ruleset file or the engine code, so **none of them is a ruleset version**.
+
+| Run | Change |
+|---|---|
+| A | `risk.min_stop_distance_pct` 0.15 → 0.5 |
+| B | `risk.min_stop_distance_pct` 0.15 → 0.7 |
+| C | BREAKOUT_RETEST detection off |
+| D | C and B together |
+
+| | 0.1.0 | A | B | C | D |
+|---|---|---|---|---|---|
+| Trades | 176 | 116 | 70 | 72 | 48 |
+| Win rate | 28.4% | 34.5% | 38.6% | 36.1% | 43.8% |
+| Avg R net / gross | −0.39 / −0.20 | −0.28 / −0.14 | −0.14 / −0.04 | −0.15 / −0.02 | +0.02 / +0.12 |
+| Net P&L | −₹16,794 | −₹10,545 | −₹3,974 | −₹2,536 | +₹345 |
+| Gross P&L | −₹7,988 | −₹4,855 | −₹750 | +₹749 | +₹2,406 |
+| Profit factor | 0.52 | 0.56 | 0.70 | 0.79 | 1.05 |
+| IS net (avg R net) | −₹11,429 (−0.45) | −₹7,880 (−0.37) | −₹2,012 (−0.13) | −₹2,868 (−0.23) | −₹550 (−0.03) |
+| OOS net (avg R net) | −₹5,365 (−0.32) | −₹2,665 (−0.17) | −₹1,962 (−0.16) | +₹332 (−0.04) | +₹895 (+0.08) |
+| Stop-outs | 80 | 42 | 14 | 19 | 5 |
+| Max-positions skips | 667 | 564 | 394 | 60 | 52 |
+
+Run D in more detail: costs ₹2,061 (about 0.09R per trade, against about 0.2R in 0.1.0); gross R positive in both halves (+0.07 IS, +0.17 OOS); OPENING_RANGE_BREAKOUT +0.05R / +0.18R net (12 and 10 trades), PREV_DAY_HIGH_BREAK −0.09R / 0.00R (15 and 11 trades); exits 24 session-end, 17 structure, 5 stop, 2 target.
+
+**Reading:**
+
+- Both changes improve the result in both halves; together (D) they bring the rules to about break-even after costs.
+- D is **not evidence of profitability**: +₹345 over 48 trades is within noise, its in-sample half is still slightly negative net, and D was chosen after seeing A–C on the same days (selection bias). Costs are still assumptions.
+- D is the best **candidate** for a proposed `pa-intraday 0.2.0`. Adopting it needs an owner decision, a ruleset version with the TRD updates, a setup on/off switch in code, and a test on sessions it was not chosen on (more history, or forward paper logging, TRD-07).
+
+## 5. Limits of this run
 
 - 55 sessions in one market period; IS and OOS are 34 and 21 sessions. Any variant tuned on these days must be checked on new days (forward paper logging, TRD-07) before it is trusted.
 - Today's NIFTY 50 list is applied to the whole period (survivorship bias).
