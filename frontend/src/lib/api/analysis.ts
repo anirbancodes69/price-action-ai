@@ -136,7 +136,7 @@ export function mapAnalysis(run: ApiAnalysisRun): StockAnalysis {
     stock: {
       symbol: run.instrument.symbol,
       name: run.instrument.name,
-      exchange: run.instrument.exchange === "BSE" ? "BSE" : "NSE",
+      exchange: "NSE",
       sector: "Unclassified",
       indices: ["NIFTY 50"],
       price,

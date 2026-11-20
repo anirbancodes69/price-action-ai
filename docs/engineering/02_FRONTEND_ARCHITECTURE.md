@@ -128,7 +128,7 @@ Differences between the current frontend and the specified product. None is fixe
 | D-01 | Setup types | `breakout-retest`, `pullback-to-support`, `range-breakout`, `breakdown-retest`, `trend-continuation`, `range-bound` | 4 canonical types (TRD-04) | Update `SetupType` + `SETUP_TYPES` labels; mapping table TRD-04 §13 | M7 |
 | D-02 | Setup status | No `expired`; `detected` | `FORMING`, …, `EXPIRED` | Add `expired`; rename label of `detected` → "Forming" | M7 |
 | D-03 | Universe options | NIFTY 50/100/200/MIDCAP 150, "All NSE equities"; default NIFTY 100 | NIFTY 500 default; subsets only | Add NIFTY 500, remove All NSE, change default | M7 |
-| D-04 | Types `Exchange`, `IndexMembership` | `BSE` allowed; index list lacks NIFTY 500 | NSE only; universes from API | Narrow types / use API universes | M7 |
+| D-04 | Types `Exchange`, `IndexMembership` | **Partly resolved 2026-11-20 (T-I128):** `Exchange` is `"NSE"` only; `IndexMembership` still lacks NIFTY 500 | NSE only; universes from API | Use API universes | M7 |
 | D-05 | Analysis logic | Demo zigzag (3% threshold) heuristic in `mocks/demo-analysis.ts` | Fractal pivots L=R=2 etc. (TRD-02) | Engine replaces; mock stays labelled demo heuristic for frontend-only development | M3–M7 |
 | D-06 | Plan sizing | Quantity computed in `create-plan-dialog.tsx` from a ₹ risk input | Engine-computed from risk profile (%); API preview | Dialog calls `/risk/calculate`; risk input becomes % with profile default | M7 |
 | D-07 | Plan statuses | `pending`, `entry-confirmed`, `active`, `completed`, `invalidated`, `cancelled` | `PENDING`, `TRIGGERED`, `FILLED`, `SKIPPED`, `INVALIDATED`, `EXPIRED`, `CANCELLED`; open/closed from linked trade | Map `active`/`completed` from `FILLED` + trade status; add tabs | M7 |
@@ -146,7 +146,7 @@ Differences between the current frontend and the specified product. None is fixe
 | D-19 | Chart events | `breakout`/`retest`/`breakdown` | `BOS`/`CHOCH`/`WICK_BREACH` + setup stage markers | Adapter + new marker types | M7 |
 | D-20 | Error handling | ~~No `error.tsx`~~ **Resolved 2026-11-20 (T-903):** `error.tsx` in `(app)`, `(auth)` and `onboarding` (ErrorState + retry); the reference is the `ApiError` request id, else the Next.js digest (`lib/api/error-reference.ts`), never the message | Route error boundaries | Done | M7 |
 | D-21 | Tooling | ~~No tests, no `typecheck` script~~ **Resolved in M0:** Vitest 5 (`npm test`), `npm run typecheck` | Vitest, `tsc --noEmit` in CI | Done | M0 |
-| D-22 | Scanner exchange filter | NSE/BSE filter | Remove (NSE only) | Remove | M7 |
+| D-22 | Scanner exchange filter | ~~NSE/BSE filter~~ **Resolved 2026-11-20 (T-I128):** filter removed; API mappers set `NSE` | Remove (NSE only) | Done | M7 |
 | D-23 | Plan sizing input | Risk budget ₹5,000 default in dialog | Risk % from profile (₹ shown as derived) | See D-06 | M7 |
 | D-24 | Prices | `number` in types | Strings in API | Adapter parses | M7 |
 | D-25 | Time model | ~~`Candle.time` is a date string; `Timeframe = "1D" \| "1W" \| "1M"`; chart aggregates daily bars~~ **Resolved (restructuring branch):** `Candle.time` is an IST timestamp for intraday bars and a session date for daily bars; `Timeframe = "5m" \| "15m" \| "1D"`; the chart shifts timestamps to read IST (`lib/chart/time.ts`), draws session separators and session levels; `lib/chart/aggregate.ts` removed | Timestamped bars, `5m`/`15m` (daily display only), IST labels, session separators (ADR-015, ARC-04 §2.9) | Done | — |

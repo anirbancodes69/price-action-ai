@@ -86,7 +86,7 @@ export function mapScannerRow(r: ApiScannerRow): ScannerRow {
     stock: {
       symbol: r.instrument.symbol,
       name: r.instrument.name,
-      exchange: r.instrument.exchange === "BSE" ? "BSE" : "NSE",
+      exchange: "NSE",
       sector: "Unclassified",
       indices: ["NIFTY 50"],
       price: num(r.last_close),
