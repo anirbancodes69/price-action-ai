@@ -48,7 +48,7 @@ def detect_breakout_retest(ctx: SetupContext) -> tuple[list[Setup], list[str]]:
             a for a in _anchors(ctx) if a[0] not in taken and a[4] < j
         ]
         if j >= 1:
-            for z in build_zones(
+            for z in (ctx.zone_cache.zones if ctx.zone_cache is not None else build_zones)(
                 ctx.bars,
                 ctx.pivots_5m,
                 ctx.pivots_15m,

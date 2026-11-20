@@ -27,6 +27,7 @@ from app.domain.snapshot import SnapshotCheck, SnapshotStatus, check_snapshot
 from app.domain.structure import run_structure
 from app.domain.types import Bar, StructureResult, Timeframe
 from app.domain.zone_build import build_zones
+from app.domain.zone_cache import ZoneCache
 from app.domain.zones import Zone
 
 
@@ -64,6 +65,7 @@ def analyse(
     previous_session_open: datetime | None = None,
     tick: Decimal | None = None,
     session_close: datetime | None = None,
+    zone_cache: ZoneCache | None = None,
 ) -> AnalysisResult:
     """Pure function of closed bars and the ruleset (bars span `analysis.lookback_sessions` sessions)."""
     check = check_snapshot(bars_5m, bars_15m, params)
@@ -75,7 +77,9 @@ def analyse(
     htf = align_htf([bars_5m[-1].end], bars_15m, s15)[0]
     levels = session_levels(bars_5m, session_open, prev_day, params.int_("session.opening_range_minutes"))
     t = len(bars_5m) - 1
-    zones = build_zones(bars_5m, s5.pivots, s15.pivots, t, params, session_open, previous_session_open, tick)
+    zones = (zone_cache.zones if zone_cache is not None else build_zones)(
+        bars_5m, s5.pivots, s15.pivots, t, params, session_open, previous_session_open, tick
+    )
     pools = equal_levels(bars_5m, s5.pivots, t, params.equal_tolerance())
     result = AnalysisResult(
         params.code, params.version, check, h5, h15, s5, s15, htf, levels, tuple(zones), tuple(pools)
@@ -97,6 +101,7 @@ def analyse(
         previous_session_open,
         params,
         tick,
+        zone_cache,
     )
     found: list[Setup] = []
     reasons: list[str] = []
