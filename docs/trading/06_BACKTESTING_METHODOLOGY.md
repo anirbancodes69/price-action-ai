@@ -155,7 +155,7 @@ Metrics with fewer than 30 trades or 60 sessions are shown with a "low sample" w
 
 Exploration runs on real bars are recorded in [`backtests/`](backtests/), aggregates only (the trade lists derive from personal-mode data, ADR-011):
 
-- [2026-11-20: pa-intraday 0.1.0, NIFTY 50, 55 sessions](backtests/2026-11-20-pa-intraday-0.1.0-nifty50.md): net −₹16,794, 176 trades, profit factor 0.52; no edge before costs, BREAKOUT_RETEST negative in both halves. Variants A–D on the same days: dropping BREAKOUT_RETEST with a 0.7% minimum stop is about break-even (+₹345, 48 trades); a candidate, not adopted.
+- [2026-11-20: pa-intraday 0.1.0, NIFTY 50, 55 sessions](backtests/2026-11-20-pa-intraday-0.1.0-nifty50.md): net −₹16,794, 176 trades, profit factor 0.52; no edge before costs, BREAKOUT_RETEST negative in both halves. Variants A–D on the same days: dropping BREAKOUT_RETEST with a 0.7% minimum stop is about break-even (+₹345, 48 trades); a candidate, not adopted. Replayed on 164 earlier sessions (Jan–Aug 2026) it lost −₹13,310 (profit factor 0.63): not out-of-sample positive.
 
 ## 12. Open questions
 

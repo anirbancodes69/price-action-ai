@@ -38,8 +38,8 @@ Update this file at the end of every substantial task, based only on verified st
 |---|---|
 | First real backtest | 2026-11-20, 55 sessions (2026-09-01..2026-11-19), `pa-intraday 0.1.0`: 176 trades, win rate 28.4%, −₹16,794 net, profit factor 0.52, −0.20R per trade before costs ([log](docs/trading/backtests/2026-11-20-pa-intraday-0.1.0-nifty50.md)) |
 | By setup | BREAKOUT_RETEST 130 trades −0.48R; PREV_DAY_HIGH_BREAK 33 trades −0.27R; OPENING_RANGE_BREAKOUT 13 trades +0.10R (too few to read) |
-| Best candidate | Variant D (BREAKOUT_RETEST off, min stop distance 0.7%): about break-even, chosen on the same days, so not evidence. Not adopted; any rule change needs the owner's decision and a new ruleset version |
-| Next check | Replay variant D on the stored 2026-01..08 bars, which it was not chosen on (T-I134) |
+| Best candidate | Variant D (BREAKOUT_RETEST off, min stop distance 0.7%) was about break-even on the days it was chosen on (+₹345, 48 trades) but **lost −₹13,310 over 164 earlier sessions (2026-01..08), profit factor 0.63, negative before costs**: not out-of-sample positive ([log §5](docs/trading/backtests/2026-11-20-pa-intraday-0.1.0-nifty50.md)). Not adopted |
+| Next check | `pa-intraday 0.1.0` on the same 2026-01..08 bars for a baseline (remaining part of T-I134); then research on entry quality, since exits and stop distance do not create an edge |
 
 ## Completed milestones
 
@@ -58,7 +58,7 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Immediate next task
 
-1. **Out-of-sample check (T-I134):** replay variant D on the stored 2026-01-01..2026-08-31 bars. It needs no rule change and decides whether a `pa-intraday 0.2.0` proposal is worth making.
+1. **Out-of-sample check (T-I134):** variant D is done (negative, see above); the remaining part is `pa-intraday 0.1.0` on the same bars as a baseline. No `pa-intraday 0.2.0` proposal is justified by the evidence so far.
 2. **Correctness fixes from the 2026-11-21 audit (T-I135..T-I138):** scanner signal vs risk rejection, gap check at analysis time, NSE holiday calendar, previous-day levels from the previous trading session.
 3. **Owner steps:** load the NSE holiday list into `backend/database/seeders/data/nse-market-calendar.json` and check the cost schedule against Zerodha contract notes (OQ-BT-02). To run ingestion live: `scripts/kite_login.py` each trading day (token expires about 06:00 IST), `INGEST_ENABLED=true` in `.env`, `docker compose up -d engine-worker`; re-run `backfill --timeframe 1D` after each close until a daily job exists.
 
