@@ -137,17 +137,6 @@ export function ScannerView({ rows, asOf, live }: { rows: ScannerRow[]; asOf: st
             { value: "NIFTY MIDCAP 100", label: "NIFTY MIDCAP 100" },
           ]}
         />
-        <Select
-          aria-label="Exchange"
-          width="auto"
-          value={f.exchange}
-          onChange={(e) => set("exchange", e.target.value as ScannerFilters["exchange"])}
-          options={[
-            { value: "all", label: "All exchanges" },
-            { value: "NSE", label: "NSE" },
-            { value: "BSE", label: "BSE" },
-          ]}
-        />
         <ClearButton show={canClear} onClear={() => setF(DEFAULT_FILTERS)} />
       </FilterRow>
 

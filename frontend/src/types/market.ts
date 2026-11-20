@@ -1,6 +1,7 @@
 /** Market-data domain types. These mirror the contract the backend will expose. */
 
-export type Exchange = "NSE" | "BSE";
+/** NSE only (ADR-014); the API carries the exchange per instrument. */
+export type Exchange = "NSE";
 
 export type IndexMembership = "NIFTY 50" | "NIFTY NEXT 50" | "NIFTY MIDCAP 100";
 

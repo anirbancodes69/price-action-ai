@@ -2,7 +2,6 @@ import type { Bias, IndexMembership, MarketStructure, ScannerRow, SetupStatus, S
 
 export interface ScannerFilters {
   query: string;
-  exchange: "all" | "NSE" | "BSE";
   index: "all" | IndexMembership;
   bias: "all" | Bias;
   setup: "all" | SetupType;
@@ -13,7 +12,6 @@ export interface ScannerFilters {
 
 export const DEFAULT_FILTERS: ScannerFilters = {
   query: "",
-  exchange: "all",
   index: "all",
   bias: "all",
   setup: "all",
@@ -26,7 +24,6 @@ export function applyFilters(rows: ScannerRow[], f: ScannerFilters) {
   const q = f.query.trim().toLowerCase();
   return rows.filter((r) => {
     if (q && !r.stock.symbol.toLowerCase().includes(q) && !r.stock.name.toLowerCase().includes(q)) return false;
-    if (f.exchange !== "all" && r.stock.exchange !== f.exchange) return false;
     if (f.index !== "all" && !r.stock.indices.includes(f.index)) return false;
     if (f.bias !== "all" && r.bias !== f.bias) return false;
     if (f.setup !== "all" && r.setupType !== f.setup) return false;

@@ -3,7 +3,8 @@
  * Like the scanner, the canonical vocabulary is mapped at this boundary and only formatting conversions happen
  * (decimal strings to numbers). Nothing is calculated here: entry, stop, target, score and signal come from the engine.
  */
-import type { Bias, Candle, PriceZone, QualityFactor, StockAnalysis, StructureBreak, SwingPoint } from "@/types";
+import type { Bias, Candle, EvidenceItem, PriceZone, QualityFactor, StockAnalysis, StructureBreak, SwingPoint } from "@/types";
+import { SIGNAL_REASONS } from "../labels";
 import { apiRequest } from "./client";
 import { SETUP_STATUS, SETUP_TYPE, SIGNAL, mapStructure, num, type ApiStructure, type DataMode } from "./scanner";
 
@@ -117,12 +118,25 @@ export function mapAnalysis(run: ApiAnalysisRun): StockAnalysis {
     note: c.missing ? "Not available" : `${c.points} of ${c.max} points`,
   }));
   const lv = primary?.levels;
+  // Evidence restates engine output only: each PAQS component (supporting when it scored, caution when it
+  // scored nothing or was missing) and the engine's own reason codes. No threshold is applied here.
+  const evidence: EvidenceItem[] = [
+    ...(primary?.quality.components ?? []).map((c): EvidenceItem => {
+      const scored = !c.missing && c.points > 0;
+      return {
+        title: c.label,
+        detail: c.missing ? "Not available for this bar." : `${c.points} of ${c.max} points.`,
+        tone: scored ? "supporting" : "caution",
+      };
+    }),
+    ...run.signal.reason_codes.map((code): EvidenceItem => ({ title: SIGNAL_REASONS[code] ?? code, detail: "Reported by the engine.", tone: "caution" })),
+  ];
 
   return {
     stock: {
       symbol: run.instrument.symbol,
       name: run.instrument.name,
-      exchange: run.instrument.exchange === "BSE" ? "BSE" : "NSE",
+      exchange: "NSE",
       sector: "Unclassified",
       indices: ["NIFTY 50"],
       price,
@@ -169,7 +183,7 @@ export function mapAnalysis(run: ApiAnalysisRun): StockAnalysis {
     qualityFactors: factors,
     entryConditions: lv ? [`Trigger above ${lv.trigger}, entry at the next 5m open.`] : [],
     invalidation: lv ? [`A close below the stop at ${lv.stop}.`] : [],
-    evidence: [],
+    evidence,
   };
 }
 

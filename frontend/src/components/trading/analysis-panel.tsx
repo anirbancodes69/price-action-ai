@@ -29,14 +29,21 @@ function Block({ title, children, aside }: { title: string; children: ReactNode;
 }
 
 const LIFECYCLE: SetupStatus[] = ["detected", "awaiting-confirmation", "entry-confirmed"];
-const LIFECYCLE_SHORT: Record<string, string> = { detected: "Detected", "awaiting-confirmation": "Awaiting", "entry-confirmed": "Confirmed" };
+const LIFECYCLE_SHORT: Record<string, string> = { detected: "Forming", "awaiting-confirmation": "Awaiting", "entry-confirmed": "Confirmed" };
 
-/** Detected → Awaiting confirmation → Entry confirmed (or Invalidated). An ordered state: the step ramp. */
+/** Forming → Awaiting confirmation → Entry confirmed (or Invalidated or Expired). An ordered state: the step ramp. */
 function SetupLifecycle({ status }: { status: SetupStatus }) {
   if (status === "invalidated") {
     return (
       <Badge tone="destructive" dot>
         Invalidated
+      </Badge>
+    );
+  }
+  if (status === "expired") {
+    return (
+      <Badge tone="neutral" dot>
+        Expired
       </Badge>
     );
   }

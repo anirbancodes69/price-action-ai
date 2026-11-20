@@ -28,7 +28,8 @@ export type SetupStatus =
   | "detected"
   | "awaiting-confirmation"
   | "entry-confirmed"
-  | "invalidated";
+  | "invalidated"
+  | "expired";
 
 /**
  * Action state shown to the trader. Never a bare BUY/SELL — each state is

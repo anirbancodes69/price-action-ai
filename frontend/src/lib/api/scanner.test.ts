@@ -65,7 +65,7 @@ describe("mapScannerRow", () => {
       signal_state: "NO_TRADE",
       primary_setup: { ...base.primary_setup!, type: "PREV_DAY_LOW_BREAK", direction: "SHORT", status: "EXPIRED", levels: null },
     });
-    expect([r.direction, r.setupType, r.setupStatus, r.levels]).toEqual(["short", "prev-day-low-break", "invalidated", null]);
+    expect([r.direction, r.setupType, r.setupStatus, r.levels]).toEqual(["short", "prev-day-low-break", "expired", null]);
   });
 
   it("falls back safely for a setup type the frontend does not know", () => {
