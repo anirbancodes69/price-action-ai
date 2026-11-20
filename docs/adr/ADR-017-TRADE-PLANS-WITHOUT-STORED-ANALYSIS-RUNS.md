@@ -32,4 +32,4 @@
 - Migration `2026_11_19_000002`: `analysis_run_id` nullable; new nullable `setup_type`, `paqs`, `as_of_ts`. Existing rows are unaffected (none exist in personal mode).
 - Contract: `TradePlan.analysis_run_id` and `setup_id` nullable; `TradePlanCreate` takes `setup_type` and no longer requires `analysis_run_id` in personal mode. ARC-04 T2 and ARC-03 §8 are updated in the same change.
 - A plan cannot be traced to a stored run, only to its own recorded setup, levels and bar time.
-- Status transitions by bar close (triggered, invalidated, expired) are the engine's and are not built yet: a plan stays `PENDING` until the owner cancels it.
+- Status transitions by bar close (triggered, invalidated, expired) are the engine's and are not built yet: a plan stays `PENDING` until the owner cancels it or its entry cutoff passes. The cutoff rule is a pure time rule and runs in Laravel (`plans:expire`, T-I130): `PENDING` becomes `EXPIRED`, an unfilled `TRIGGERED` plan `SKIPPED`.
