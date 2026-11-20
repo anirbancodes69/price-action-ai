@@ -71,16 +71,21 @@ def backfill(
     end: date,
     sleep: Callable[[float], None],
     resume: bool = True,
+    as_of: date | None = None,
 ) -> BackfillReport:
     """Fetch `timeframe` bars for `refs` over `start..end` and upsert them.
 
     With `resume`, an instrument that already has bars restarts at its latest stored trade date (that day is
     refetched because it may have been partial). An expired token aborts the run (`FAILED`); other provider
     errors are recorded per instrument window and the run ends `PARTIAL`.
+
+    `as_of` is the date at which provider references are resolved (default `end`). Older history is stored
+    under the instruments as they are known today, so a range that ends before the references were opened
+    (the first sync) needs a later `as_of`.
     """
     max_days = provider.capabilities().max_days_per_request[timeframe]
     repo = IngestionRepository(conn, source, provider.provider_code)
-    ids = repo.resolve_instruments(refs, datetime.combine(end, time(12), IST))
+    ids = repo.resolve_instruments(refs, datetime.combine(as_of or end, time(12), IST))
     report = BackfillReport(uuid.uuid4(), skipped_unmapped=[r.symbol for r in refs if r.symbol not in ids])
     conn.execute(
         insert(ingestion_runs).values(

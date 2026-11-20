@@ -4,6 +4,7 @@
   sync-instruments --symbols FILE            instrument master -> instruments, refs, snapshots
   load-universe --code NIFTY50 --symbols FILE --from YYYY-MM-DD
   backfill --code NIFTY50 --timeframe 5m|15m|1D --from YYYY-MM-DD --to YYYY-MM-DD
+           [--no-resume] [--as-of YYYY-MM-DD]   (both needed for history older than the stored bars)
                                              (1D feeds the daily chart context; history-check is 5m/15m only)
   history-check --code NIFTY50 --timeframe 5m --from YYYY-MM-DD --to YYYY-MM-DD
 
@@ -51,6 +52,17 @@ def _parser() -> argparse.ArgumentParser:
     c.add_argument("--timeframe", choices=["5m", "15m", "1D"], default="5m")
     c.add_argument("--from", dest="from_", type=date.fromisoformat, required=True)
     c.add_argument("--to", type=date.fromisoformat, required=True)
+    c.add_argument(
+        "--no-resume",
+        action="store_true",
+        help="refetch from --from even where bars exist (needed for history older than the stored bars)",
+    )
+    c.add_argument(
+        "--as-of",
+        type=date.fromisoformat,
+        help="date at which universe membership and provider references are looked up (default --to); "
+        "use a recent date to backfill history that predates the universe load",
+    )
     d = sub.add_parser("history-check")
     d.add_argument("--code", default="NIFTY50")
     d.add_argument("--timeframe", choices=["5m", "15m"], default="5m")
@@ -105,8 +117,21 @@ def main(argv: list[str] | None = None) -> int:
                         f" {len(c.missing_sessions)} sessions absent, worst {list(c.worst)}"
                     )
         else:
-            refs = universe_refs(conn, args.code, provider.provider_code, args.to)
-            rep = backfill(conn, source, provider, ctx, refs, args.timeframe, args.from_, args.to, time.sleep)
+            as_of = args.as_of or args.to
+            refs = universe_refs(conn, args.code, provider.provider_code, as_of)
+            rep = backfill(
+                conn,
+                source,
+                provider,
+                ctx,
+                refs,
+                args.timeframe,
+                args.from_,
+                args.to,
+                time.sleep,
+                resume=not args.no_resume,
+                as_of=as_of,
+            )
             print(f"{rep.status}: inserted={rep.inserted} updated={rep.updated} requests={rep.requests}")
             for line in [*rep.failed[:20], *(f"unmapped {x}" for x in rep.skipped_unmapped[:20])]:
                 print(" ", line)

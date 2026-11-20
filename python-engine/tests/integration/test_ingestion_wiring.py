@@ -289,6 +289,20 @@ def test_backfill_chunks_resumes_and_reports(fx: Fx) -> None:
     assert ghost.skipped_unmapped == ["GHOST"] and ghost.status == "PARTIAL"
 
 
+def test_backfill_of_history_older_than_the_first_sync_needs_as_of(fx: Fx) -> None:
+    synced = DAYS[2] + timedelta(days=1)  # the provider references open after the history being fetched
+    sync_instruments(fx.conn, fx.provider, CTX, fx.symbols[:1], synced)
+    refs = [ProviderInstrumentRef(f"{fx.suffix}0", fx.symbols[0])]
+    miss = backfill(fx.conn, fx.source, fx.provider, CTX, refs, "5m", DAYS[0], DAYS[2], lambda _: None)
+    fx.run_ids.append(miss.run_id)
+    assert miss.skipped_unmapped == [fx.symbols[0]] and miss.inserted == 0
+    got = backfill(
+        fx.conn, fx.source, fx.provider, CTX, refs, "5m", DAYS[0], DAYS[2], lambda _: None, as_of=synced
+    )
+    fx.run_ids.append(got.run_id)
+    assert got.status == "COMPLETED" and got.inserted == 3 * 75
+
+
 def test_backtest_loader_builds_sessions_with_previous_day_levels(fx: Fx) -> None:
     sync_instruments(fx.conn, fx.provider, CTX, fx.symbols[:1], DAYS[0] - timedelta(days=5))
     refs = [ProviderInstrumentRef(f"{fx.suffix}0", fx.symbols[0])]
