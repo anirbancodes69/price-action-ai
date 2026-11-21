@@ -203,7 +203,7 @@ def test_run_record_flags_and_determinism() -> None:
         2,
         "FIXED",
     )
-    assert set(a.flags) == {"short_history", "survivorship_bias_risk", "low_sample"}
+    assert set(a.flags) == {"short_history", "survivorship_bias_risk", "low_sample", "NOT_ISOLATED"}
     ok = run_backtest(two_sessions(), cfg(point_in_time_universe=True), fn)
     assert "survivorship_bias_risk" not in ok.flags
     changed = two_sessions()

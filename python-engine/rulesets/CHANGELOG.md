@@ -8,6 +8,12 @@ needs an entry here, updated TRD docs (TRD-01 §6 and the TRD that defines the r
 The backend seeds from `backend/database/seeders/data/<code>-<version>.json` because the backend container cannot see
 this directory; both files are kept byte-identical.
 
+## pa-intraday 0.3.0 (2026-11-21, Strategy 01 research ruleset)
+
+- `0.2.0` plus one change: `exit.structure_exit_enabled: false`. Approved decision P-4 of the Strategy 01 specification ([page](../../docs/strategies/liquidity-sweep-reversal.md)): the bearish-CHoCH structure exit is not part of the Liquidity Sweep strategy, so its isolated backtests exit only at the stop, the target or the session end. Every other value is identical to `0.2.0`.
+- Used only for single-strategy research runs (`run_backtest.py --ruleset pa-intraday@0.3.0 --strategy liquidity_sweep_reversal --experiment 4a|4b`). Not seeded as active; the live scanner stays on `0.1.0`. The seeder copy exists and is byte-identical.
+- Not validated: no backtest has been run on it yet.
+
 ## pa-intraday 0.2.0 (2026-11-21, exploration candidate)
 
 - `0.1.0` plus `setup.liquidity_sweep_enabled: true`: enables `LIQUIDITY_SWEEP_REVERSAL` (TRD-04 §7; vectors TV-SET-20..28). All other values are identical to `0.1.0`, which is unchanged and stays active. Not seeded as active; used for backtests (`run_backtest.py --ruleset pa-intraday@0.2.0`).

@@ -10,6 +10,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from typing import Any
 
 from app.backtest.costs import CostSchedule
 from app.backtest.trade import ExitConfig, Position, Trade, close_trade, step_position
@@ -105,6 +106,15 @@ class _Order:
     signal_at: datetime
 
 
+# Order for candidates closing on the same bar competing for slots: (session, paqs, symbol) -> key.
+OrderKey = Callable[[SessionSpec, int, str], Any]
+
+
+def score_then_symbol(_spec: SessionSpec, paqs: int, symbol: str) -> tuple[int, str]:
+    """The combined-engine order: highest score first, then symbol (not acceptable for single strategies)."""
+    return -paqs, symbol
+
+
 def _skip_reason(blocked: str | None, errors: Sequence[str]) -> str:
     if blocked == "MAX_POSITIONS_REACHED":
         return blocked
@@ -120,6 +130,7 @@ def replay_session(
     profile: RiskProfile,
     schedule: CostSchedule,
     analyse_fn: AnalyseFn = default_analyse,
+    order_key: OrderKey = score_then_symbol,
 ) -> SessionResult:
     cutoff = entry_cutoff(spec.session_close, params.int_("session.entry_cutoff_minutes_before_close"))
     exit_time = spec.session_close - timedelta(minutes=params.int_("session.exit_minutes_before_close"))
@@ -228,7 +239,7 @@ def replay_session(
             prim = res.signal.primary
             if res.signal.signal is Signal.ENTRY_CONFIRMED and prim is not None and prim.levels is not None:
                 cands.append((prim.paqs.total if prim.paqs else 0, s.symbol, res))
-        for paqs, name, res in sorted(cands, key=lambda c: (-c[0], c[1])):
+        for paqs, name, res in sorted(cands, key=lambda c: order_key(spec, c[0], c[1])):
             prim = res.signal.primary if res.signal else None
             if prim is None or prim.levels is None:
                 continue

@@ -31,7 +31,7 @@ Pointers only. Read the linked section; do not copy its contents into code comme
 | Previous-day high break (and low break, informational) | [TRD-04 §4](../../../../docs/trading/04_SETUP_DETECTION_RULES.md#4-setup-2--prev_day_high_break-long) |
 | Breakout and retest | [TRD-04 §5](../../../../docs/trading/04_SETUP_DETECTION_RULES.md#5-setup-3--breakout_retest-long) |
 | Trend continuation (after validation) | [TRD-04 §6](../../../../docs/trading/04_SETUP_DETECTION_RULES.md#6-setup-4--trend_continuation-long-after-validation) |
-| Liquidity sweep reversal (after validation) | [TRD-04 §7](../../../../docs/trading/04_SETUP_DETECTION_RULES.md#7-setup-5--liquidity_sweep_reversal-long-after-validation) |
+| Liquidity sweep reversal (after validation) | [TRD-04 §7](../../../../docs/trading/04_SETUP_DETECTION_RULES.md#7-setup-5--liquidity_sweep_reversal-long-pa-intraday-020) |
 | Entry, stop, target ladder, R:R | [TRD-04 §8](../../../../docs/trading/04_SETUP_DETECTION_RULES.md#8-levels) |
 | Evidence items | [TRD-04 §9](../../../../docs/trading/04_SETUP_DETECTION_RULES.md#9-evidence) |
 | PAQS quality score | [TRD-04 §10](../../../../docs/trading/04_SETUP_DETECTION_RULES.md#10-price-action-quality-score-paqs) |

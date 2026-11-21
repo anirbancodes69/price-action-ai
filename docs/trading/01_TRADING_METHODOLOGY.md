@@ -240,3 +240,5 @@ User overrides are bounded so that a user can only make risk rules **stricter** 
 | `setup.liquidity_sweep_enabled` | true | flag | true/false | No | TRD-04 §7 |
 
 A ruleset without the key (`0.1.0`) has the setup disabled. The score version stays `paqs-intraday-0.1.0` (the sweep checklist and the unscored anchors are in TRD-04 §10, OQ-SD-07).
+
+`pa-intraday 0.3.0` is `0.2.0` with `exit.structure_exit_enabled = false` (the Strategy 01 research ruleset: no bearish-CHoCH exit in single-strategy runs). Every other value is identical; it is not seeded as active, and its files are `python-engine/rulesets/pa-intraday/0.3.0.json` and the byte-identical seeder copy.
