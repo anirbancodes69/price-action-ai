@@ -22,9 +22,9 @@ All setups are evaluated on **closed 5m bars** of the current session, with 15m 
 | `PREV_DAY_LOW_BREAK` (§4.1) | Yes | SHORT, informational |
 | `BREAKOUT_RETEST` (§5) | Yes | LONG; the breakdown mirror is SHORT, informational |
 | `TREND_CONTINUATION` (§6) | After validation of the MVP setups | LONG |
-| `LIQUIDITY_SWEEP_REVERSAL` (§7) | After validation of the MVP setups | LONG |
+| `LIQUIDITY_SWEEP_REVERSAL` (§7) | Implemented; enabled only in `pa-intraday 0.2.0` (exploration, not validated) | LONG |
 
-`SUPPORT_REJECTION` and `TREND_PULLBACK` belonged to `pa-core` and are retired (TRD-01 Appendix A). Setups marked "after validation" are fully specified but disabled in `pa-intraday 0.1.0`; enabling them is a new ruleset version.
+`SUPPORT_REJECTION` and `TREND_PULLBACK` belonged to `pa-core` and are retired (TRD-01 Appendix A). Setups marked "after validation" are fully specified but disabled in `pa-intraday 0.1.0`; enabling them is a new ruleset version. `LIQUIDITY_SWEEP_REVERSAL` is built and switched on by `setup.liquidity_sweep_enabled` in `pa-intraday 0.2.0` (ruleset registry delta: TRD-01 Appendix B); `pa-intraday 0.1.0` is unchanged and never emits it.
 
 ## 2. Common lifecycle
 
@@ -126,7 +126,7 @@ When the anchor is `OR_HIGH` or `PDH` and both an `OPENING_RANGE_BREAKOUT`/`PREV
 | Stop | `s.price × (1 − sb)`. |
 | Target | §8.3, with the impulse-leg high (highest high between `b` and `s.index`) as the setup-specific candidate. |
 
-## 7. Setup 5 — LIQUIDITY_SWEEP_REVERSAL (long, after validation)
+## 7. Setup 5 — LIQUIDITY_SWEEP_REVERSAL (long; `pa-intraday 0.2.0`)
 
 **Idea:** price runs stops below an obvious level with a wick, then reclaims it.
 
@@ -139,7 +139,7 @@ When the anchor is `OR_HIGH` or `PDH` and both an `OPENING_RANGE_BREAKOUT`/`PREV
 | Stop | `sweep_low × (1 − sb)`. |
 | Target | §8.3; an `EQUAL_HIGHS` pool above entry is the setup-specific candidate. |
 
-A wick below `Y` whose close stays below `Y` without a timely reclaim is not a sweep; a close below `Y × (1 − sbuf)` is a structural break per TRD-02.
+A wick below `Y` whose close stays below `Y` without a timely reclaim is not a sweep; a close below `Y × (1 − sbuf)` is a structural break per TRD-02. "Unbroken" for a level means no close below `Y × (1 − sbuf)` since it formed and before bar `w`. The setup is exempt from the 15m context filter (SD-05: no `HTF_AGAINST` invalidation; the score gives structure alignment 0). Implementation: `python-engine/app/domain/setups/liquidity_sweep.py`; choices where this section is silent are OQ-SD-07 and OQ-SD-08.
 
 ## 8. Levels
 
@@ -258,4 +258,6 @@ The Phase 1 frontend mock (`frontend/src/types/analysis.ts`) uses a daily setup 
 | OQ-SD-03 | Resolved for `pa-intraday`: the entry window is one 5m bar. Revisit if forward logging shows the window is too short for manual execution. |
 | OQ-SD-04 | Should PAQS thresholds differ per setup type? |
 | OQ-SD-06 | Implementation choices where TRD-04 is silent (T-I40..T-I45): no 15m context counts as "against"; one `BREAKOUT_RETEST` per level anchor per session; zone anchors use the zone as built at the bar before the breakout (resistance or inside, `touches ≥ 2`); a bar ending exactly at the entry cutoff may still confirm; the `SESSION_HIGH` rung of the target ladder includes the confirmation bar's own high, so it is often the nearest candidate and flags `rr_below_min`; the breakdown-retest SHORT mirror is not implemented; PAQS checklist thresholds are code constants. Confirm or amend. |
+| OQ-SD-07 | `LIQUIDITY_SWEEP_REVERSAL` key-level quality (TRD-04 §10 gives points only for a zone anchor): what should a sweep of `PDL`, `OR_LOW`, an `EQUAL_LOWS` pool or a swing low earn (the long setups give `PDH` 16, `OR_HIGH` 14, +4 zone confluence)? Until decided these anchors score 0 with `missing = true`, so a sweep's PAQS is capped at 80. |
+| OQ-SD-08 | `LIQUIDITY_SWEEP_REVERSAL` implementation choices where §7 is silent: one setup per sweep bar, for the highest level reclaimed on it (ties by anchor order `PDL`, `OR_LOW`, `EQUAL_LOWS`, `ZONE`, `SWING_LOW_5M`, `SWING_LOW_15M`); a level (anchor and price) is used once per session (SD-04); a zone level is `Z.low` of an `ACTIVE` zone that is `SUPPORT` at the close of bar `w − 1`; a close of `w` below `Y × (1 − sbuf)` rules out the two-bar reclaim; a bar whose low is deeper than `L[w] × (1 − sbuf)` on the reclaim bar is itself a same-bar sweep; no CHoCH invalidation. |
 | OQ-SD-05 | Should `PREV_DAY_HIGH_BREAK` require a follow-through close (a second close above PDH) before confirmation? Decide from intraday backtests. |

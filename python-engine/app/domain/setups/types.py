@@ -9,6 +9,7 @@ from decimal import Decimal
 from enum import StrEnum
 
 from app.domain.htf import HtfContext
+from app.domain.liquidity import LiquidityPool
 from app.domain.params import RulesetParams
 from app.domain.session import SessionLevels
 from app.domain.types import Bar, StructureResult, SwingPoint
@@ -23,6 +24,7 @@ class SetupType(StrEnum):
     PREV_DAY_HIGH_BREAK = "PREV_DAY_HIGH_BREAK"
     PREV_DAY_LOW_BREAK = "PREV_DAY_LOW_BREAK"
     BREAKOUT_RETEST = "BREAKOUT_RETEST"
+    LIQUIDITY_SWEEP_REVERSAL = "LIQUIDITY_SWEEP_REVERSAL"
 
 
 TYPE_ORDER = {t: i for i, t in enumerate(SetupType)}
@@ -62,6 +64,9 @@ class Setup:
     breakout_index: int | None = None
     retest_index: int | None = None
     retest_closes_hold: bool | None = None
+    swept_level: Decimal | None = None  # the liquidity level `Y` a sweep reclaimed
+    sweep_low: Decimal | None = None  # lowest low of the sweep (and reclaim) bar(s)
+    same_bar_reclaim: bool | None = None
 
     @property
     def informational(self) -> bool:
@@ -91,3 +96,4 @@ class SetupContext:
     params: RulesetParams
     tick: Decimal | None = None
     zone_cache: ZoneCache | None = None  # optional memo of `build_zones` (a speed-up only)
+    pools: Sequence[LiquidityPool] | None = None  # equal-level pools at `t` when the caller has them

@@ -159,7 +159,7 @@ The engine's output vocabulary is fixed per ruleset version and mirrored in the 
 | Structure state | `BULLISH`, `BEARISH`, `SIDEWAYS`, `TRANSITION` |
 | Swing label | `HH`, `LH`, `EQH`, `HL`, `LL`, `EQL`, `NONE` (first pivot of its kind) |
 | Structure event | `BOS`, `CHOCH`, `WICK_BREACH` |
-| Setup type | MVP: `OPENING_RANGE_BREAKOUT`, `PREV_DAY_HIGH_BREAK`, `PREV_DAY_LOW_BREAK` (bearish, informational), `BREAKOUT_RETEST`. Later in `pa-intraday`: `TREND_CONTINUATION`, `LIQUIDITY_SWEEP_REVERSAL`. Retired with `pa-core`: `SUPPORT_REJECTION`, `TREND_PULLBACK` |
+| Setup type | MVP: `OPENING_RANGE_BREAKOUT`, `PREV_DAY_HIGH_BREAK`, `PREV_DAY_LOW_BREAK` (bearish, informational), `BREAKOUT_RETEST`. Later in `pa-intraday`: `TREND_CONTINUATION`; `LIQUIDITY_SWEEP_REVERSAL` is built and enabled in `0.2.0` only. Retired with `pa-core`: `SUPPORT_REJECTION`, `TREND_PULLBACK` |
 | Direction | `LONG` (actionable), `SHORT` (informational only) |
 | Setup status | `FORMING`, `AWAITING_CONFIRMATION`, `ENTRY_CONFIRMED`, `INVALIDATED`, `EXPIRED` |
 | Signal state (UI) | `NO_TRADE`, `BUY_WATCH`, `ENTRY_CONFIRMED`, `HOLD`, `EXIT` |
@@ -231,4 +231,12 @@ The daily registry (`pa-core`, 0.1.0). Every parameter is configurable per rules
 
 User overrides are bounded so that a user can only make risk rules **stricter** for `risk.min_rr` and `risk.max_entry_gap_pct`. Rationale: the analysis output must remain comparable to backtested behaviour.
 
+## Appendix B. Ruleset `pa-intraday 0.2.0` (exploration candidate, not validated)
 
+`0.2.0` is `0.1.0` plus one parameter; every other value is identical. `0.1.0` stays the active ruleset and is never edited. `0.2.0` is not seeded as active (`RulesetSeeder::RULESETS` lists only `0.1.0`); its files are `python-engine/rulesets/pa-intraday/0.2.0.json` and the byte-identical seeder copy.
+
+| Parameter | Value | Unit | Range | User-overridable | Source |
+|---|---|---|---|---|---|
+| `setup.liquidity_sweep_enabled` | true | flag | true/false | No | TRD-04 §7 |
+
+A ruleset without the key (`0.1.0`) has the setup disabled. The score version stays `paqs-intraday-0.1.0` (the sweep checklist and the unscored anchors are in TRD-04 §10, OQ-SD-07).

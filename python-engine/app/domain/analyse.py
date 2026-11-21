@@ -18,6 +18,7 @@ from app.domain.params import RulesetParams
 from app.domain.pivots import detect_pivots, label_pivots
 from app.domain.session import DailyLevels, SessionLevels, entry_cutoff, session_levels
 from app.domain.setups.breakout_retest import detect_breakout_retest
+from app.domain.setups.liquidity_sweep import detect_liquidity_sweep
 from app.domain.setups.opening_range import detect_opening_range
 from app.domain.setups.prev_day import detect_prev_day
 from app.domain.setups.scoring import score_setup
@@ -102,10 +103,11 @@ def analyse(
         params,
         tick,
         zone_cache,
+        tuple(pools),
     )
     found: list[Setup] = []
     reasons: list[str] = []
-    for detect in (detect_opening_range, detect_prev_day, detect_breakout_retest):
+    for detect in (detect_opening_range, detect_prev_day, detect_breakout_retest, detect_liquidity_sweep):
         got, why = detect(ctx)
         found += got
         reasons += why
