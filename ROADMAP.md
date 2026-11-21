@@ -49,6 +49,10 @@ Full acceptance and exit criteria are in ENG-01 §3.
 
 M0 included the GitHub repository configuration (ruleset, squash-only merges, secret scanning, Dependabot, CODEOWNERS, templates) and the GitHub Actions CI implementation. Deviations recorded in ENG-01 M0: backend and engine CI were pulled forward from M1; Trivy and Semgrep were deferred to image publishing; third-party Actions were pinned by tag at first and are now pinned by commit SHA (T-901, 2026-11-17).
 
+## Strategy library
+
+The intraday milestones above are being followed by a validation programme for twelve independent strategies ([ADR-018](docs/adr/ADR-018-INDEPENDENT-STRATEGY-LIBRARY.md)). The order, per-strategy status and blockers are in the [strategy roadmap and master tracker](docs/development/strategy-development-roadmap.md). Next: Strategy 01, Liquidity Sweep / Reversal. This does not change the milestone statuses above.
+
 ## Open roadmap questions
 
 - OQ-RD-01 — target dates per milestone.

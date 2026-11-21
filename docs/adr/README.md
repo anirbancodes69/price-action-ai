@@ -36,6 +36,7 @@ Each ADR has: Status, Date, Context, Decision, Alternatives considered, Conseque
 | [ADR-015](ADR-015-INTRADAY-TIME-AND-SNAPSHOT-MODEL.md) | Intraday Time Model and Snapshots by Reference | Accepted | 2026-11-17 |
 | [ADR-016](ADR-016-LIVE-ENGINE-PROXY-FOR-SCANNER-AND-ANALYSIS.md) | Live Engine Proxy for the Scanner and Analysis (Personal Mode) | Accepted | 2026-11-18 |
 | [ADR-017](ADR-017-TRADE-PLANS-WITHOUT-STORED-ANALYSIS-RUNS.md) | Trade Plans Without Stored Analysis Runs (Personal Mode) | Accepted | 2026-11-19 |
+| [ADR-018](ADR-018-INDEPENDENT-STRATEGY-LIBRARY.md) | Independent Strategy Library, Developed and Validated One Strategy at a Time | Accepted | 2026-11-21 |
 
 ## Candidate future ADRs
 

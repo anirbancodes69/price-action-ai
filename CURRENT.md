@@ -43,6 +43,10 @@ Update this file at the end of every substantial task, based only on verified st
 | Stored history | NIFTY 50 5m and 15m bars for 2024-01-01..2026-11-19 (717 sessions; 498 added 2026-11-21, T-I140). Four special sessions in it (Saturdays 2024-03-02 and 2024-05-18, Muhurat 2024-11-01 and 2025-10-21) are short and need the special-session list (T-I137) before a replay |
 | Next check | `pa-intraday 0.1.0` on the same 2026-01..08 bars for a baseline (remaining part of T-I134); then research on entry quality, since exits and stop distance do not create an edge |
 
+## Strategy library programme (ADR-018, 2026-11-21)
+
+Documentation and planning only; no strategy or production code changed. The 12-strategy roadmap, development process, isolation and validation standards, data limitations and the experiment registry are in place. Master tracker: [docs/development/strategy-development-roadmap.md](docs/development/strategy-development-roadmap.md#5-master-strategy-tracker). Verified starting state: Strategy 01 (liquidity sweep), 09 (ORB), 10 (PDH break) and 11 (breakout-retest) are `IMPLEMENTED` as long-only setups; strategy 03 has a draft specification (TRD-04 §6) and no code; 02, 04-08 have no setup code; 12 is `DEFERRED`. **No strategy has an independent backtest**, and all earlier backtests were combined runs ([registry](docs/research/experiment-registry.md)). Owner decisions recorded 2026-11-21: D-1, D-2, D-5, D-7 approved; D-3, D-4, D-6 deferred (roadmap §6). **Next authorised task:** Strategy 01, Liquidity Sweep / Reversal: audit, complete, test and independently validate.
+
 ## Completed milestones
 
 | Milestone | Date | Evidence |
@@ -60,6 +64,7 @@ Update this file at the end of every substantial task, based only on verified st
 
 ## Immediate next task
 
+0. **Strategy 01 (T-I142):** audit, complete, test and independently validate Liquidity Sweep / Reversal, (roadmap approved 2026-11-21). The items below are the earlier backtest follow-ups.
 1. **Out-of-sample check (T-I134):** variant D is done (negative, see above); the remaining part is `pa-intraday 0.1.0` on the same bars as a baseline. No `pa-intraday 0.2.0` proposal is justified by the evidence so far.
 2. **Correctness fixes from the 2026-11-21 audit (T-I135..T-I138):** scanner signal vs risk rejection, gap check at analysis time, NSE holiday calendar, previous-day levels from the previous trading session.
 3. **Owner steps:** load the NSE holiday list into `backend/database/seeders/data/nse-market-calendar.json` and check the cost schedule against Zerodha contract notes (OQ-BT-02). To run ingestion live: `scripts/kite_login.py` each trading day (token expires about 06:00 IST), `INGEST_ENABLED=true` in `.env`, `docker compose up -d engine-worker`; re-run `backfill --timeframe 1D` after each close until a daily job exists.

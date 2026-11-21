@@ -22,7 +22,10 @@ This directory is the **authoritative specification** for PriceAction AI: an AI-
 | [trading/](trading/) | TRD-01..08 | Methodology & parameter registry, market structure, S/R, setups & quality score, risk, backtesting, paper trading, validation |
 | [engineering/](engineering/) | ENG-01..12 | Roadmap, frontend, backend, Python engine, ingestion, errors/logging, testing, dev environment, GitHub repo, CI/CD, branching/release, code quality/PRs |
 | [operations/](operations/) | OPS-01..06 | Deployment, environment config, monitoring, retention/backup, compliance, disaster recovery |
-| [adr/](adr/README.md) | ADR-001..013 | Architecture decision records |
+| [adr/](adr/README.md) | ADR-001..018 | Architecture decision records |
+| [strategies/](strategies/README.md) | — | One page per strategy in the 12-strategy library, and the strategy template |
+| [development/](development/strategy-development-roadmap.md) | — | Strategy roadmap and master tracker, development process, future adaptive architecture |
+| [research/](research/README.md) | — | Independent backtesting standards, validation criteria, data limitations, experiment registry, research audits |
 | [design-standards.md](design-standards.md) | — | UI/UX design standards (mandatory for all frontend work, ADR-013) |
 | [GLOSSARY.md](GLOSSARY.md) | — | Terminology |
 | [DOCUMENTATION_STATUS.md](DOCUMENTATION_STATUS.md) | — | Status, dependencies, open questions per document |
