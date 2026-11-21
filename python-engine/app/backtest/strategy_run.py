@@ -81,6 +81,36 @@ def seeded_order(seed: int) -> OrderKey:
     return key
 
 
+def strategy_config(
+    strategy_id: str,
+    experiment: str,
+    params: RulesetParams,
+    capital: Decimal,
+    schedule: CostSchedule,
+    engine_version: str,
+    data_source: str,
+    universe: str,
+    *,
+    tie_break_seed: int = 1,
+    purpose: str = "EXPLORATION",
+) -> BacktestConfig:
+    if experiment not in ("4a", "4b"):
+        raise ValueError("experiment must be '4a' or '4b'")
+    return BacktestConfig(
+        params,
+        capital,
+        schedule,
+        engine_version,
+        data_source,
+        universe,
+        purpose=purpose,
+        strategy_id=strategy_id,
+        experiment=experiment,
+        profile_fn=unlimited_profile if experiment == "4a" else RiskProfile.from_params,
+        order_key=seeded_order(tie_break_seed),
+    )
+
+
 def run_strategy_backtest(
     strategy_id: str,
     experiment: str,
@@ -95,19 +125,16 @@ def run_strategy_backtest(
     tie_break_seed: int = 1,
     purpose: str = "EXPLORATION",
 ) -> BacktestResult:
-    if experiment not in ("4a", "4b"):
-        raise ValueError("experiment must be '4a' or '4b'")
-    cfg = BacktestConfig(
+    cfg = strategy_config(
+        strategy_id,
+        experiment,
         params,
         capital,
         schedule,
         engine_version,
         data_source,
         universe,
+        tie_break_seed=tie_break_seed,
         purpose=purpose,
-        strategy_id=strategy_id,
-        experiment=experiment,
-        profile_fn=unlimited_profile if experiment == "4a" else RiskProfile.from_params,
-        order_key=seeded_order(tie_break_seed),
     )
     return run_backtest(sessions, cfg, strategy_analyse(strategy_id))

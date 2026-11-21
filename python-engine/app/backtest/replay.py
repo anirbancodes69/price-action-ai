@@ -104,6 +104,8 @@ class _Order:
     target: Decimal
     risk_budget: Decimal
     signal_at: datetime
+    anchor: str = ""
+    swept_level: Decimal | None = None
 
 
 # Order for candidates closing on the same bar competing for slots: (session, paqs, symbol) -> key.
@@ -206,6 +208,8 @@ def replay_session(
                 o.target,
                 o.signal_at,
                 bar.start,
+                anchor=o.anchor,
+                swept_level=o.swept_level,
             )
         # B. exits on this bar (fill bars included: stop checked first)
         for sym_name in list(open_pos):
@@ -280,6 +284,8 @@ def replay_session(
                     rr.target,
                     rr.sizing.risk_budget,
                     sig_at,
+                    prim.setup.anchor,
+                    prim.setup.swept_level,
                 )
             )
 
