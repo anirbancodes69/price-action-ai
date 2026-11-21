@@ -21,7 +21,7 @@ import json
 import sys
 import tomllib
 import uuid
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -30,7 +30,8 @@ from sqlalchemy import create_engine
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # make `app` importable when run as a script
 
 from app.backtest.costs import CostSchedule
-from app.backtest.loader import load_backtest_inputs
+from app.backtest.exclusions import SPECIAL_SESSIONS, Exclusion, summarise
+from app.backtest.loader import load_backtest_inputs, load_daily_levels
 from app.backtest.report import format_report, report_dict
 from app.backtest.run import BacktestConfig, run_backtest
 from app.backtest.splits import split_sessions
@@ -55,6 +56,13 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--sizing", choices=["FIXED", "COMPOUNDING"], default="FIXED")
     p.add_argument("--split", choices=["all", "is", "oos", "holdout"], default="all")
     p.add_argument("--ruleset", default="pa-intraday@0.1.0")
+    p.add_argument(
+        "--members-on",
+        type=date.fromisoformat,
+        help="date whose universe membership is used (default --to). Membership is stored from 2026-11,\n"
+        "so an "
+        "older range needs a recent date; the run stays flagged survivorship_bias_risk",
+    )
     p.add_argument("--json", dest="json_out", type=Path)
     p.add_argument("--strategy", choices=sorted(STRATEGY_DETECTORS))
     p.add_argument("--experiment", choices=["4a", "4b"])
@@ -76,16 +84,37 @@ def main(argv: list[str] | None = None) -> int:
     params = load_ruleset(code, version)
     engine = create_engine(s.database_url.get_secret_value())
     with engine.connect() as conn:
-        members = universe_members(conn, a.code, a.to)
+        members = universe_members(conn, a.code, a.members_on or a.to)
         if not members:
             print(
-                f"No members in universe {a.code} on {a.to}. Run market_data_cli.py load-universe.",
+                f"No members in universe {a.code} on {a.members_on or a.to}. "
+                "Run market_data_cli.py load-universe.",
                 file=sys.stderr,
             )
             return 2
-        inputs = load_backtest_inputs(
-            conn, source, members, a.from_, a.to, params.int_("analysis.lookback_sessions")
-        )
+        exclusions: list[Exclusion] = []
+        if a.strategy:
+            # D-7: previous-day levels from the official 1D bars, special sessions out of the replay.
+            margin = timedelta(days=params.int_("analysis.lookback_sessions") * 2 + 14)
+            daily = {
+                sym: load_daily_levels(conn, source, iid, a.from_ - margin, a.to)
+                for sym, iid in members.items()
+            }
+            inputs = load_backtest_inputs(
+                conn,
+                source,
+                members,
+                a.from_,
+                a.to,
+                params.int_("analysis.lookback_sessions"),
+                daily_levels=daily,
+                skip_days=set(SPECIAL_SESSIONS),
+                exclusions=exclusions,
+            )
+        else:
+            inputs = load_backtest_inputs(
+                conn, source, members, a.from_, a.to, params.int_("analysis.lookback_sessions")
+            )
     engine.dispose()
     if a.split != "all":
         sp = split_sessions([i.spec.session_date for i in inputs])
@@ -109,8 +138,13 @@ def main(argv: list[str] | None = None) -> int:
             purpose=f"EXPLORATION:{a.split}",
         )
         print(format_report(result))
+        print("Exclusions: " + (", ".join(f"{k} {v}" for k, v in summarise(exclusions).items()) or "none"))
         if a.json_out:
-            a.json_out.write_text(json.dumps(report_dict(result), indent=2))
+            out = report_dict(result)
+            out["exclusions"] = [
+                {"day": e.day.isoformat(), "symbol": e.symbol, "reason": e.reason} for e in exclusions
+            ]
+            a.json_out.write_text(json.dumps(out, indent=2))
             print(f"\nFull result written to {a.json_out}")
         return 0
     cfg = BacktestConfig(

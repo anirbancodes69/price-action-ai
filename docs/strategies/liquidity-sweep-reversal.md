@@ -135,7 +135,7 @@ Limits: long only; PAQS gives the anchors `PDL`, `OR_LOW`, `EQUAL_LOWS` and swin
 
 - `analyse(..., detectors=strategy_detectors("liquidity_sweep_reversal"), isolated=True)` runs only `detect_liquidity_sweep`, leaves `paqs` empty and uses `choose_signal(score_gate=False)`. The defaults (`detectors=None`, `isolated=False`) are the live behaviour and are tested equal.
 - Registry: `app/domain/strategies.py`. Run: `app/backtest/strategy_run.py` and `scripts/run_backtest.py --ruleset pa-intraday@0.3.0 --strategy liquidity_sweep_reversal --experiment 4a|4b [--tie-break-seed N]`.
-- 4a: `unlimited_profile` lifts the position, open-risk, daily-loss, streak and value limits; the size is the fixed risk unit (0.5% of the capital per trade, ₹500 on ₹1,00,000). One open trade per symbol.
+- 4a: `unlimited_profile` lifts the position, open-risk, daily-loss, streak, value and capital limits; the size is the fixed risk unit (0.5% of the capital per trade, ₹500 on ₹1,00,000). One open trade per symbol. The shared fill rules still apply: a gap that degrades the reward-to-risk below the minimum (`SKIPPED_RR_DEGRADED`), the cutoff and the maximum entry gap.
 - 4b: project limits (TRD-05); candidates closing on the same bar compete in the order of `sha256(seed | session date | symbol)`. A second seed is the required second tie-break run.
 - Run record carries `strategy_id` and `experiment`; flags `costs_unverified` and `UNSUPPORTED_DIRECTION:SHORT`. A combined run is flagged `NOT_ISOLATED`.
 - Exits in an isolated run: stop, target, session end (the structure exit is off in `0.3.0`). `trade_levels()` stays shared and its sweep branch is this strategy's own ladder (§12).
