@@ -19,6 +19,9 @@ OR_WIDTH_OK = (Decimal("0.50"), Decimal("1.50"))
 OR_CONFIRM_WITHIN_BARS = 24
 PDH_OPEN_GAP_PCT = Decimal("0.30")
 RETEST_WITHIN_BARS = 3
+SWEEP_MAX_DEPTH_PCT = Decimal("0.30")
+SWEEP_ZONE_MIN_TOUCHES = 2
+SWEEP_LEVEL_ANCHORS = ("PDL", "OR_LOW", "EQUAL_LOWS")
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +93,11 @@ def level_component(s: Setup, ctx: SetupContext, zones: Sequence[Zone]) -> Compo
         return Component(
             "key_level_quality", int((Decimal(s.zone.strength) * Decimal("0.2")).quantize(Decimal(1))), 20
         )
+    if s.type is SetupType.LIQUIDITY_SWEEP_REVERSAL:
+        # TRD-04 §10 gives points only for a zone anchor; other sweep anchors are not scored (OQ-SD-07).
+        return Component(
+            "key_level_quality", 0, 20, True, "no points defined for this sweep anchor (OQ-SD-07)"
+        )
     base = PDH_ANCHOR_PTS if s.anchor == "PDH" else OR_HIGH_ANCHOR_PTS
     level = ctx.levels.pdh if s.anchor == "PDH" else ctx.levels.or_high
     if level is not None and _confluent(level, zones, ctx.params.pct("zone.cluster_tolerance_pct")):
@@ -125,6 +133,19 @@ def checklist_component(s: Setup, ctx: SetupContext) -> Component:
             s.retest_index is not None
             and s.breakout_index is not None
             and s.retest_index - s.breakout_index <= RETEST_WITHIN_BARS
+        ):
+            pts += 8
+    elif s.type is SetupType.LIQUIDITY_SWEEP_REVERSAL:
+        if s.same_bar_reclaim:
+            pts += 9
+        if s.anchor in SWEEP_LEVEL_ANCHORS or (
+            s.anchor == "ZONE" and s.zone is not None and s.zone.touches >= SWEEP_ZONE_MIN_TOUCHES
+        ):
+            pts += 8
+        if (
+            s.swept_level is not None
+            and s.sweep_low is not None
+            and (s.swept_level - s.sweep_low) / s.swept_level * 100 <= SWEEP_MAX_DEPTH_PCT
         ):
             pts += 8
     return Component("setup_quality", pts, 25)

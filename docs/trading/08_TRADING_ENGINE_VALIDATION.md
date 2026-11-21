@@ -101,7 +101,16 @@ Defines the mandatory test catalogue for the trading engine. Every test ID below
 | TV-SET-16 | Setup awaiting confirmation at the entry cutoff | EXPIRED (`SESSION_CUTOFF`); no confirmation by a bar ending after the cutoff |
 | TV-SET-17 | 09:25 close (opening range of 15 minutes incomplete) | No opening range breakout can form |
 | TV-SET-18 | Signal timestamps | `signal_at = E(T)`; `valid_until` per TRD-04 §12 |
-| TV-SET-19 | Trend continuation and sweep reversal | Disabled in `pa-intraday 0.1.0`: never emitted (vectors for their rules are written when enabled) |
+| TV-SET-19 | Trend continuation and sweep reversal in `pa-intraday 0.1.0` | Disabled: never emitted. `LIQUIDITY_SWEEP_REVERSAL` is enabled in `0.2.0` (TV-SET-20..28); the trend continuation vectors are written when it is enabled |
+| TV-SET-20 | Same-bar sweep of PDL 1480 (low 1478, close 1481), then a close 1485 | Detected on the sweep bar: trigger 1483, stop base 1478; `ENTRY_CONFIRMED` on the next bar (1485 > 1483.7415) |
+| TV-SET-21 | Two-bar reclaim: close 1479.5 (≥ 1479.26, below Y), next close 1481 with low 1478.2 ≥ 1477.261 | Detected on the reclaim bar, trigger = its high, `same_bar_reclaim = false` |
+| TV-SET-22 | Wick without a reclaim; close below `Y × (1 − sbuf)`; deeper low on the reclaim bar | No setup; no setup; the reclaim bar is itself a same-bar sweep with the lower `sweep_low` |
+| TV-SET-23 | Sweep low 1479.26 vs 1479.25 against `Y × (1 − sbuf)` = 1479.26 | No setup at the boundary; a setup one tick below |
+| TV-SET-24 | Close below the sweep low after detection | `INVALIDATED` (`SWEEP_FAILED`) |
+| TV-SET-25 | 15m `BEARISH` with an otherwise valid sweep | Not invalidated (SD-05 exception); structure alignment 0, PAQS 55 in the worked fixture |
+| TV-SET-26 | Stop and target ladder of the TV-SET-20 fixture | Stop 1477.261, target PDH 1510, rr 3.23 |
+| TV-SET-27 | `EQUAL_HIGHS` pool above the entry | First target candidate, ahead of a nearer PDH that also meets `risk.min_rr` |
+| TV-SET-28 | Sweep checklist points | 25 with same-bar + listed anchor + depth ≤ 0.30%; depth 0.3007% loses the 8; non-zone key-level anchors score 0, `missing = true` (OQ-SD-07) |
 
 ### 3.5 Risk (TRD-05)
 

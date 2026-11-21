@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import ROUND_FLOOR, Decimal
 
+from app.domain.liquidity import PoolType, equal_levels
 from app.domain.setups.types import Setup, SetupContext, SetupDirection, SetupStatus, SetupType
 from app.domain.types import PivotKind
 from app.domain.zones import Zone
@@ -92,6 +93,14 @@ def trade_levels(s: Setup, ctx: SetupContext, zones: Sequence[Zone]) -> TradeLev
     t = ctx.t
     cands: list[tuple[str, Decimal]] = []
     lv = ctx.levels
+    if s.type is SetupType.LIQUIDITY_SWEEP_REVERSAL:
+        pools = ctx.pools
+        if pools is None:
+            pools = equal_levels(ctx.bars, ctx.pivots_5m, t, p.equal_tolerance())
+        cands += sorted(
+            (("EQUAL_HIGHS", x.level) for x in pools if x.type is PoolType.EQUAL_HIGHS and x.level > entry),
+            key=lambda c: c[1],
+        )
     if s.type is SetupType.OPENING_RANGE_BREAKOUT and lv.or_high is not None and lv.or_low is not None:
         cands.append(("MEASURED_OPENING_RANGE", lv.or_high + (lv.or_high - lv.or_low)))
     refs = [
