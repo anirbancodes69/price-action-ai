@@ -21,6 +21,8 @@ SPECIAL_SESSIONS: dict[date, str] = {
 }
 
 MISSING_PREV_DAY_LEVELS = "MISSING_PREV_DAY_LEVELS"
+# The previous day's 1D bar does not contain that day's 5m range (for example a corporate-action break).
+INCONSISTENT_PREV_DAY_LEVELS = "INCONSISTENT_PREV_DAY_LEVELS"
 
 
 @dataclass(frozen=True, slots=True)

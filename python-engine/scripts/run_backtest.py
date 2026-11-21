@@ -56,6 +56,13 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--sizing", choices=["FIXED", "COMPOUNDING"], default="FIXED")
     p.add_argument("--split", choices=["all", "is", "oos", "holdout"], default="all")
     p.add_argument("--ruleset", default="pa-intraday@0.1.0")
+    p.add_argument(
+        "--members-on",
+        type=date.fromisoformat,
+        help="date whose universe membership is used (default --to). Membership is stored from 2026-11,\n"
+        "so an "
+        "older range needs a recent date; the run stays flagged survivorship_bias_risk",
+    )
     p.add_argument("--json", dest="json_out", type=Path)
     p.add_argument("--strategy", choices=sorted(STRATEGY_DETECTORS))
     p.add_argument("--experiment", choices=["4a", "4b"])
@@ -77,10 +84,11 @@ def main(argv: list[str] | None = None) -> int:
     params = load_ruleset(code, version)
     engine = create_engine(s.database_url.get_secret_value())
     with engine.connect() as conn:
-        members = universe_members(conn, a.code, a.to)
+        members = universe_members(conn, a.code, a.members_on or a.to)
         if not members:
             print(
-                f"No members in universe {a.code} on {a.to}. Run market_data_cli.py load-universe.",
+                f"No members in universe {a.code} on {a.members_on or a.to}. "
+                "Run market_data_cli.py load-universe.",
                 file=sys.stderr,
             )
             return 2

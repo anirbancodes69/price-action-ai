@@ -16,7 +16,12 @@ from decimal import Decimal
 
 from sqlalchemy import Connection, select
 
-from app.backtest.exclusions import MISSING_PREV_DAY_LEVELS, SPECIAL_SESSIONS, Exclusion
+from app.backtest.exclusions import (
+    INCONSISTENT_PREV_DAY_LEVELS,
+    MISSING_PREV_DAY_LEVELS,
+    SPECIAL_SESSIONS,
+    Exclusion,
+)
 from app.backtest.replay import SessionSpec, SymbolData
 from app.backtest.run import SessionInput
 from app.db.tables import candles, instrument_snapshots
@@ -116,7 +121,8 @@ def load_backtest_inputs(
     `SPECIAL_SESSIONS`) from the replay, the lookback window and the previous-day lookup, and records each in
     `exclusions`. With `daily_levels` (symbol -> trade date -> levels from 1D bars), PDH/PDL/PDC come from the
     previous full session's daily bar, not from the 5m bars; an instrument without that bar is left out of the
-    session and recorded as `MISSING_PREV_DAY_LEVELS`.
+    session and recorded as `MISSING_PREV_DAY_LEVELS`; one whose daily range does not contain the previous
+    day's 5m range is left out as `INCONSISTENT_PREV_DAY_LEVELS`.
 
     Each symbol's bars are its lookback sessions plus the session itself (earlier bars only), so a replay
     sees exactly what a live run would have had at that time.
@@ -162,6 +168,13 @@ def load_backtest_inputs(
                 if prev is None:
                     if exclusions is not None:
                         exclusions.append(Exclusion(day, sym, MISSING_PREV_DAY_LEVELS))
+                    continue
+                prev_bars = by_day.get(previous, []) if previous else []
+                if prev_bars and (
+                    prev.high < max(b.high for b in prev_bars) or prev.low > min(b.low for b in prev_bars)
+                ):
+                    if exclusions is not None:
+                        exclusions.append(Exclusion(day, sym, INCONSISTENT_PREV_DAY_LEVELS))
                     continue
             else:
                 prev = previous_day_levels(by_day[previous]) if previous and previous in by_day else None

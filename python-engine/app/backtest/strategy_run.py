@@ -55,10 +55,15 @@ def strategy_analyse(strategy_id: str) -> AnalyseFn:
 
 
 def unlimited_profile(params: RulesetParams, capital: Decimal) -> RiskProfile:
-    """Experiment 4a: only the fixed risk per trade stays; every account and capital limit is lifted."""
+    """Experiment 4a: only the fixed risk per trade stays; every account and capital limit is lifted.
+
+    The size has a `CAPITAL` term (capital minus the open positions' cost), so the capital itself is made
+    unlimited and `risk_pct` is scaled so that the risk budget per trade is unchanged (₹500 on ₹1,00,000).
+    """
+    budget = capital * params.decimal("risk.default_risk_per_trade_pct") / 100
     return RiskProfile(
-        capital=capital,
-        risk_pct=params.decimal("risk.default_risk_per_trade_pct"),
+        capital=UNLIMITED,
+        risk_pct=budget / UNLIMITED * 100,
         max_position_value=UNLIMITED,
         daily_loss_limit_pct=Decimal(10**6),
         max_consecutive_losses=UNLIMITED_COUNT,

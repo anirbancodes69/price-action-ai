@@ -18,7 +18,6 @@ from app.backtest.strategy_run import (
 )
 from app.domain.analyse import analyse
 from app.domain.params import RulesetParams
-from app.domain.risk.account import RiskProfile
 from app.domain.session import DailyLevels
 from app.domain.setups.signal import Signal
 from app.domain.setups.types import SetupType
@@ -106,10 +105,16 @@ def test_defaults_leave_the_live_analysis_unchanged() -> None:
 def test_4a_profile_lifts_every_account_limit_and_keeps_the_fixed_risk_unit() -> None:
     p = load_ruleset("pa-intraday", "0.3.0")
     prof = unlimited_profile(p, D("100000"))
-    base = RiskProfile.from_params(p, D("100000"))
-    assert prof.risk_pct == base.risk_pct == D("0.5")
-    assert prof.max_open_positions > 1000 and prof.max_consecutive_losses > 1000
+    assert prof.capital * prof.risk_pct / 100 == D("500")  # 0.5% of 1,00,000, unchanged
+    assert prof.capital > D("1e9") and prof.max_open_positions > 1000 and prof.max_consecutive_losses > 1000
     assert prof.max_position_value > D("1e9") and prof.daily_loss_limit > D("1e8")
+    # Sizing: many open positions do not shrink the next one (no CAPITAL constraint).
+    from app.domain.risk.account import AccountState
+    from app.domain.risk.sizing import size_position
+
+    busy = AccountState(D("0"), D("0"), D("0"), D("0"), 0, 10, D("99000"))
+    sz = size_position(D("1000"), D("995"), prof, busy)
+    assert (sz.qty, sz.binding_constraint) == (100, "RISK_BUDGET")  # 500 / 5
 
 
 def test_seeded_order_is_deterministic_and_not_alphabetical() -> None:
