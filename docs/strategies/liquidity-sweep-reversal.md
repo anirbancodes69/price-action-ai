@@ -4,7 +4,7 @@
 |---|---|
 | Strategy id | `liquidity_sweep_reversal` |
 | Roadmap position | 01 of 12 ([roadmap](../development/strategy-development-roadmap.md)) |
-| Acceptance status | `IMPLEMENTED` (code); specification `SPECIFICATION_APPROVED`; Stage 2 (run mode) built, Stage 3 not complete |
+| Acceptance status | `FUNCTIONAL_TESTING` (Stage 3 tests written and green 2026-11-21; no registry entry yet, so not `BACKTESTING`). Specification `SPECIFICATION_APPROVED`; run mode built |
 | Executable directions | Long |
 | Ruleset version | `pa-intraday 0.3.0` for research runs (`0.2.0` plus the structure exit off, P-4); `0.2.0` enables the setup; the live scanner stays on `0.1.0` |
 | Specification approved | **Approved by the owner, 2026-11-21** (P-1..P-4 as written, §26) |
@@ -107,11 +107,11 @@ Dependency on another strategy: **None.** The strategy does not use ORB, PDH bre
 
 ## 16. Edge cases
 
-- **Opening gap / first bar:** `w ≥ max(first, 1)`; a level needs a previous bar. A gap down through `Y` on the first bar with a reclaim is a valid sweep of `PDL` (the level is known before the session).
+- **Opening gap / first bar:** a gap down through `Y` on the first session bar with a reclaim is a valid sweep of `PDL` (tested). The code starts at `max(first, 1)`; with stored data the session is always preceded by lookback bars, so `first ≥ 1`.
 - **Missing candles / data gaps:** the strategy does not fill gaps; a session with a missing-bar issue for that symbol is excluded and logged (standards §7).
 - **Special sessions:** the four short sessions are excluded.
 - **Same price from two anchors:** one setup per sweep bar, tie by anchor order. A deeper low on the reclaim bar counts as its own same-bar sweep (OQ-SD-08).
-- **Duplicate signals:** (anchor, price) used once per session; a different anchor at the same price on a later bar is a gap to test (§18).
+- **Duplicate signals:** (anchor, price) used once per session. A different anchor at the same price is a separate level (see G-3).
 - **Cutoff:** no setup is detected or confirmed by a bar ending after the cutoff.
 - **Zero risk:** `entry ≤ stop` is rejected by the shared level check.
 - **Corporate actions:** a symbol-session near an adjustment is excluded per the data limitations.
@@ -143,19 +143,21 @@ Limits: long only; PAQS gives the anchors `PDL`, `OR_LOW`, `EQUAL_LOWS` and swin
 
 ## 18. Functional test coverage
 
-13 tests in `python-engine/tests/trading/test_setups_sweep.py` (TV-SET-19..28 plus cutoff and no-look-ahead).
+Run on 2026-11-21: 13 tests in `python-engine/tests/trading/test_setups_sweep.py` (TV-SET-19..28, cutoff, no-look-ahead) and 24 in `python-engine/tests/trading/test_setups_sweep_stage3.py`; 11 run-mode tests in `python-engine/tests/backtest/test_strategy_run.py`. The full engine suite, ruff and mypy (`app`) pass.
 
-| Stage 3 area | Covered | Gap |
-|---|---|---|
-| Setups valid / invalid, bullish | Yes (TV-SET-20..22) | No test per anchor type for `SWING_LOW_15M`, `ZONE`, `PDL`, `OR_LOW` individually |
-| Bearish | n/a (unsupported) | State in the report as `UNSUPPORTED` |
-| Levels: entry, stop, target, tick rounding | TV-SET-26, 27 | Min and max stop distance at the exact boundary: gap |
-| Lifecycle: invalidation, expiry, cutoff, duplicates | TV-SET-24, cutoff test | Expiry at `expiry_bars` boundary and same-price-different-anchor duplicate: gaps |
-| Data: missing candles, gaps, session boundaries | No | Gap |
-| Boundaries: at / just above / just below | TV-SET-23 (depth) only | Reclaim `C = Y`, `L[w+1]` limit, `bb` confirmation: gaps |
-| Look-ahead | Yes (truncated data) | Level-formation and 15m confirmation timing: extend |
-| Replay: bar-by-bar equals fresh run | No | Gap |
-| Isolation proof | Yes on a synthetic session (`tests/backtest/test_strategy_run.py`: single-strategy setups and levels equal the sweep-only part of the combined run at every bar) | Repeat on stored real bars before the first backtest |
+| Stage 3 area | Tests |
+|---|---|
+| Setups valid / invalid, bullish | TV-SET-20..22; one test per anchor: `PDL` (TV-SET-20), `OR_LOW`, `SWING_LOW_5M`, `EQUAL_LOWS`, `ZONE` (active support zone only: an inside or flipped zone gives none), `SWING_LOW_15M` (not usable before its 15m confirmation) |
+| Bearish | n/a (unsupported; reported `UNSUPPORTED_DIRECTION:SHORT`) |
+| Levels | TV-SET-26, 27; stop tick rounding and the minimum (0.15%) and maximum (2.0%) stop distance at, above and below the limit (5 cases) |
+| Lifecycle | `SWEEP_FAILED` at and below the sweep low; expiry at age 12 (live) and 13 (`AGED_OUT`); entry cutoff at the boundary (345 and 346 minutes); a level used once per session; tie between two anchors at one price |
+| Data | gap open below `PDL` on the first session bar; previous-session bars never form a setup; a missing candle is not filled; invalid input (duplicate bar) and short history give no signal |
+| Boundaries | sweep depth (TV-SET-23); reclaim close at `Y` and just below; two-bar low limit at and below; confirmation at and above `trigger × (1 + bb)` |
+| Look-ahead | truncated-data tests (two fixtures); 15m level unusable before its confirmation |
+| Replay | bar-by-bar fresh runs confirm on the same bar as the full-day run |
+| Isolation proof | synthetic (`test_strategy_run.py`) and **real bars**: `python-engine/scripts/check_strategy_isolation.py --strategy liquidity_sweep_reversal --sessions 3 --symbols 10 --to <date>`, 2026-11-21, `pa-intraday 0.3.0`, 10 NIFTY 50 symbols, every 5m bar: sessions ending 2026-11-19, 2026-07-15, 2025-09-26 and 2024-06-28, 3 sessions each (8,910 analyses, 22,538 setups): **0 differences** between the single-strategy setups and levels and the sweep part of the combined run. The proof covers the detection and level step; the replay, sizing and exits of the run mode are covered by the 11 run-mode tests |
+
+Not covered: the exact-tick boundary on `OR_LOW` and `PDL` set from the daily bars (the loader derives `PDL` from the previous session's 5m bars; data limitation L-4), and any intrabar order (no 1m data).
 
 ## 19. Independent backtest configuration
 
@@ -188,7 +190,8 @@ Data limits L-1.. in [research data limitations](../research/research-data-limit
 | P-2 (approved 2026-11-21) | OQ-SD-07 (PAQS points for non-zone anchors) | Leave open. Scoring is excluded from isolated runs (D-5), so it cannot affect validation. Decide only if the strategy later ranks live scanner results |
 | P-3 (approved 2026-11-21) | Exit set | Stop, target and session-end only. The bearish-CHoCH structure exit is not part of the strategy; a run with it is logged as a variant |
 | P-4 (approved 2026-11-21) | Strategy-only ruleset | Done as `pa-intraday 0.3.0`: `0.2.0` plus `exit.structure_exit_enabled=false`. Isolation of the detector comes from the run mode, not from the ruleset (the other setups have no enable flag). The live scanner stays on `0.1.0` |
-| G-1 | Spec vs code | No difference found by reading yet. The test gaps in §18 may reveal one; any difference is recorded here before it is fixed |
+| G-1 | Spec vs code | No difference found by reading or by the Stage 3 tests |
+| G-3 | Same price through two anchors | A level is used once per (anchor, price), so a price that is both a swing low and an `EQUAL_LOWS` level can give two setups on two different sweep bars (tested, `test_tie_between_equal_lows_and_swing_low_at_the_same_price_takes_the_anchor_order`). TRD-04 SD-04 and OQ-SD-08 allow it. Not changed: it would alter which trades exist. Impact is measured in the 4a run (count of setups sharing a swept price) and reported before any decision |
 | G-2 | Adverse slippage on exits (audit R-2) | Run records state which exits carry slippage until the shared simulator is corrected |
 
 ## 27. Acceptance decision
