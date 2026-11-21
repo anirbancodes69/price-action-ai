@@ -91,6 +91,20 @@
 | [ADR index](adr/README.md) | Current | — | — | 2026-11-15 |
 | [Documentation audit report](AUDIT_REPORT.md) | Current | — | — | 2026-11-15 |
 
+### Strategy library and research documents (ADR-018, 2026-11-21)
+
+| Document | Status | Notes |
+|---|---|---|
+| [Strategy roadmap and master tracker](development/strategy-development-roadmap.md) | Current (v1.0.0); D-1, D-2, D-5, D-7 approved 2026-11-21; D-3, D-4, D-6 deferred | Canonical tracker; statuses verified against source on 2026-11-21 |
+| [Strategy development process](development/strategy-development-process.md) | Current (v1.0.0) | Lifecycle, statuses, acceptance checklist |
+| [Future architecture](development/future-architecture.md) | Proposal, not built | Adaptive engine deferred |
+| [Strategy pages](strategies/README.md) and [template](strategies/STRATEGY_TEMPLATE.md) | Current; per-strategy specifications not yet written | Pages record verified starting state only |
+| [Independent backtesting standards](research/independent-backtesting-standards.md) | Current (v1.0.0) | Extends TRD-06 |
+| [Validation criteria](research/validation-criteria.md) | Thresholds approved (D-2); survivorship rule (D-3) confirmed at Stage 5. Still proposed in TRD-08 §6 (OQ-TRD-03) | Thresholds from TRD-08 §6 |
+| [Research data limitations](research/research-data-limitations.md), [Experiment registry](research/experiment-registry.md) | Current | Derived from the [readiness audit](research/adaptive-strategy-validation/RESEARCH_READINESS.md) |
+
+Known discrepancies recorded by the 2026-11-21 audit and not yet fixed in the specifications: [TRD-06 §6](trading/06_BACKTESTING_METHODOLOGY.md) says intraday bars are unadjusted (the stored Kite history is split/bonus-adjusted); TRD-06 §3 and ARC-08 §4.0 say Kite equity bars end at 15:15 (true only from 2026-08-03 in the stored data). [TRD-04](trading/04_SETUP_DETECTION_RULES.md) §6-7 call trend continuation and sweep reversal "after validation"; the sweep reversal is implemented (T-I141).
+
 ## 2. Open questions register
 
 All unresolved decisions, aggregated from each document's "Open questions" section (65 items). Resolve by updating the owning document (and an ADR where the decision is architectural), then remove the row there; this table is regenerated from the documents.

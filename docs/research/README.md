@@ -1,0 +1,22 @@
+# Research
+
+| Field | Value |
+|---|---|
+| Version | 1.0.0 |
+| Date | 2026-11-21 |
+
+How PriceAction AI strategies are researched and validated. The method is fixed by [ADR-018](../adr/ADR-018-INDEPENDENT-STRATEGY-LIBRARY.md): **build, test, backtest and validate every strategy independently, one at a time.** Strategy mixing is prohibited during individual research.
+
+| Document | Content |
+|---|---|
+| [Independent backtesting standards](independent-backtesting-standards.md) | Isolation rules, single-strategy run mode, the two experiments, metrics, run records, future combination research |
+| [Validation criteria](validation-criteria.md) | Robustness requirements and the proposed thresholds for `RESEARCH_VALIDATED` and `PAPER_TRADING_READY` |
+| [Research data limitations](research-data-limitations.md) | Known data and infrastructure limits, required handling and flags |
+| [Experiment registry](experiment-registry.md) | Every experiment, including failed variants and the pre-framework combined runs |
+| [Research readiness audit](adaptive-strategy-validation/RESEARCH_READINESS.md) | Evidence behind the limitations (2026-11-21) |
+| [Backtest logs](../trading/backtests/) | Full reports of individual runs |
+| [TRD-06 Backtesting methodology](../trading/06_BACKTESTING_METHODOLOGY.md) | Replay mechanics (BT-01..BT-07), costs, metrics, splits |
+
+Where the research documents and TRD-06 overlap, TRD-06 owns the replay mechanics and the research documents own isolation, validation and recording. For the development process see [strategy development process](../development/strategy-development-process.md); for status see the [master tracker](../development/strategy-development-roadmap.md#5-master-strategy-tracker).
+
+Everything on this page concerns hypothetical, simulated results. Past performance does not indicate future results (TRD-06 BT-06).

@@ -54,6 +54,8 @@ Next.js (App Router) · React · TypeScript (strict) · Tailwind CSS · TradingV
 - **No-trade is a valid outcome.** Bearish setups are informational only (long-only actionability).
 - Proposed trade plans, paper trades and actual trades are stored and handled **separately**.
 
+- **Strategy library ([ADR-018](docs/adr/ADR-018-INDEPENDENT-STRATEGY-LIBRARY.md)).** Develop and validate one strategy at a time, in the order of the [roadmap](docs/development/strategy-development-roadmap.md), following the [process](docs/development/strategy-development-process.md). Strategies are isolated: never mix strategy signals or logic in an individual backtest ([standards](docs/research/independent-backtesting-standards.md)). Status changes only with evidence; update the tracker in the same change. No VWAP or other indicators (MP-01) until the owner changes the methodology.
+
 ## 5. Development rules
 
 - **Docker first.** Use `make up`, `make dev`, `make test` and `make lint` (see [Makefile](Makefile) and [ENG-08](docs/engineering/08_DEVELOPMENT_ENVIRONMENT.md)).
