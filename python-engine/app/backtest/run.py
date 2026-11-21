@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -13,12 +13,14 @@ from app.backtest.costs import CostSchedule
 from app.backtest.metrics import Metrics, compute_metrics, equity_curve
 from app.backtest.replay import (
     AnalyseFn,
+    OrderKey,
     SessionResult,
     SessionSpec,
     Skip,
     SymbolData,
     default_analyse,
     replay_session,
+    score_then_symbol,
 )
 from app.backtest.trade import Trade
 from app.domain.candles import candles_hash
@@ -39,6 +41,11 @@ class BacktestConfig:
     sizing_mode: Literal["FIXED", "COMPOUNDING"] = "FIXED"
     point_in_time_universe: bool = False
     purpose: str = "EXPLORATION"
+    # Single-strategy run mode (standards §3). `None` is a combined run, flagged `NOT_ISOLATED`.
+    strategy_id: str | None = None
+    experiment: str | None = None  # "4a" or "4b" (standards §4)
+    profile_fn: Callable[[RulesetParams, Decimal], RiskProfile] = RiskProfile.from_params
+    order_key: OrderKey = score_then_symbol
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +70,8 @@ class RunRecord:
     first_session: date | None
     last_session: date | None
     sessions: int
+    strategy_id: str | None = None
+    experiment: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,8 +113,8 @@ def run_backtest(
     equity = cfg.capital
     for s in ordered:
         capital = equity if cfg.sizing_mode == "COMPOUNDING" else cfg.capital
-        profile = RiskProfile.from_params(cfg.params, capital)
-        r = replay_session(s.symbols, s.spec, cfg.params, profile, cfg.schedule, analyse_fn)
+        profile = cfg.profile_fn(cfg.params, capital)
+        r = replay_session(s.symbols, s.spec, cfg.params, profile, cfg.schedule, analyse_fn, cfg.order_key)
         results.append(r)
         equity += r.net_pnl
     metrics = compute_metrics(results, cfg.capital)
@@ -122,6 +131,11 @@ def run_backtest(
         flags.append("low_sample")
     if metrics.end_of_data_trades:
         flags.append("end_of_data_trades")
+    if cfg.strategy_id is None:
+        flags.append("NOT_ISOLATED")
+    else:
+        flags.append("costs_unverified")  # OQ-BT-02, until the owner verifies the schedule (D-6)
+        flags.append("UNSUPPORTED_DIRECTION:SHORT")
     record = RunRecord(
         f"{cfg.params.code} {cfg.params.version}",
         cfg.engine_version,
@@ -135,5 +149,7 @@ def run_backtest(
         ordered[0].spec.session_date if ordered else None,
         ordered[-1].spec.session_date if ordered else None,
         len(ordered),
+        cfg.strategy_id,
+        cfg.experiment,
     )
     return BacktestResult(record, tuple(results), metrics, tuple(curve), tuple(flags))

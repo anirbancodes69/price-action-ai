@@ -2,6 +2,12 @@
 
   uv run python scripts/run_backtest.py --from 2024-01-01 --to 2024-06-30 [--code NIFTY50]
       [--capital 100000] [--sizing FIXED|COMPOUNDING] [--split all|is|oos|holdout] [--json out.json]
+      [--strategy liquidity_sweep_reversal --experiment 4a|4b [--tie-break-seed 1]]
+
+With --strategy the single-strategy run mode is used (independent backtesting standards §3-§4): only that
+strategy's detector, no score gate, experiment 4a (no account limits) or 4b (project limits, seeded
+tie-break).
+Without it the combined engine runs and the result is flagged NOT_ISOLATED.
 
 Needs DATABASE_URL (an engine-role URL), INGEST_DATA_SOURCE_ID and loaded candles
 (`scripts/market_data_cli.py backfill`). Hypothetical, simulated results (TRD-06 BT-06).
@@ -28,6 +34,8 @@ from app.backtest.loader import load_backtest_inputs
 from app.backtest.report import format_report, report_dict
 from app.backtest.run import BacktestConfig, run_backtest
 from app.backtest.splits import split_sessions
+from app.backtest.strategy_run import run_strategy_backtest
+from app.domain.strategies import STRATEGY_DETECTORS
 from app.ingestion.universe import universe_members
 from app.rulesets import load_ruleset
 from app.settings import get_settings
@@ -48,6 +56,9 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--split", choices=["all", "is", "oos", "holdout"], default="all")
     p.add_argument("--ruleset", default="pa-intraday@0.1.0")
     p.add_argument("--json", dest="json_out", type=Path)
+    p.add_argument("--strategy", choices=sorted(STRATEGY_DETECTORS))
+    p.add_argument("--experiment", choices=["4a", "4b"])
+    p.add_argument("--tie-break-seed", type=int, default=1)
     return p
 
 
@@ -58,6 +69,9 @@ def main(argv: list[str] | None = None) -> int:
         print("Set INGEST_DATA_SOURCE_ID (the data source whose candles to replay).", file=sys.stderr)
         return 2
     source = uuid.UUID(s.ingest_data_source_id)
+    if bool(a.strategy) != bool(a.experiment):
+        print("--strategy and --experiment go together.", file=sys.stderr)
+        return 2
     code, version = a.ruleset.split("@")
     params = load_ruleset(code, version)
     engine = create_engine(s.database_url.get_secret_value())
@@ -80,6 +94,25 @@ def main(argv: list[str] | None = None) -> int:
     if not inputs:
         print("No sessions with stored 5m bars in that range.", file=sys.stderr)
         return 2
+    if a.strategy:
+        result = run_strategy_backtest(
+            a.strategy,
+            a.experiment,
+            inputs,
+            params,
+            a.capital,
+            CostSchedule(),
+            _engine_version(),
+            s.ingest_provider,
+            a.code,
+            tie_break_seed=a.tie_break_seed,
+            purpose=f"EXPLORATION:{a.split}",
+        )
+        print(format_report(result))
+        if a.json_out:
+            a.json_out.write_text(json.dumps(report_dict(result), indent=2))
+            print(f"\nFull result written to {a.json_out}")
+        return 0
     cfg = BacktestConfig(
         params,
         a.capital,

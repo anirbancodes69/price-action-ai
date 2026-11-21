@@ -43,6 +43,10 @@ def format_report(r: BacktestResult) -> str:
         DISCLAIMER,
         UNVERIFIED_COSTS,
     ]
+    if rec.strategy_id:
+        lines.insert(
+            1, f"strategy {rec.strategy_id} | experiment {rec.experiment} (single-strategy run mode)"
+        )
     if r.flags:
         lines.append("Flags: " + ", ".join(r.flags))
     if m.low_sample:

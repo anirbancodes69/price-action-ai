@@ -5,7 +5,7 @@ Setups, zones and risk arrive in later milestones (I4, I5).
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime
 from decimal import Decimal
@@ -50,6 +50,16 @@ class AnalysisResult:
     no_setup_reasons: tuple[str, ...] = ()
 
 
+# A detector reads the shared facts in a `SetupContext` and returns (setups, no-setup reasons).
+Detector = Callable[[SetupContext], tuple[list[Setup], list[str]]]
+ALL_DETECTORS: tuple[Detector, ...] = (
+    detect_opening_range,
+    detect_prev_day,
+    detect_breakout_retest,
+    detect_liquidity_sweep,
+)
+
+
 def _structure(bars: Sequence[Bar], tf: Timeframe, params: RulesetParams) -> StructureResult:
     pivots = label_pivots(
         detect_pivots(bars, params.pivot_left(tf), params.pivot_right(tf)), params.equal_tolerance()
@@ -67,8 +77,15 @@ def analyse(
     tick: Decimal | None = None,
     session_close: datetime | None = None,
     zone_cache: ZoneCache | None = None,
+    detectors: Sequence[Detector] | None = None,
+    isolated: bool = False,
 ) -> AnalysisResult:
-    """Pure function of closed bars and the ruleset (bars span `analysis.lookback_sessions` sessions)."""
+    """Pure function of closed bars and the ruleset (bars span `analysis.lookback_sessions` sessions).
+
+    `detectors` and `isolated` are the single-strategy run mode (backtesting standards §3). Only the
+    given detectors run; with `isolated`, setups carry no PAQS and the signal does not use the score gate. The
+    defaults are the live behaviour and are unchanged.
+    """
     check = check_snapshot(bars_5m, bars_15m, params)
     h5, h15 = candles_hash(bars_5m), candles_hash(bars_15m)
     if check.status is not SnapshotStatus.VALID:
@@ -107,13 +124,13 @@ def analyse(
     )
     found: list[Setup] = []
     reasons: list[str] = []
-    for detect in (detect_opening_range, detect_prev_day, detect_breakout_retest, detect_liquidity_sweep):
+    for detect in ALL_DETECTORS if detectors is None else detectors:
         got, why = detect(ctx)
         found += got
         reasons += why
     scored = []
     for st in found:
         lv = trade_levels(st, ctx, zones)
-        scored.append(ScoredSetup(st, score_setup(st, ctx, zones, lv), lv))
-    sig = choose_signal(scored, ctx, reasons)
+        scored.append(ScoredSetup(st, None if isolated else score_setup(st, ctx, zones, lv), lv))
+    sig = choose_signal(scored, ctx, reasons, score_gate=not isolated)
     return replace(result, setups=tuple(scored), signal=sig, no_setup_reasons=tuple(reasons))

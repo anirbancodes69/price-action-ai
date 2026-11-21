@@ -53,9 +53,16 @@ def _eligible(s: ScoredSetup, t: int) -> bool:
 
 
 def choose_signal(
-    scored: Sequence[ScoredSetup], ctx: SetupContext, extra_reasons: Sequence[str] = ()
+    scored: Sequence[ScoredSetup],
+    ctx: SetupContext,
+    extra_reasons: Sequence[str] = (),
+    score_gate: bool = True,
 ) -> SignalResult:
-    """TRD-04 §12. `signal_at = E(T)`; `valid_until` per signal type."""
+    """TRD-04 §12. `signal_at = E(T)`; `valid_until` per signal type.
+
+    `score_gate=False` is the single-strategy run mode: no `LOW_SCORE` reason. The primary is the confirmed
+    setup detected last, then the earliest in detection order (stable sort); one strategy has no ranking.
+    """
     t = ctx.t
     bar = ctx.bars[t]
     signal_at = bar.end
@@ -65,7 +72,7 @@ def choose_signal(
         return SignalResult(Signal.NO_TRADE, None, ("NO_SETUP", *extra_reasons), signal_at, None)
     primary = pool[0]
     reasons: list[str] = []
-    if primary.paqs is None or primary.paqs.total < ctx.params.int_("score.watch_threshold"):
+    if score_gate and (primary.paqs is None or primary.paqs.total < ctx.params.int_("score.watch_threshold")):
         reasons.append("LOW_SCORE")
     if primary.levels is None or primary.levels.rr_below_min:
         reasons.append("RR_BELOW_MINIMUM" if primary.levels and primary.levels.target else "NO_TARGET")
