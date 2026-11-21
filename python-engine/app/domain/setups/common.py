@@ -44,13 +44,18 @@ def after_cutoff(ctx: SetupContext, j: int) -> bool:
     return ctx.bars[j].end > ctx.cutoff
 
 
-def end_of_life(ctx: SetupContext, s: Setup, j: int) -> tuple[SetupStatus, str] | None:
-    """SD-08 cutoff, SD-02 age (EXPIRED), then SD-05 (INVALIDATED), in that order."""
+def end_of_life(
+    ctx: SetupContext, s: Setup, j: int, htf_blocks: bool = True
+) -> tuple[SetupStatus, str] | None:
+    """SD-08 cutoff, SD-02 age (EXPIRED), then SD-05 (INVALIDATED), in that order.
+
+    `htf_blocks=False` is the SD-05 exception for `LIQUIDITY_SWEEP_REVERSAL`: the score penalises it instead.
+    """
     if after_cutoff(ctx, j):
         return SetupStatus.EXPIRED, "SESSION_CUTOFF"
     if j - s.detected_at_index > ctx.params.int_("setup.expiry_bars"):
         return SetupStatus.EXPIRED, "AGED_OUT"
-    if htf_against(ctx, j, s.direction):
+    if htf_blocks and htf_against(ctx, j, s.direction):
         return SetupStatus.INVALIDATED, "HTF_AGAINST"
     return None
 
@@ -69,6 +74,7 @@ def replay_simple(
     start: int,
     invalid_close: tuple[str, Decimal, bool] | None = None,
     structure_invalidation: bool = False,
+    htf_blocks: bool = True,
 ) -> Setup:
     """Replay bars `start..t` for a setup that is already AWAITING_CONFIRMATION.
 
@@ -78,7 +84,7 @@ def replay_simple(
     b = bb(ctx)
     long = s.direction is SetupDirection.LONG
     for j in range(start, ctx.t + 1):
-        stop = end_of_life(ctx, s, j)
+        stop = end_of_life(ctx, s, j, htf_blocks)
         if stop:
             return end(s, stop[0], stop[1], j)
         close = ctx.bars[j].close
