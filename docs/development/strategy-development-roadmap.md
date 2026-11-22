@@ -89,7 +89,7 @@ Owner decisions of 2026-11-21 are recorded below. Nothing else is resolved by as
 | D-8 | Technical: single-strategy run mode in the research harness (no primary-signal selection, no score gate, no slot limit in experiment 4a) | **Built 2026-11-21** (T-I142 Stage 2, on branch `docs/strategy-01-specification`, not yet merged); isolation proof passes on real bars (0 differences, page §18) |
 | D-9 | Technical: short-side replay support | Open; follows D-4 |
 | D-10 | Technical: Strategy 12 methodology | Open; after the owner reviews MP-01; not scheduled |
-| D-11 | Pause new strategy stages for a framework diagnosis | **Approved** by the owner, 2026-11-22: every rule set tested loses before costs, so the shared replay machinery is diagnosed first ([plan](../research/framework-diagnosis-plan.md), T-I144). Strategy 02's pre-registered 4a in-sample run finishes; later stages and new strategies wait for the diagnosis report. The order in §1 is unchanged |
+| D-11 | Pause new strategy stages for a framework diagnosis | **Approved** by the owner, 2026-11-22: every rule set tested loses before costs, so the shared replay machinery is diagnosed first ([plan](../research/framework-diagnosis-plan.md), T-I144). Strategy 02's pre-registered 4a in-sample run finishes; later stages and new strategies wait for the diagnosis report. The order in §1 is unchanged. **Report delivered 2026-11-22** ([report](../research/framework-diagnosis-report.md)): friction, not entry timing, exit model, drift or a simulator defect, explains the loss; the owner chooses the framework change |
 
 ## 7. Maintenance
 

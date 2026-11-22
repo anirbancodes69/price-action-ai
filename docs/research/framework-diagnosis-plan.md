@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Version | 1.0.0 |
-| Status | Pre-registered, 2026-11-22. **No test has run.** Fixed before any result is seen; a change after that is a new, separately logged experiment |
+| Status | Pre-registered, 2026-11-22. Fixed before any result was seen (2026-11-22); a change after that is a new, separately logged experiment. DX-0..DX-5 and DX-7 have run, see [the report](framework-diagnosis-report.md) |
 | Owner decision | 2026-11-22: pause new strategy stages and diagnose why every tested rule set loses before costs |
 | Related | [Experiment registry §4](experiment-registry.md#4-framework-diagnosis-experiments) · [Independent backtesting standards](independent-backtesting-standards.md) · [Validation criteria](validation-criteria.md) · [TRD-06](../trading/06_BACKTESTING_METHODOLOGY.md) · [Strategy roadmap](../development/strategy-development-roadmap.md) |
 
@@ -59,6 +59,17 @@ Run in this order. Each test records its code commit, input hashes, seeds and ex
 
 **Statistics.** Confidence intervals by bootstrap over sessions (whole sessions resampled, so trades on one day stay together), 10,000 resamples, seed 1. A difference is "material" when its 95% CI excludes zero **and** it is at least 0.05R (or 0.02% for DX-1 returns). No other threshold is used.
 
+### 4a. Implementation amendments (2026-11-22, written before any DX-1..DX-7 test ran)
+
+Found while reading the saved chunks and the replay code. They narrow the method only where the saved data cannot support the text above; no result had been seen.
+
+1. **The target is not in the saved trades** (a trade stores entry, exit, quantity, risk amount and costs, not the target). The stop is recoverable (`entry - risk_amount / qty`); the target is not. So DX-4, DX-2 and DX-5 use one **common target of 2.5R** (R measured from the entry reference) for the strategy entries *and* for the controls, and compare like with like. The strategies' own recorded result is shown beside it. 2.5R is fixed from the saved target exits (median 2.3R for Strategy 01, 2.3R for Strategy 02, which are biased low because near targets are hit more often) and because a target of exactly 2.0R can never pass the fill rule after 0.05% slippage. It is not tuned on any result.
+2. **Controls use the stop distance of the matched trade in % of the fill price** (the saved entry includes slippage; the entry reference is not stored). Stops are not rounded to the tick.
+3. **DX-1 by 15m context is not reported**: it needs a per-bar structure analysis. DX-1 is reported by month only.
+4. **DX-2 cannot measure signals the fill rule skipped**: skipped signals are not in the saved chunks (counts only). Recorded as a limitation, as the plan allows.
+5. **DX-3 fill gap** is the fill bar's open minus the previous bar's close (the signal bar close), taken from the stored bars; the entry reference is not stored.
+6. **DX-5 (a)-(c) run on the common 2.5R exit**, with the baseline being the same entries under the same common exit (not the recorded exits), so each variant isolates one change.
+
 ## 5. Decision rules (fixed now)
 
 The result is a report, not a rule change. Whatever it finds, a framework change goes to the owner, then into a new ruleset version (or an engine change with tests), and is validated on data this plan did not use.
@@ -82,6 +93,7 @@ The result is a report, not a rule change. Whatever it finds, a framework change
 
 | Item | State |
 |---|---|
-| Strategy programme | New strategy stages paused (owner, 2026-11-22). The pre-registered Strategy 02 4a in-sample run (registry §1.2) continues to completion; Stages 4b and later wait for this report |
+| Strategy programme | New strategy stages paused (owner, 2026-11-22). The pre-registered Strategy 02 4a in-sample run (registry §1.2) finished and the strategy was parked; Stages 4b and later wait for the owner's decision on this report |
 | DX-0 | Done 2026-11-22: 570 trades, -0.18R gross, -0.37R net, net -₹50,433 ([log §7](../trading/backtests/2026-11-20-pa-intraday-0.1.0-nifty50.md#7-baseline-pa-intraday-010-on-2026-01-01-to-2026-08-31-t-i134-dx-0)). Context only |
-| DX-1..DX-7 | Not started; DX-6 waits for contract notes |
+| DX-1..DX-5, DX-7 | Done 2026-11-22: [report](framework-diagnosis-report.md); registry §4. Implementation amendments in §4a |
+| DX-6 | Waits for the owner's contract notes (D-6) |

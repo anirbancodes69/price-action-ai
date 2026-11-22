@@ -42,7 +42,7 @@ Update this file at the end of every substantial task, based only on verified st
 | Sweep reversal | `LIQUIDITY_SWEEP_REVERSAL` is built and enabled only in `pa-intraday 0.2.0` (T-I141); `0.1.0` is unchanged. Not backtested yet; two spec gaps are open (OQ-SD-07 scoring of non-zone anchors, OQ-SD-08 implementation choices) |
 | Stored history | NIFTY 50 5m and 15m bars for 2024-01-01..2026-11-19 (717 sessions; 498 added 2026-11-21, T-I140). Four special sessions in it (Saturdays 2024-03-02 and 2024-05-18, Muhurat 2024-11-01 and 2025-10-21) are short and need the special-session list (T-I137) before a replay |
 | `0.1.0` baseline, Jan–Aug | 2026-11-22, same 164 sessions as variant D (T-I134 done): 570 trades, win 30.7%, −0.18R gross / −0.37R net, −₹50,433, profit factor 0.56, both halves negative; BREAKOUT_RETEST −0.21R gross over 437 trades. D did better (−0.18R net) but both lose before costs; charges (₹28,314) exceed the gross loss ([log §7](docs/trading/backtests/2026-11-20-pa-intraday-0.1.0-nifty50.md#7-baseline-pa-intraday-010-on-2026-01-01-to-2026-08-31-t-i134-dx-0)). Context only for the diagnosis |
-| Next check | Framework diagnosis (T-I144, owner decision 2026-11-22): every rule set tested loses before costs, so the shared machinery is tested before more strategies are built. Pre-registered [plan](docs/research/framework-diagnosis-plan.md): R decomposition, drift baseline, matched random-entry control, signal forward returns, exit-model bounds, simulator spot check, charges check; in-sample data only. DX-0 (the row above) is done |
+| Next check | Framework diagnosis (T-I144, owner decision 2026-11-22): every rule set tested loses before costs, so the shared machinery is tested before more strategies are built. Pre-registered [plan](docs/research/framework-diagnosis-plan.md): R decomposition, drift baseline, matched random-entry control, signal forward returns, exit-model bounds, simulator spot check, charges check; in-sample data only. DX-0 (the row above) is done. **DX-1..DX-5 and DX-7 done 2026-11-22** ([report](docs/research/framework-diagnosis-report.md)): strategies are not better than matched random entries; before slippage and charges both earn about 0R, friction costs about 0.3R per trade; drift, exit model and simulator are not the cause. DX-6 waits for contract notes |
 
 ## Strategy library programme (ADR-018, 2026-11-21)
 
@@ -65,7 +65,7 @@ Documentation and planning only; no strategy or production code changed. The 12-
 
 ## Immediate next task
 
-0. **Framework diagnosis (T-I144):** run the pre-registered [plan](docs/research/framework-diagnosis-plan.md), DX-3 first; strategy stages wait for its report. Owner: 3 to 5 Zerodha intraday contract notes for DX-6.
+0. **Framework diagnosis (T-I144):** the tests ran ([report](docs/research/framework-diagnosis-report.md)); owner reviews it and chooses the framework change (report §7); strategy stages wait. Owner: 3 to 5 Zerodha intraday contract notes for DX-6.
 0a. **Strategy 01 (T-I142):** audit, complete, test and independently validate Liquidity Sweep / Reversal, (roadmap approved 2026-11-21). The items below are the earlier backtest follow-ups.
 1. **Out-of-sample check (T-I134):** done 2026-11-22: variant D and `pa-intraday 0.1.0` both lose before costs on 2026-01..08. No ruleset proposal is justified by the evidence so far.
 2. **Correctness fixes from the 2026-11-21 audit (T-I135..T-I138):** scanner signal vs risk rejection, gap check at analysis time, NSE holiday calendar, previous-day levels from the previous trading session.
