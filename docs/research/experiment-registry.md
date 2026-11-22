@@ -108,7 +108,7 @@ Pre-registered 2026-11-23 in the [fast screening protocol](fast-screening-protoc
 
 ## 6. Daily Gate 0 experiments
 
-Draft pre-registration, 2026-11-23, in the [Gate 0 plan](gate0-daily-diagnosis-plan.md) (not yet approved by the owner; nothing has run; waits for the owner's daily-history backfill). In-sample segment only; no strategy is tested.
+Pre-registered 2026-11-23 in the [Gate 0 plan](gate0-daily-diagnosis-plan.md) (approved by the owner the same day). Tooling is implemented (`app/backtest/diagnostics/daily.py`, `scripts/run_gate0.py`); **nothing has run on real history, it waits for the owner's one-run daily-history backfill** (plan §7). In-sample segment only; no strategy is tested.
 
 | Experiment | Date | What runs | Data | Result | Flags | Report |
 |---|---|---|---|---|---|---|

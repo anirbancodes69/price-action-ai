@@ -107,3 +107,26 @@ def test_groww_published_schedule_differs_only_in_brokerage_and_exchange_rates()
     # at 100,000 both are at the cap
     assert intraday_costs(D(100000), D(100000), S).brokerage == D("40.00")
     assert intraday_costs(D(100000), D(100000), GROWW_PUBLISHED).brokerage == D("40.00")
+
+
+def test_delivery_costs_hand_computed_for_a_50000_round_trip() -> None:
+    """Buy and sell 50,000 (delivery): every item computed by hand, per side rounded to paise."""
+    from app.backtest.costs import DeliverySchedule, delivery_costs
+
+    c = delivery_costs(D(50000), D(50000), DeliverySchedule())
+    assert c.brokerage == D("40.00")  # min(20, 0.1% = 50) per side
+    assert c.stt == D("100.00")  # 0.1% both sides
+    assert c.exchange == D("3.08")  # 1.535 -> 1.54 per side
+    assert c.sebi == D("0.10") and c.ipft == D("0.10")  # 0.05 per side
+    assert c.stamp == D("7.50")  # 0.015% on the buy
+    assert c.dp == D("20")  # once, on the sell
+    assert c.gst == D("11.39")  # 18% of (40 + 3.08 + 0.10 + 0.10 + 20) = 11.3904
+    assert c.total == D("182.17")
+
+
+def test_delivery_brokerage_is_a_percentage_below_the_cap() -> None:
+    from app.backtest.costs import DeliverySchedule, delivery_costs
+
+    c = delivery_costs(D(10000), D(10000), DeliverySchedule())
+    assert c.brokerage == D("20.00")  # 0.1% of 10,000 = 10 per side
+    assert c.stt == D("20.00") and c.stamp == D("1.50") and c.dp == D("20")
