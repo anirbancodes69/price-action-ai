@@ -65,7 +65,7 @@ Documentation and planning only; no strategy or production code changed. The 12-
 
 ## Immediate next task
 
-0. **Framework diagnosis (T-I144):** the tests ran ([report](docs/research/framework-diagnosis-report.md)); owner reviews it and chooses the framework change (report §7); strategy stages wait.
+0. **Framework diagnosis (T-I144):** the tests ran ([report](docs/research/framework-diagnosis-report.md)); owner reviews it and chooses the framework change (report §7); strategy stages wait. Draft [fast screening protocol](docs/research/fast-screening-protocol.md) (T-I145, 2026-11-23): 13 fixed variants screened on 2024 against random-entry controls; awaiting owner approval, nothing has run.
 0a. **Strategy 01 (T-I142):** audit, complete, test and independently validate Liquidity Sweep / Reversal, (roadmap approved 2026-11-21). The items below are the earlier backtest follow-ups.
 1. **Out-of-sample check (T-I134):** done 2026-11-22: variant D and `pa-intraday 0.1.0` both lose before costs on 2026-01..08. No ruleset proposal is justified by the evidence so far.
 2. **Correctness fixes from the 2026-11-21 audit (T-I135..T-I138):** scanner signal vs risk rejection, gap check at analysis time, NSE holiday calendar, previous-day levels from the previous trading session.
