@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Version | 1.0 |
-| Status | **Approved by the owner, 2026-11-23** (as drafted). Binding: a change is a new, separately logged pre-registration. Implementation clarifications are in §8.1. Waits for the owner's one-run daily backfill (§7); nothing has run on real history |
+| Status | **Approved by the owner, 2026-11-23** (as drafted). Binding: a change is a new, separately logged pre-registration. Implementation clarifications are in §8.1; post-run amendments in §8.2. **Run 2026-11-23** on data version 2026-11-23: [report](gate0-daily-diagnosis-report.md) |
 | Task | T-I146 |
 | Authority | [ADR-019](../adr/ADR-019-DAILY-TIMEFRAME-RESEARCH-TRACK.md) (accepted 2026-11-23): no daily strategy is specified or run until this diagnosis reports |
 | Related | [Framework diagnosis plan](framework-diagnosis-plan.md) (the intraday model for this plan) · [Validation criteria](validation-criteria.md) · [Experiment registry §6](experiment-registry.md#6-daily-gate-0-experiments) · [TRD-06](../trading/06_BACKTESTING_METHODOLOGY.md) |
@@ -98,6 +98,14 @@ I will first check the backfill's behaviour against the existing rows (idempoten
 4. **Full-history stocks (DG-5)** are those whose first stored date is within 5 sessions of the earliest date in the union.
 5. **DG-1** returns are `close of the H-th session from the fill session / open of the fill session - 1`; by calendar year only (the equal-weight basket is the mean over stocks per start session, reported by year).
 6. **Costs.** Charges are rounded to paise per side and GST on the rounded sum, as in the intraday schedule; the ₹50,000 example is hand-computed in a test.
+
+### 8.2 Post-run amendments (2026-11-23, written after the runs they describe; reported in the [report](gate0-daily-diagnosis-report.md))
+
+Run 1 followed this plan as registered. Three things were found and handled, each recorded here rather than silently changed:
+
+1. **DG-0 defects (run 1).** Four special sessions existing for only one or two stocks (2015-02-28, 2016-10-30, 2017-10-19, 2018-11-07), one bar with an unadjusted open (ADANIENT 2015-06-03) and three corporate actions the provider does not adjust (ADANIENT 2015-06-03 and 2018-09-06, GRASIM 2017-07-19) were found and checked against public records. The runner gained `--known-events`: the special sessions and the bad bar are dropped and the series is cut at the three ex-dates, so no trade or holding window crosses them. This is the decision rule's "fix or exclude, then re-run". Run 2 applied it.
+2. **Sizing at the fill (run 2).** The slippage sensitivity was not monotone; investigation showed the daily simulator sized the position at the fill, so an open gapping down toward the stop increased the quantity. The intraday engine plans the quantity at the signal and never increases it at the fill (TRD-05 §7.1). The daily simulator now matches that. Run 3 applied it.
+3. **R basis (run 2).** With a fill very close to the stop, R measured against the risk at the fill is unbounded, which is the pre-registered convention of §4. The report therefore shows R against the **planned risk** (`qty × (signal close − stop)`) as the primary basis and the pre-registered basis beside it. The simulation, costs and statistics are otherwise as registered.
 
 ## 9. Limits
 

@@ -20,6 +20,7 @@ from app.backtest.diagnostics.daily import (
     month_key,
     ohlc_defects,
     run_daily,
+    segment_at,
     verify_daily_trade,
 )
 from app.backtest.diagnostics.stats import add, bootstrap_mean
@@ -206,3 +207,33 @@ def test_month_block_bootstrap_resamples_calendar_months() -> None:
             add(sums, (2024, m), -0.1 + (0.05 if m % 2 else -0.05))
     r = bootstrap_mean(sums, resamples=300)
     assert r.n == 60 and r.low <= r.estimate <= r.high and r.high < 0
+
+
+def test_segment_at_splits_before_the_break_and_never_leaves_an_empty_series() -> None:
+    bars = mk([FLAT] * 10)
+    segs = segment_at(bars, [bars[4].day, bars[7].day])
+    assert [len(x) for x in segs] == [4, 3, 3] and segs[1][0].day == bars[4].day
+    assert segment_at(bars, []) == [bars]
+    assert [len(x) for x in segment_at(bars, [bars[0].day])] == [10]  # a break at the very start
+    assert [len(x) for x in segment_at(bars, [START + timedelta(days=99)])] == [10]  # beyond the data
+    # no baseline window crosses a break: eligible signals are computed inside each segment
+    assert all(eligible_signals(seg, 2) == list(range(len(seg) - 3)) for seg in segs if len(seg) > 3)
+
+
+def test_quantity_is_planned_from_the_signal_close_and_never_increased_at_the_fill() -> None:
+    planned = int(D(500) // (D("100") - D("97")))  # 166 shares from the signal close
+    gap_down = mk([("97.5", "98", "96.8", "97.8")])[0]  # opens just above the 97 stop
+    _, qty = fill_entry(gap_down, D("100"), D("97"), RULES) or (D(0), 0)
+    assert qty == planned  # sizing at the fill would have allowed about 500 shares (the 50,000 cap)
+    gap_up = mk([("100.8", "101", "100.4", "100.9")])[0]
+    _, qty_up = fill_entry(gap_up, D("100"), D("97"), RULES) or (D(0), 0)
+    assert 0 < qty_up < planned  # a higher open can only reduce it
+
+
+def test_planned_risk_does_not_shrink_when_the_open_gaps_toward_the_stop() -> None:
+    bars = mk([FLAT, ("97.5", "100.5", "97.2", "100"), ("100", "101", "99.5", "100.5")])
+    t = run_daily(bars, 0, "A", D("100"), D("97"), None, 2, RULES, SCHED)
+    assert t is not None and t.reason == "TIME_STOP"
+    assert t.risk < t.planned_risk / 4  # the fill is a few tenths above the stop
+    assert abs(t.r_gross) > 4 * abs(t.r_gross_planned)  # R against the fill risk explodes, planned R does not
+    assert t.planned_risk == t.qty * (D("100") - D("97"))

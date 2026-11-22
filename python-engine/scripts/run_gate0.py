@@ -43,6 +43,7 @@ from app.backtest.diagnostics.daily import (
     month_key,
     month_pool,
     ohlc_defects,
+    segment_at,
     verify_daily_trade,
 )
 from app.backtest.diagnostics.stats import add, bootstrap_mean
@@ -66,6 +67,21 @@ VARIANTS: dict[str, DeliverySchedule] = {
     "brokerage_cap_40": DeliverySchedule(brokerage_cap=D(40)),
 }
 FRICTION_STOPS = (D(2), D(3), D(4), D(5), D(8))
+# Sessions that exist for only one or two stocks (Budget Saturday, Diwali Muhurat); found by DG-0, run 1.
+DAILY_SPECIAL_SESSIONS: dict[date, str] = {
+    date(2015, 2, 28): "SPECIAL_SESSION_BUDGET_SATURDAY",
+    date(2016, 10, 30): "SPECIAL_SESSION_MUHURAT",
+    date(2017, 10, 19): "SPECIAL_SESSION_MUHURAT",
+    date(2018, 11, 7): "SPECIAL_SESSION_MUHURAT",
+}
+# DG-0 findings, run 1 (each checked against public records, see the Gate 0 report): provider data for these
+# corporate actions is not adjusted, so the series is cut there; one bar has an unadjusted open (dropped).
+KNOWN_DROPS: tuple[tuple[str, date], ...] = (("ADANIENT", date(2015, 6, 3)),)
+KNOWN_BREAKS: tuple[tuple[str, date], ...] = (
+    ("ADANIENT", date(2015, 6, 3)),  # demerger ex-date (Adani Ports, Adani Power, Adani Transmission)
+    ("ADANIENT", date(2018, 9, 6)),  # Adani Gas demerger ex-date
+    ("GRASIM", date(2017, 7, 19)),  # financial-services spin-off ex-date
+)
 FULL_HISTORY_SESSIONS = 5  # a stock is "full history" when it starts within this many sessions of the first
 
 
@@ -73,7 +89,7 @@ def cfg_id(stop: Decimal, target: Decimal | None, hold: int) -> str:
     return f"stop{stop}%/target{'none' if target is None else f'{target}R'}/hold{hold}"
 
 
-def load_calendar(conn: Connection, source: uuid.UUID, ids: list[uuid.UUID]) -> list[date]:
+def load_calendar(conn: Connection, source: uuid.UUID, ids: list[uuid.UUID], skip: set[date]) -> list[date]:
     """Session dates only (no prices), special sessions removed."""
     rows = conn.execute(
         select(candles.c.trade_date)
@@ -84,7 +100,9 @@ def load_calendar(conn: Connection, source: uuid.UUID, ids: list[uuid.UUID]) -> 
         )
         .distinct()
     ).all()
-    return sorted(r.trade_date for r in rows if r.trade_date not in SPECIAL_SESSIONS)
+    return sorted(
+        r.trade_date for r in rows if r.trade_date not in SPECIAL_SESSIONS and r.trade_date not in skip
+    )
 
 
 def load_day_bars(
@@ -120,6 +138,7 @@ class Grid:
         self.stop_r: dict[str, list[float]] = defaultdict(list)
         self.redraws: dict[str, int] = defaultdict(int)
         self.missing: dict[str, int] = defaultdict(int)
+        self.near_stop: dict[str, int] = defaultdict(int)  # fills inside half the planned stop distance
 
 
 def run_grid(
@@ -152,9 +171,13 @@ def run_grid(
                             gross, net = float(t.r_gross), float(t.r_net)
                             add(g.sums[cid]["gross"], mk, gross)
                             add(g.sums[cid]["net"], mk, net)
+                            add(g.sums[cid]["gross_p"], mk, float(t.r_gross_planned))
+                            add(g.sums[cid]["net_p"], mk, float(t.r_net_planned))
+                            if t.entry - t.stop < (t.ref - t.stop) / 2:
+                                g.near_stop[cid] += 1
                             if not primary:
                                 continue
-                            if sym in full:
+                            if sym.split("#")[0] in full:
                                 add(g.sums[cid]["gross_full"], mk, gross)
                                 add(g.sums[cid]["net_full"], mk, net)
                             for name, sch in VARIANTS.items():
@@ -194,6 +217,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--exclude", type=Path, help='JSON list of ["SYMBOL", "YYYY-MM-DD"] stock-sessions to drop'
     )
+    p.add_argument(
+        "--known-events",
+        action="store_true",
+        help="apply the DG-0 run-1 findings: drop the daily special sessions and one defective bar, and cut "
+        "the series at the unadjusted corporate actions (KNOWN_DROPS, KNOWN_BREAKS)",
+    )
     p.add_argument("--smoke", type=int, help="smoke test: only the first N symbols (results not meaningful)")
     a = p.parse_args(argv)
     s = get_settings()
@@ -205,14 +234,21 @@ def main(argv: list[str] | None = None) -> int:
     if a.exclude:
         for sym, day in json.loads(a.exclude.read_text()):
             drop[sym].add(date.fromisoformat(day))
+    skip: set[date] = set(DAILY_SPECIAL_SESSIONS) if a.known_events else set()
+    breaks: dict[str, list[date]] = defaultdict(list)
+    if a.known_events:
+        for sym, day in KNOWN_DROPS:
+            drop[sym].add(day)
+        for sym, day in KNOWN_BREAKS:
+            breaks[sym].append(day)
     engine = create_engine(s.database_url.get_secret_value())
     with engine.connect() as conn:
         members = universe_members(conn, a.code, a.members_on)
-        calendar = load_calendar(conn, source, list(members.values()))
+        calendar = load_calendar(conn, source, list(members.values()), skip)
         in_last = in_sample_last_date(calendar)
         print(f"{len(calendar)} sessions {calendar[0]}..{calendar[-1]}; in-sample ends {in_last}", flush=True)
         names = sorted(members)[: a.smoke] if a.smoke else sorted(members)
-        bars_by = {n: load_day_bars(conn, source, members[n], in_last, drop[n]) for n in names}
+        bars_by = {n: load_day_bars(conn, source, members[n], in_last, drop[n] | skip) for n in names}
     engine.dispose()
     assert all(b[-1].day <= in_last for b in bars_by.values() if b), "a bar past the in-sample end was loaded"
     in_cal = [d for d in calendar if d <= in_last]
@@ -222,6 +258,11 @@ def main(argv: list[str] | None = None) -> int:
     result["data"]["in_sample_last"] = str(in_last)
     result["data"]["in_sample_sessions"] = len(in_cal)
     result["data"]["short_history"] = len(calendar) < 1250
+    result["data"]["known_events_applied"] = a.known_events
+    if a.known_events:
+        result["data"]["special_sessions_dropped"] = {str(k): v for k, v in DAILY_SPECIAL_SESSIONS.items()}
+        result["data"]["bars_dropped"] = [f"{sy} {dy}" for sy, dy in KNOWN_DROPS]
+        result["data"]["series_cut_at"] = [f"{sy} {dy}" for sy, dy in KNOWN_BREAKS]
     # DG-0 data audit
     first_dates = {n: b[0].day for n, b in bars_by.items() if b}
     cutoff = in_cal[min(FULL_HISTORY_SESSIONS, len(in_cal) - 1)]
@@ -248,13 +289,18 @@ def main(argv: list[str] | None = None) -> int:
         dg0["flags"] += [{"symbol": n, "day": str(x), "gap": round(g, 4), "why": w} for x, g, w in gf]
         dg0["flags"] += [{"symbol": n, "day": str(x), "gap": None, "why": w} for x, w in d]
     result["dg0"] = dg0
+    # series used by DG-1, DG-3 and DG-4: cut at the unadjusted corporate actions
+    series: dict[str, list[DayBar]] = {}
+    for n, b in bars_by.items():
+        for k, seg in enumerate(segment_at(b, breaks.get(n, []))):
+            series[n if k == 0 else f"{n}#{k + 1}"] = seg
     # DG-1 drift
     dg1: dict[str, Any] = {}
     for h in DRIFT_HOLDS:
         month_sums: dict[Any, tuple[float, int]] = {}
         by_year: dict[int, list[float]] = defaultdict(list)
         basket: dict[date, list[float]] = defaultdict(list)
-        for b in bars_by.values():
+        for b in series.values():
             for day, r in drift_returns(b, h):
                 add(month_sums, month_key(day), r)
                 by_year[day.year].append(r)
@@ -276,7 +322,7 @@ def main(argv: list[str] | None = None) -> int:
     grids: dict[str, Grid] = {}
     for slip in SLIPPAGES:
         print(f"DG-3 grid, slippage {slip}%", flush=True)
-        grids[str(slip)] = run_grid(bars_by, full, slip, slip == PRIMARY, seed1)
+        grids[str(slip)] = run_grid(series, full, slip, slip == PRIMARY, seed1)
     prim = grids[str(PRIMARY)]
     dg3: dict[str, Any] = {}
     for stop in STOPS:
@@ -288,6 +334,9 @@ def main(argv: list[str] | None = None) -> int:
                     "trades": sum(c for _, c in sums["gross"].values()),
                     "gross": fmt(bootstrap_mean(sums["gross"])),
                     "net": fmt(bootstrap_mean(sums["net"])),
+                    "gross_planned": fmt(bootstrap_mean(sums["gross_p"])),
+                    "net_planned": fmt(bootstrap_mean(sums["net_p"])),
+                    "near_stop_fills": prim.near_stop[cid],
                     "exits": dict(prim.exits[cid]),
                     "avg_stop_out_r": round(sum(prim.stop_r[cid]) / len(prim.stop_r[cid]), 3)
                     if prim.stop_r[cid]
@@ -298,6 +347,8 @@ def main(argv: list[str] | None = None) -> int:
                         str(sl): {
                             "gross": fmt(bootstrap_mean(grids[str(sl)].sums[cid]["gross"])),
                             "net": fmt(bootstrap_mean(grids[str(sl)].sums[cid]["net"])),
+                            "gross_planned": fmt(bootstrap_mean(grids[str(sl)].sums[cid]["gross_p"])),
+                            "net_planned": fmt(bootstrap_mean(grids[str(sl)].sums[cid]["net_p"])),
                         }
                         for sl in SLIPPAGES
                         if sl != PRIMARY
@@ -319,7 +370,7 @@ def main(argv: list[str] | None = None) -> int:
     picks = rng.sample(gaps, min(5, len(gaps))) + rng.sample(others, min(20 - min(5, len(gaps)), len(others)))
     checks = []
     for sym, t in picks:
-        mism = verify_daily_trade(bars_by[sym], t, PRIMARY)
+        mism = verify_daily_trade(series[sym], t, PRIMARY)
         checks.append({"symbol": sym, "fill_day": str(t.fill_day), "reason": t.reason, "mismatches": mism})
     result["dg4"] = {
         "sample": len(checks),
@@ -359,9 +410,12 @@ def render(r: dict[str, Any]) -> str:
     L += ["", "DG-3 random-entry baseline grid (R)"]
     for cid, v in r["dg3"].items():
         g, n = v["gross"], v["net"]
+        gp, np_ = v["gross_planned"], v["net_planned"]
         L.append(
             f"  {cid}: n={v['trades']} gross {g['est']} [{g['lo']}, {g['hi']}]"
             f" net {n['est']} [{n['lo']}, {n['hi']}]"
+            f" | planned-risk gross {gp['est']} net {np_['est']} [{np_['lo']}, {np_['hi']}]"
+            f" near-stop fills {v['near_stop_fills']}"
             f" exits {v['exits']} stop-out R {v['avg_stop_out_r']} redraws {v['redraws']}"
             f" unfilled {v['unfilled_draws']}"
         )
