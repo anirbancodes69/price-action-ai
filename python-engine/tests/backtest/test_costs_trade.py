@@ -91,3 +91,19 @@ def test_close_trade_pnl_and_r() -> None:
     assert t.net_pnl == D("500") - t.costs and t.r_net == t.net_pnl / D("200")
     loss = close_trade(_pos(), D("98"), T0, "STOP", S)
     assert loss.gross_pnl == D("-200") and loss.net_pnl < loss.gross_pnl  # costs add to the loss
+
+
+def test_groww_published_schedule_differs_only_in_brokerage_and_exchange_rates() -> None:
+    from dataclasses import fields
+
+    from app.backtest.costs import GROWW_PUBLISHED
+
+    changed = {f.name for f in fields(S) if getattr(S, f.name) != getattr(GROWW_PUBLISHED, f.name)}
+    assert changed == {"version", "brokerage_pct", "exchange_pct"}
+    # 50,000 each way: 0.03% is 15 rupees a side, 0.1% reaches the 20 rupee cap
+    ours = intraday_costs(D(50000), D(50000), S)
+    groww = intraday_costs(D(50000), D(50000), GROWW_PUBLISHED)
+    assert (ours.brokerage, groww.brokerage) == (D("30.00"), D("40.00"))
+    # at 100,000 both are at the cap
+    assert intraday_costs(D(100000), D(100000), S).brokerage == D("40.00")
+    assert intraday_costs(D(100000), D(100000), GROWW_PUBLISHED).brokerage == D("40.00")
