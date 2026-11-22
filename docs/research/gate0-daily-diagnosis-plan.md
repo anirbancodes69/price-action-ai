@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Version | 0.1 (draft) |
-| Status | **Draft pre-registration, 2026-11-23. Not approved. Nothing has run.** It becomes binding when the owner approves it; after that a change is a new, separately logged pre-registration |
+| Version | 1.0 |
+| Status | **Approved by the owner, 2026-11-23** (as drafted). Binding: a change is a new, separately logged pre-registration. Implementation clarifications are in §8.1. Waits for the owner's one-run daily backfill (§7); nothing has run on real history |
 | Task | T-I146 |
 | Authority | [ADR-019](../adr/ADR-019-DAILY-TIMEFRAME-RESEARCH-TRACK.md) (accepted 2026-11-23): no daily strategy is specified or run until this diagnosis reports |
 | Related | [Framework diagnosis plan](framework-diagnosis-plan.md) (the intraday model for this plan) · [Validation criteria](validation-criteria.md) · [Experiment registry §6](experiment-registry.md#6-daily-gate-0-experiments) · [TRD-06](../trading/06_BACKTESTING_METHODOLOGY.md) |
@@ -89,6 +89,15 @@ I will first check the backfill's behaviour against the existing rows (idempoten
 - Daily simulator and the delivery cost schedule (`app/backtest/costs.py`, with the ₹50,000 example hand-computed in a test), daily random-entry sampler, month-block bootstrap, data-audit helpers, and the in-sample split guard, in `python-engine/app/backtest/diagnostics/` with unit tests (gap through the stop, stop and target in one session, time stop, one position per symbol, fill skips, month blocks, no read beyond the in-sample date).
 - Runner `scripts/run_gate0.py`; raw output in the research directory outside the repository; the engine suite stays green and no detector, ruleset or replay behaviour changes.
 - Report `docs/research/gate0-daily-diagnosis-report.md` (aggregates only) and one registry row per test ([§6](experiment-registry.md#6-daily-gate-0-experiments)).
+
+### 8.1 Implementation clarifications (written before any run, nothing in §5 or §6 changed)
+
+1. **Adjustedness check (DG-0).** The repository holds no list of corporate actions, so the plan's "known events listed before the run" is replaced by a mechanical rule written now: every overnight gap above 15% in absolute size is listed, and so is every gap whose `open / previous close` is within 3% of 1/2, 1/3, 1/4, 1/5 or 1/10 (the signature of an unadjusted split or bonus). Each listed gap is then looked up in public sources and explained or flagged; a stock-session flagged as a defect is excluded and counted.
+2. **Calendar.** The expected sessions are the union of the dates present for any stock in the universe; a stock is missing a session when the date is in the union, on or after its own first date, and absent for it.
+3. **In-sample guard.** The split is computed from the **dates** of the union calendar only; price bars are loaded only up to the last in-sample date, and a signal day is eligible only if its full holding window ends inside the in-sample segment.
+4. **Full-history stocks (DG-5)** are those whose first stored date is within 5 sessions of the earliest date in the union.
+5. **DG-1** returns are `close of the H-th session from the fill session / open of the fill session - 1`; by calendar year only (the equal-weight basket is the mean over stocks per start session, reported by year).
+6. **Costs.** Charges are rounded to paise per side and GST on the rounded sum, as in the intraday schedule; the ₹50,000 example is hand-computed in a test.
 
 ## 9. Limits
 

@@ -58,3 +58,61 @@ def intraday_costs(buy_value: Decimal, sell_value: Decimal, s: CostSchedule) -> 
     return Costs(
         brok, _r(sell_value * s.stt_sell_pct / 100), exch, sebi, _r(buy_value * s.stamp_buy_pct / 100), gst
     )
+
+
+@dataclass(frozen=True, slots=True)
+class DeliverySchedule:
+    """Equity delivery charges (ADR-019): UNVERIFIED published rates (OQ-HP-04)."""
+
+    version: str = "groww-delivery-published-2026-11-23"
+    brokerage_cap: Decimal = Decimal(20)  # rupees per executed order
+    brokerage_pct: Decimal = Decimal("0.1")  # of order value
+    stt_pct: Decimal = Decimal("0.1")  # both sides
+    exchange_pct: Decimal = Decimal("0.00307")  # NSE; the help page says 0.00297
+    sebi_pct: Decimal = Decimal("0.0001")  # 10 rupees per crore
+    ipft_pct: Decimal = Decimal("0.0001")  # investor-protection-fund trust charge, NSE
+    stamp_buy_pct: Decimal = Decimal("0.015")
+    dp_per_sell: Decimal = Decimal(20)  # depository 3.50 + broker 16.50
+    gst_pct: Decimal = Decimal(18)  # on brokerage, exchange, SEBI, IPFT and DP; not on STT or stamp duty
+
+
+@dataclass(frozen=True, slots=True)
+class DeliveryCosts:
+    brokerage: Decimal
+    stt: Decimal
+    exchange: Decimal
+    sebi: Decimal
+    ipft: Decimal
+    stamp: Decimal
+    dp: Decimal
+    gst: Decimal
+
+    @property
+    def total(self) -> Decimal:
+        return (
+            self.brokerage
+            + self.stt
+            + self.exchange
+            + self.sebi
+            + self.ipft
+            + self.stamp
+            + self.dp
+            + self.gst
+        )
+
+
+def delivery_costs(buy_value: Decimal, sell_value: Decimal, s: DeliverySchedule) -> DeliveryCosts:
+    """Round-trip delivery charges. Each charge is rounded per side to paise; GST is on the rounded sum."""
+
+    def brokerage(v: Decimal) -> Decimal:
+        return _r(min(s.brokerage_cap, v * s.brokerage_pct / 100))
+
+    brok = brokerage(buy_value) + brokerage(sell_value)
+    exch = _r(buy_value * s.exchange_pct / 100) + _r(sell_value * s.exchange_pct / 100)
+    sebi = _r(buy_value * s.sebi_pct / 100) + _r(sell_value * s.sebi_pct / 100)
+    ipft = _r(buy_value * s.ipft_pct / 100) + _r(sell_value * s.ipft_pct / 100)
+    gst = _r((brok + exch + sebi + ipft + s.dp_per_sell) * s.gst_pct / 100)
+    stt = _r(buy_value * s.stt_pct / 100) + _r(sell_value * s.stt_pct / 100)
+    return DeliveryCosts(
+        brok, stt, exch, sebi, ipft, _r(buy_value * s.stamp_buy_pct / 100), s.dp_per_sell, gst
+    )
