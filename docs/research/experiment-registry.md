@@ -105,3 +105,17 @@ Pre-registered 2026-11-23 in the [fast screening protocol](fast-screening-protoc
 |---|---|---|---|---|---|---|
 | T0-1..T0-4 | 2026-11-23 | Stop-distance filters (≥ 0.75%, ≥ 1.00%) on the saved Strategy 01 and 02 trades vs matched controls | 2024 screen (50 stocks); 2025 confirmation not run (nothing promoted) | Screen done, none promoted. Gross edge over control +0.015 to +0.053R, every 99% interval includes zero; gross R -0.022 to +0.019; net -0.07 to -0.13R | `survivorship_bias_risk`, `costs_unverified` | [report §2](fast-screening-report.md#2-screen-results-2024) |
 | M1..M3 × 3 filters (9 variants) | 2026-11-23 | Minimal entries (opening-range breakout, previous-day-high break, failed opening-range breakdown) with stop filters none, ≥ 0.75%, ≥ 1.00% vs matched controls | 2024 screen on 10 stocks; confirmation 2025 not run (nothing promoted) | Screen done, none promoted. M1 and M2 worse than random in all six variants (-0.10 to -0.15R gross, 99% intervals below zero); M3 no difference (+0.02R, 569 trades), wide-stop M3 only 100 and 39 trades | `survivorship_bias_risk`, `costs_unverified` | [report §2](fast-screening-report.md#2-screen-results-2024) |
+
+## 6. Daily Gate 0 experiments
+
+Draft pre-registration, 2026-11-23, in the [Gate 0 plan](gate0-daily-diagnosis-plan.md) (not yet approved by the owner; nothing has run; waits for the owner's daily-history backfill). In-sample segment only; no strategy is tested.
+
+| Experiment | Date | What runs | Data | Result | Flags | Report |
+|---|---|---|---|---|---|---|
+| DG-0 | — | Data audit: coverage, missing sessions, OHLC sanity, gaps above 15%, adjustedness against known corporate actions | daily bars, one backfill (data version) | Not run | `survivorship_bias_risk` | plan §5 |
+| DG-1 | — | Drift baseline: buy the next open, hold 5, 10, 20 sessions, no stop or target | in-sample | Not run | `survivorship_bias_risk` | plan §5 |
+| DG-2 | — | Friction decomposition by stop distance under the delivery schedule | in-sample | Not run | `costs_unverified` | plan §5 |
+| DG-3 | — | Random-entry baseline grid (4 stops × 3 targets × 2 holds = 24 configurations), 5 seeds | in-sample | Not run | `survivorship_bias_risk`, `costs_unverified` | plan §5 |
+| DG-4 | — | Simulator spot check, 20 trades | in-sample | Not run | — | plan §5 |
+| DG-5 | — | Survivorship and coverage sensitivity | in-sample | Not run | `survivorship_bias_risk` | plan §5 |
+| DG-6 | — | Charges sensitivity (exchange rate, brokerage) | in-sample | Not run | `costs_unverified` | plan §5 |
