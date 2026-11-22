@@ -37,7 +37,7 @@ Fixed in advance so that nothing below can change after results are seen. Any ch
 
 | Experiment | Date | Strategy | Ruleset | Type | Purpose | Data range | Exclusions | Flags | Result | Report |
 |---|---|---|---|---|---|---|---|---|---|---|
-| S01-4a-IS-chunks | 2026-11-21 | `liquidity_sweep_reversal` | `pa-intraday 0.3.0` | 4a, 7 chunks | EXPLORATION | 2024-01-02..2025-09-23 | as above | as above | Running; filled in below as each chunk is saved | this section |
+| S01-4a-IS-chunks | 2026-11-21 | `liquidity_sweep_reversal` | `pa-intraday 0.3.0` | 4a, 7 chunks | EXPLORATION | 2024-01-02..2025-09-23 | as above | as above | Completed 2026-11-21 (code da8b0af, 7/7 chunks rc=0, 427 sessions, 3 special sessions excluded). 11,363 trades; win 32.5%; avg R gross -0.16, net -0.33; PF 0.54; net P&L -₹1,842,560 at fixed ₹500 risk unit (unlimited-capital 4a, so drawdown % is not meaningful); cost drag 15.5% of gross. Every anchor, every 15m regime, every half hour and all 21 months have negative net avg R (best month 2025-04 -0.19R, worst 2025-09 -0.47R). Skips: SKIPPED_RR_DEGRADED 7556, ALREADY_IN_POSITION 3627. Flags: survivorship_bias_risk, costs_unverified, UNSUPPORTED_DIRECTION:SHORT. Raw output kept outside the repo (research dir, merged.json). No parameter changed | this section |
 
 ## 2. Pre-framework experiments (combined strategies)
 
