@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Status | **Proposed** (2026-11-23). Not accepted: nothing below is in force until the owner accepts it |
+| Status | **Accepted** (2026-11-23, owner, as written). Does not supersede ADR-014 |
 | Date | 2026-11-23 |
 | Deciders | Product owner |
-| Version | 0.1 (proposal) |
+| Version | 1.0 |
 | Related | [ADR-014](ADR-014-PERSONAL-INTRADAY-WORKSTATION.md) · [ADR-018](ADR-018-INDEPENDENT-STRATEGY-LIBRARY.md) · [ADR-008](ADR-008-DETERMINISTIC-TRADING-ENGINE.md) · [ADR-010](ADR-010-MANUAL-TRADE-EXECUTION-MVP.md) · [ADR-015](ADR-015-INTRADAY-TIME-AND-SNAPSHOT-MODEL.md) · [TRD-01](../trading/01_TRADING_METHODOLOGY.md) · [Framework diagnosis report](../research/framework-diagnosis-report.md) · [Fast screening report](../research/fast-screening-report.md) · [Validation criteria](../research/validation-criteria.md) |
 
 ## Context
@@ -37,7 +37,7 @@ Other facts that bear on the decision:
 - Constraints that stay: long-only actionability (C-12), manual execution (ADR-010), closed bars, no look-ahead, deterministic versioned rulesets, no indicators (MP-01).
 - Constraints that do not carry over: MP-11 "session-bounded", the 15:15 session exit, the entry cutoff and the daily-loss and consecutive-loss limits are intraday ideas.
 
-## Decision (proposed)
+## Decision
 
 1. **A research track, not a product pivot.** Add a **daily-timeframe, multi-day-hold research track** to the strategy library process of ADR-018. The workstation's product scope stays intraday (ADR-014 remains Accepted and is **not** superseded by this ADR). If a daily strategy reaches `RESEARCH_VALIDATED`, a separate ADR decides whether and how the product scope changes; until then nothing in the frontend, backend, scanner or schema changes.
 2. **Research scope.** NSE cash equities, NIFTY 50, long-only. Daily bars are primary. A signal is evaluated at the close of a daily bar and acted on no earlier than the next session's open. A position may be held overnight; exits are the stop, the target, or a time stop at a maximum holding period (hypothesis: 20 sessions, fixed in the Gate 0 plan before any result). Gaps through the stop fill at the open.
@@ -87,4 +87,4 @@ The owner may stop the track at Gate 0 (no daily entry beats random controls und
 
 ## Status
 
-Proposed on 2026-11-23. To accept, the owner approves it as written or with changes; acceptance changes this status, adds a decision row and creates the Gate 0 task, and does not supersede ADR-014.
+Proposed 2026-11-23; **accepted by the owner on 2026-11-23, as written.** DEC-021 records it and T-I146 tracks Gate 0. ADR-014 stays Accepted and is not superseded. Acceptance authorises the research track only: Gate 0 must be pre-registered and approved before it runs, and no daily strategy may be specified before its report.
