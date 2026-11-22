@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- Strategy 02 parked by the owner (2026-11-22, `DEFERRED`) after its 4a in-sample run: 10,353 trades over 427 sessions, win 33.8%, avg R gross -0.15 / net -0.31, PF 0.52, negative in every anchor, 15m context, half hour and month; improvement rounds 0 of 3; 4b, out-of-sample and holdout untouched. Results in registry §1.2 and the strategy page §21. No code changed.
 - Strategy 02 experiment 4a in-sample pre-registered (registry §1.2): same split, sizing, costs and chunks as Strategy 01, decision rule fixed before the run. No code changed.
 - Strategy 02 Stage 3: 27 functional tests and 6 run-mode tests (look-ahead, replay, isolation, boundaries, stop limits); TV-SET-36..39. Fix before any backtest: when one close breaks several levels, the level reclaimed first is used (a later bar can no longer replace a setup already detected); the specification wording is clarified (finding G-4). Strategy 01 page: G-4 recorded (same corner, not changed).
 - Strategy 02 Stage 2: `FAILED_BREAKDOWN_RECLAIM` setup (`setups/failed_breakdown.py`), registered as strategy `failed_breakout`; ruleset `pa-intraday 0.4.0` (`setup.failed_breakout_enabled`, `setup.failed_break_max_bars` = 6); shared level facts moved to `setups/support_levels.py` (Strategy 01 behaviour unchanged); TRD-04 §7A, TRD-01 §6 and vectors TV-SET-29..35. 17 tests; real-bar isolation proof 0 differences. The setup type is not yet in the DB CHECK constraints or the API enum.

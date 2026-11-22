@@ -17,7 +17,7 @@ One page per strategy in the library. The master tracker, with each stage's stat
 | # | Strategy | Page | Acceptance status |
 |---|---|---|---|
 | 01 | Liquidity Sweep / Reversal | [liquidity-sweep-reversal.md](liquidity-sweep-reversal.md) | `DEFERRED` (parked 2026-11-22) |
-| 02 | Failed Breakout | [failed-breakout.md](failed-breakout.md) | `FUNCTIONAL_TESTING` |
+| 02 | Failed Breakout | [failed-breakout.md](failed-breakout.md) | `DEFERRED` |
 | 03 | Trend Following / Pullback | [trend-following-pullback.md](trend-following-pullback.md) | `SPECIFICATION_IN_PROGRESS` |
 | 04 | CHoCH Reversal | [choch-reversal.md](choch-reversal.md) | `NOT_STARTED` |
 | 05 | Support & Resistance Reversal | [support-resistance-reversal.md](support-resistance-reversal.md) | `NOT_STARTED` |

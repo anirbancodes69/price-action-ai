@@ -12,6 +12,7 @@ How PriceAction AI strategies are researched and validated. The method is fixed 
 | [Independent backtesting standards](independent-backtesting-standards.md) | Isolation rules, single-strategy run mode, the two experiments, metrics, run records, future combination research |
 | [Validation criteria](validation-criteria.md) | Robustness requirements and the proposed thresholds for `RESEARCH_VALIDATED` and `PAPER_TRADING_READY` |
 | [Research data limitations](research-data-limitations.md) | Known data and infrastructure limits, required handling and flags |
+| [Framework diagnosis plan](framework-diagnosis-plan.md) | Pre-registered tests of why every rule set loses before costs (2026-11-22) |
 | [Experiment registry](experiment-registry.md) | Every experiment, including failed variants and the pre-framework combined runs |
 | [Research readiness audit](adaptive-strategy-validation/RESEARCH_READINESS.md) | Evidence behind the limitations (2026-11-21) |
 | [Backtest logs](../trading/backtests/) | Full reports of individual runs |

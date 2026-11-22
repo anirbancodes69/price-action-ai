@@ -61,7 +61,7 @@ Same protocol as §1.1, fixed in advance. Any change is a new, separately logged
 
 | Experiment | Date | Strategy | Ruleset | Type | Purpose | Data range | Exclusions | Flags | Result | Report |
 |---|---|---|---|---|---|---|---|---|---|---|
-| S02-4a-IS-chunks | 2026-11-22 | `failed_breakout` | `pa-intraday 0.4.0` | 4a, 7 chunks | EXPLORATION | 2024-01-02..2025-09-23 | as above | as above | Not run yet; filled in below as each chunk is saved | this section |
+| S02-4a-IS-chunks | 2026-11-22 | `failed_breakout` | `pa-intraday 0.4.0` | 4a, 7 chunks | EXPLORATION | 2024-01-02..2025-09-23 | as above | as above | Completed 2026-11-22 (code bffbb93, 7/7 chunks rc=0, 427 sessions, 3 special sessions excluded). 10,353 trades; win 33.8%; avg R gross -0.15, net -0.31; PF 0.52; net P&L -₹15,89,298 at fixed ₹500 risk unit (gross -₹7,93,868, costs ₹7,95,430; unlimited-capital 4a, so drawdown % is not meaningful); cost drag 16.4% of gross. Every anchor, every 15m context, every half hour and all 21 months have negative net avg R (best month 2025-04 -0.08R, worst 2024-10 -0.42R; BULLISH context worst at -0.42R). Exits: SESSION_END 5,122, STOP 4,670, STOP_GAP 7, TARGET 554. Skips: SKIPPED_RR_DEGRADED 4,158, ALREADY_IN_POSITION 2,133. Trades sharing a level in a session and symbol: 2 pairs, 4 trades (0.04%). Bars from breakdown to reclaim: not reported (the trade record does not store the breakdown bar; descriptive only, no parameter depends on it). Strategy 01 beside it (context, not pooled): -0.16 gross / -0.33 net, PF 0.54. **Decision rule triggered** (gross not positive; net negative in every anchor and regime): owner decision 2026-11-22 = park (`DEFERRED`), no variant tried, improvement rounds 0 of 3. Raw output kept outside the repo (research dir, merged.json) | this section; [strategy page §21](../strategies/failed-breakout.md#21-in-sample-results) |
 
 ## 2. Pre-framework experiments (combined strategies)
 
@@ -81,3 +81,18 @@ The variant scripts for PRE-002 and PRE-003 were temporary and are not in the re
 | Record | Date | Purpose |
 |---|---|---|
 | [Research readiness audit](adaptive-strategy-validation/RESEARCH_READINESS.md) | 2026-11-21 | Audit of data, backtester reliability and strategy executability. No backtest was run |
+
+## 4. Framework diagnosis experiments
+
+Pre-registered 2026-11-22, before any of them ran, in the [framework diagnosis plan](framework-diagnosis-plan.md) (hypotheses, methods, statistics and decision rules fixed there). These test the shared replay machinery, not a strategy, and change no ruleset. All except DX-0 use only the in-sample segment (2024-01-02..2025-09-23).
+
+| Experiment | Date | What runs | Data | Result | Flags | Report |
+|---|---|---|---|---|---|---|
+| PRE-005 (DX-0) | 2026-11-22 | `pa-intraday 0.1.0` combined, FIXED sizing, capital ₹1,00,000, the same 4 chunks as PRE-003 (2026-01-01..02-27, 03-02..05-05, 05-06..07-03, 07-06..08-31) | 164 sessions, 2026-01-01..2026-08-31, today's NIFTY 50 | Completed 2026-11-22 (4/4 chunks rc=0; input hashes 1229094ed2d0, 59e0a79fa0b1, bdf5ea618d3e, bc4b3efafab3). 570 trades; win 30.7%; avg R gross -0.18, net -0.37; PF 0.56; net -₹50,433 (gross -₹22,119, costs ₹28,314); both halves negative; BREAKOUT_RETEST 437 trades -0.21R gross. Variant D (PRE-003) did better on the same days (-0.18R net) but also loses before costs. Context only: no decision may rest on it (plan §3) | `survivorship_bias_risk`, `costs_unverified`, `NOT_ISOLATED` | [log §7](../trading/backtests/2026-11-20-pa-intraday-0.1.0-nifty50.md#7-baseline-pa-intraday-010-on-2026-01-01-to-2026-08-31-t-i134-dx-0) |
+| DX-3 | — | R decomposition by stop-distance bucket (Strategy 01, then 02) | in-sample trades | Not run | `survivorship_bias_risk`, `costs_unverified` | plan |
+| DX-1 | — | Drift baseline, 09:30 open to 15:15, and seeded random entry bars | in-sample sessions | Not run | `survivorship_bias_risk` | plan |
+| DX-4 | — | Matched random-entry control, 5 seeds per trade (Strategy 01, then 02) | in-sample | Not run | `survivorship_bias_risk`, `costs_unverified` | plan |
+| DX-2 | — | Signal forward returns vs random bars | in-sample | Not run | `survivorship_bias_risk` | plan |
+| DX-5 | — | Exit-model bounds (collision rule, fixed horizons, stop slippage) | in-sample Strategy 01 entries | Not run | `survivorship_bias_risk`, `costs_unverified` | plan |
+| DX-7 | — | Simulator spot check (20 trades, seed 1) and gap count | in-sample | Not run | — | plan |
+| DX-6 | — | Charges check against Zerodha contract notes | owner's notes | Waiting for the owner (D-6) | — | plan |

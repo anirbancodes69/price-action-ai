@@ -4,13 +4,13 @@
 |---|---|
 | Strategy id | `failed_breakout` |
 | Roadmap position | 02 of 12 ([roadmap](../development/strategy-development-roadmap.md)) |
-| Acceptance status | `FUNCTIONAL_TESTING` (Stage 2 merged in PR #74; Stage 3 tests written and green 2026-11-22, PR pending; no registry entry yet, so not `BACKTESTING`) |
+| Acceptance status | `DEFERRED` (parked by the owner 2026-11-22 after the 4a in-sample run; §27) |
 | Executable directions | Long (disabled in `0.1.0`-`0.3.0`; enabled only in the research ruleset `0.4.0`) |
 | Ruleset version | `pa-intraday 0.4.0` for research runs (`0.3.0` plus `setup.failed_breakout_enabled` and `setup.failed_break_max_bars`); `0.1.0`-`0.3.0` unchanged; the live scanner stays on `0.1.0` |
 | Specification approved | **Approved by the owner, 2026-11-22** (P-1..P-5 as written, §26) |
 | Last updated | 2026-11-22 |
 
-Sections 1-16 are the **specification** (what the strategy must do). Section 17 records what the **code does today**. The authoritative rule text is [TRD-04 §7A](../trading/04_SETUP_DETECTION_RULES.md); the vectors are TV-SET-29..35 ([TRD-08](../trading/08_TRADING_ENGINE_VALIDATION.md)). No performance claim exists for this strategy.
+Sections 1-16 are the **specification** (what the strategy must do). Section 17 records what the **code does today**. The authoritative rule text is [TRD-04 §7A](../trading/04_SETUP_DETECTION_RULES.md); the vectors are TV-SET-29..35 ([TRD-08](../trading/08_TRADING_ENGINE_VALIDATION.md)). The only performance evidence is the in-sample 4a result in §21 (negative); no positive claim exists.
 
 ## 1. Strategy overview
 
@@ -158,13 +158,29 @@ Not covered: shorts (unsupported by design); a live-scanner or database path (th
 
 ## 19. Independent backtest configuration
 
-`Not run`. Same as Strategy 01: single-strategy run mode, experiment 4a then 4b, data 2024-01-01..2026-11-19 with 1D-bar levels and special sessions excluded, costs unverified until D-6, regimes by `context_15m`, 60/20/20 split. The 4a in-sample run is pre-registered in the [registry §1.2](../research/experiment-registry.md#12-pre-registration-strategy-02-experiment-4a-in-sample-registered-2026-11-22-before-any-chunk-ran) (2026-11-22) before it starts.
+4a in-sample run done 2026-11-22; 4b, out-of-sample, holdout and walk-forward not run (strategy parked, §27). Same as Strategy 01: single-strategy run mode, experiment 4a then 4b, data 2024-01-01..2026-11-19 with 1D-bar levels and special sessions excluded, costs unverified until D-6, regimes by `context_15m`, 60/20/20 split. The 4a in-sample run is pre-registered in the [registry §1.2](../research/experiment-registry.md#12-pre-registration-strategy-02-experiment-4a-in-sample-registered-2026-11-22-before-any-chunk-ran) (2026-11-22) before it starts.
 
 ## 20. Historical performance
 `Not run`.
 
 ## 21. In-sample results
-`Not run`.
+
+Experiment 4a (every candidate traded, fixed ₹500 risk unit, no account limits), `pa-intraday 0.4.0`, 2024-01-02..2025-09-23, 427 sessions (3 special sessions excluded), run 2026-11-22 from code `bffbb93` in 7 chunks and merged. Pre-registration and result: [registry §1.2](../research/experiment-registry.md). Raw output is kept outside the repository.
+
+| Measure | Value |
+|---|---|
+| Trades | 10,353 |
+| Win rate | 33.8% |
+| Average R, gross / net | -0.15 / -0.31 |
+| Profit factor | 0.52 |
+| Net P&L (at ₹500 risk unit) | -₹15,89,298 (gross -₹7,93,868, costs ₹7,95,430) |
+| Cost drag | 16.4% of gross P&L |
+| Exits | SESSION_END 5,122; STOP 4,670; TARGET 554; STOP_GAP 7 |
+| Skips | SKIPPED_RR_DEGRADED 4,158; ALREADY_IN_POSITION 2,133; SKIPPED_SESSION_CUTOFF 223; STOP_TOO_WIDE 83; RR_BELOW_MINIMUM 27 |
+
+Net average R by slice (all negative): anchor EQUAL_LOWS -0.35, OR_LOW -0.33, PDL -0.29, SWING_LOW_15M -0.91 (3 trades), SWING_LOW_5M -0.30, ZONE -0.32; 15m context BEARISH -0.27, BULLISH -0.42, TRANSITION -0.30; every half hour from 09:30 (-0.24) to 13:30 (-0.36); all 21 months (best 2025-04 -0.08, worst 2024-10 -0.42). Per 3-month chunk, gross average R was -0.10, -0.15, -0.14 for the first three.
+
+Reading: the gross average R is negative, so costs (unverified, D-6) worsen the result but do not cause it. No slice is positive and none is consistently better across chunks (OR_LOW was +0.04R in one chunk and -0.45R in another). BULLISH context is the worst, the opposite of a with-trend reading. Only 554 of 10,353 trades reach target while 5,122 run to session end, the same shape as Strategy 01 (-0.16 gross / -0.33 net, PF 0.54), which points at something shared rather than at either entry rule (see the framework diagnosis, T-I144). Trades sharing a level in a session and symbol: 4 (0.04%). Bars from breakdown to reclaim were not extracted (the trade record has no breakdown bar). Drawdown percentage is not meaningful in 4a (no capital limit). Flags: `survivorship_bias_risk`, `costs_unverified`, `UNSUPPORTED_DIRECTION:SHORT`. In-sample only: out-of-sample and holdout untouched, 4b not run, no parameter changed.
 
 ## 22. Out-of-sample results
 `Not run`.
@@ -193,7 +209,7 @@ Data limits L-1.. in [research data limitations](../research/research-data-limit
 
 ## 27. Acceptance decision
 
-Not decided. Status `SPECIFICATION_APPROVED`. The checklist ([process §5](../development/strategy-development-process.md#5-acceptance-checklist)) has nothing ticked.
+**Parked, 2026-11-22 (owner decision).** Status `DEFERRED`; not `VALIDATION_FAILED`, because the full criteria were not evaluated: only the in-sample 4a run exists. The pre-registered decision rule was triggered (gross average R -0.15, net negative in every anchor and 15m context), which sent the decision to the owner. Evidence: net average R -0.31, profit factor 0.52, negative in every anchor, 15m context, half hour and month (§21). Root cause is not established. Rationale: no slice to filter on, no hypothesis in the data for a variant, and tuning on the same in-sample data risks overfitting ([process §6](../development/strategy-development-process.md#6-when-validation-fails)); the shared shape with Strategy 01 is being diagnosed separately (T-I144). Preserved: the detector, ruleset `pa-intraday 0.4.0`, the tests, the registry entries and §21. Not run: 4b, out-of-sample, holdout, walk-forward, Stage 5 (the out-of-sample and holdout data were never touched). Improvement rounds used: 0 of 3 ([criteria §5](../research/validation-criteria.md#5-improvement-rounds)). Reopening needs a written hypothesis and a new ruleset version. The acceptance checklist ([process §5](../development/strategy-development-process.md#5-acceptance-checklist)) is not complete.
 
 ## 28. Future improvements
 
