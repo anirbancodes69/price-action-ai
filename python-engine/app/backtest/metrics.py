@@ -5,7 +5,7 @@ from __future__ import annotations
 import statistics
 from collections import defaultdict
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -50,6 +50,7 @@ class Metrics:
     by_month: dict[str, GroupStats]
     low_sample: bool
     end_of_data_trades: int
+    by_anchor: dict[str, GroupStats] = field(default_factory=dict)
 
 
 def _mean(xs: Sequence[Decimal]) -> Decimal | None:
@@ -165,6 +166,7 @@ def compute_metrics(
         by_month=_grouped(trades, lambda t: (t.fill_at + IST).strftime("%Y-%m")),
         low_sample=len(trades) < LOW_SAMPLE_TRADES or n_sessions < LOW_SAMPLE_SESSIONS,
         end_of_data_trades=eod,
+        by_anchor=_grouped(trades, lambda t: t.anchor or "n/a"),
     )
 
 

@@ -24,6 +24,8 @@ class Position:
     signal_at: datetime
     fill_at: datetime
     structure_exit_pending: bool = False
+    anchor: str = ""  # setup anchor (research breakdowns)
+    swept_level: Decimal | None = None
 
     @property
     def risk_amount(self) -> Decimal:
@@ -58,6 +60,8 @@ class Trade:
     r_gross: Decimal
     r_net: Decimal
     end_of_data: bool = False
+    anchor: str = ""
+    swept_level: Decimal | None = None
 
 
 def step_position(pos: Position, bar: Bar, cfg: ExitConfig) -> tuple[Decimal, str] | None:
@@ -119,4 +123,6 @@ def close_trade(
         gross / risk,
         net / risk,
         end_of_data,
+        pos.anchor,
+        pos.swept_level,
     )

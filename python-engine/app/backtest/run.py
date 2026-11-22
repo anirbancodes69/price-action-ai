@@ -117,13 +117,18 @@ def run_backtest(
         r = replay_session(s.symbols, s.spec, cfg.params, profile, cfg.schedule, analyse_fn, cfg.order_key)
         results.append(r)
         equity += r.net_pnl
+    return assemble_result(results, cfg, inputs_hash(ordered))
+
+
+def assemble_result(results: Sequence[SessionResult], cfg: BacktestConfig, input_hash: str) -> BacktestResult:
+    """Metrics, curve, flags and run record for replayed sessions (also used to merge chunks)."""
     metrics = compute_metrics(results, cfg.capital)
     curve: list[tuple[date, Decimal]] = []
     values = equity_curve(results, cfg.capital)[1:]
     for r, v in zip(results, values, strict=True):
         curve.append((r.spec.session_date, v))
     flags: list[str] = []
-    if len(ordered) < MIN_SESSIONS:
+    if len(results) < MIN_SESSIONS:
         flags.append("short_history")
     if not cfg.point_in_time_universe:
         flags.append("survivorship_bias_risk")
@@ -145,10 +150,10 @@ def run_backtest(
         ("5m", "15m"),
         cfg.sizing_mode,
         cfg.purpose,
-        inputs_hash(ordered),
-        ordered[0].spec.session_date if ordered else None,
-        ordered[-1].spec.session_date if ordered else None,
-        len(ordered),
+        input_hash,
+        results[0].spec.session_date if results else None,
+        results[-1].spec.session_date if results else None,
+        len(results),
         cfg.strategy_id,
         cfg.experiment,
     )

@@ -67,6 +67,7 @@ def format_report(r: BacktestResult) -> str:
         "Skips: " + (", ".join(f"{k} {v}" for k, v in m.skips.items()) or "none"),
     ]
     lines += _group_lines("By setup", m.by_setup)
+    lines += _group_lines("By anchor", m.by_anchor)
     lines += _group_lines("By half hour (IST)", m.by_half_hour)
     lines += _group_lines("By 15m context", m.by_context_15m)
     lines += _group_lines("By month", m.by_month)

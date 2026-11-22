@@ -29,6 +29,7 @@ from sqlalchemy import create_engine
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # make `app` importable when run as a script
 
+from app.backtest.chunks import save_chunk
 from app.backtest.costs import CostSchedule
 from app.backtest.exclusions import SPECIAL_SESSIONS, Exclusion, summarise
 from app.backtest.loader import load_backtest_inputs, load_daily_levels
@@ -67,6 +68,9 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--strategy", choices=sorted(STRATEGY_DETECTORS))
     p.add_argument("--experiment", choices=["4a", "4b"])
     p.add_argument("--tie-break-seed", type=int, default=1)
+    p.add_argument(
+        "--save-chunk", type=Path, help="save the replayed sessions (for scripts/merge_backtests.py)"
+    )
     return p
 
 
@@ -137,6 +141,21 @@ def main(argv: list[str] | None = None) -> int:
             tie_break_seed=a.tie_break_seed,
             purpose=f"EXPLORATION:{a.split}",
         )
+        if a.save_chunk:
+            meta = {
+                "ruleset": a.ruleset,
+                "strategy_id": a.strategy,
+                "experiment": a.experiment,
+                "capital": str(a.capital),
+                "tie_break_seed": a.tie_break_seed,
+                "data_source": s.ingest_provider,
+                "universe": a.code,
+                "purpose": f"EXPLORATION:{a.split}",
+                "from": a.from_.isoformat(),
+                "to": a.to.isoformat(),
+                "members_on": (a.members_on or a.to).isoformat(),
+            }
+            save_chunk(a.save_chunk, result, meta, exclusions)
         print(format_report(result))
         print("Exclusions: " + (", ".join(f"{k} {v}" for k, v in summarise(exclusions).items()) or "none"))
         if a.json_out:
