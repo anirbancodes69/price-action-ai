@@ -14,7 +14,8 @@ How PriceAction AI strategies are researched and validated. The method is fixed 
 | [Research data limitations](research-data-limitations.md) | Known data and infrastructure limits, required handling and flags |
 | [Framework diagnosis plan](framework-diagnosis-plan.md) | Pre-registered tests of why every rule set loses before costs (2026-11-22) |
 | [Framework diagnosis report](framework-diagnosis-report.md) | Results of the diagnosis: friction, not the entries or the machinery, explains the loss (2026-11-22) |
-| [Fast screening protocol](fast-screening-protocol.md) | Draft pre-registration: a fixed family of 13 variants screened cheaply against random-entry controls, then confirmed on other days (2026-11-23, not approved) |
+| [Fast screening protocol](fast-screening-protocol.md) | Approved pre-registration: a fixed family of 13 variants screened cheaply against random-entry controls, then confirmed on other days (2026-11-23) |
+| [Fast screening report](fast-screening-report.md) | Screen result: no variant promoted; breakout entries worse than random (2026-11-23) |
 | [Experiment registry](experiment-registry.md) | Every experiment, including failed variants and the pre-framework combined runs |
 | [Research readiness audit](adaptive-strategy-validation/RESEARCH_READINESS.md) | Evidence behind the limitations (2026-11-21) |
 | [Backtest logs](../trading/backtests/) | Full reports of individual runs |

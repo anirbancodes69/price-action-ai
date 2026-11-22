@@ -135,6 +135,35 @@ def eligible_signal_bars(bars: Sequence[Bar], or_end: datetime, cutoff: datetime
     return [s for s in range(len(bars) - 1) if bars[s].end >= or_end and bars[s + 1].start < cutoff]
 
 
+def fill_and_run(
+    bars: Sequence[Bar],
+    s: int,
+    symbol: str,
+    ref: Decimal,
+    stop: Decimal,
+    rules: Rules,
+    schedule: CostSchedule,
+    target_r: Decimal = TARGET_R,
+    unlimited_value: Decimal = NO_VALUE_LIMIT,
+) -> Control | None:
+    """A signal at the close of bar `s` with reference entry `ref` and `stop`: fill at the next open by the
+    real fill rule (`simulate_entry`), then the common exit. `None` when the fill is skipped."""
+    _, cutoff, exit_time = session_times(bars, rules)
+    if s + 1 >= len(bars) or ref <= stop:
+        return None
+    target = ref + target_r * (ref - stop)
+    plan = int(rules.risk_unit // (ref - stop))
+    fill = simulate_entry(
+        bars[s + 1].open, ref, stop, target, plan, rules.risk_unit, unlimited_value, rules.min_rr,
+        rules.max_gap_pct, bars[s + 1].start, cutoff, rules.slippage_pct,
+    )  # fmt: skip
+    if not fill.filled or fill.price is None:
+        return None
+    cfg = exit_config(rules, exit_time)
+    t = simulate(bars, s + 1, symbol, fill.price, stop, fill.qty, target, cfg, schedule)
+    return Control(t, s + 1, forward_returns(bars, s + 1, fill.price, stop, exit_time), 0)
+
+
 def draw_control(
     bars: Sequence[Bar],
     symbol: str,
@@ -149,22 +178,15 @@ def draw_control(
     """One control: a uniformly random eligible signal bar after `after_index` (the previous control's exit
     bar, so one position per symbol), filled by the same rule as a strategy; a skipped fill is redrawn (at
     most `MAX_REDRAWS` times). `None` when no bar qualifies."""
-    or_end, cutoff, exit_time = session_times(bars, rules)
+    or_end, cutoff, _ = session_times(bars, rules)
     pool = [s for s in eligible_signal_bars(bars, or_end, cutoff) if s + 1 > after_index]
-    cfg = exit_config(rules, exit_time)
     redraws = 0
     while pool and redraws <= MAX_REDRAWS:
         s = rng.choice(pool)
         ref = bars[s].close
         stop = ref * (1 - stop_pct / 100)
-        target = ref + target_r * (ref - stop)
-        plan = int(rules.risk_unit // (ref - stop)) if ref > stop else 0
-        fill = simulate_entry(
-            bars[s + 1].open, ref, stop, target, plan, rules.risk_unit, unlimited_value, rules.min_rr,
-            rules.max_gap_pct, bars[s + 1].start, cutoff, rules.slippage_pct,
-        )  # fmt: skip
-        if fill.filled and fill.price is not None:
-            t = simulate(bars, s + 1, symbol, fill.price, stop, fill.qty, target, cfg, schedule)
-            return Control(t, s + 1, forward_returns(bars, s + 1, fill.price, stop, exit_time), redraws)
+        c = fill_and_run(bars, s, symbol, ref, stop, rules, schedule, target_r, unlimited_value)
+        if c is not None:
+            return Control(c.trade, c.fill_index, c.forward, redraws)
         redraws += 1
     return None
