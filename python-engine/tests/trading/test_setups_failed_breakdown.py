@@ -24,7 +24,7 @@ Row = tuple[str, str, str, str]
 
 BREAK: Row = ("1482", "1482", "1476", "1477")  # bar 5: close 1477 < 1479.26, the first close below PDL
 RECLAIM: Row = ("1477", "1481", "1476.5", "1480.5")  # bar 6: close 1480.5 >= 1480; H 1481, break low 1476
-CONFIRM: Row = ("1480.5", "1483", "1480", "1482")  # bar 7: close 1482 > 1481 x 1.0005 = 1481.5405
+CONFIRM: Row = ("1480.5", "1483", "1480", "1482")  # bar 7: close 1482 > 1481 x 1.0005 = 1481.7405
 BELOW: Row = ("1477", "1479", "1476.5", "1478")  # stays below PDL without a new low or a reclaim
 HOLD: Row = ("1480", "1481", "1479.6", "1480.5")  # above 1479.26, below the confirmation level
 SEQ = [*LEAD, BREAK, RECLAIM, CONFIRM]

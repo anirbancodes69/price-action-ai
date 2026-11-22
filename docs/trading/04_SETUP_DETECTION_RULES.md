@@ -155,7 +155,7 @@ A wick below `Y` whose close stays below `Y` without a timely reclaim is not a s
 | Stop | `break_low × (1 − sb)`. |
 | Target | §8.3, no setup-specific candidate. |
 
-One setup per breakdown bar (the highest level reclaimed, ties by anchor order `PDL, OR_LOW, EQUAL_LOWS, ZONE, SWING_LOW_5M, SWING_LOW_15M`); a level (anchor, price) is used once per session; a zone level is `Z.low` of an `ACTIVE` support zone at the close of `b − 1`. Exempt from the 15m context filter like §7. Disabled unless `setup.failed_breakout_enabled` is true. The mirror (failed breakout of a high) is bearish, not built and not executable (SD-06, D-4). Scoring points for this setup are not defined; it is outside the isolated runs (D-5).
+One setup per breakdown bar: the level reclaimed first (a later bar never changes the choice); among levels reclaimed on the same bar the highest, then the anchor order `PDL, OR_LOW, EQUAL_LOWS, ZONE, SWING_LOW_5M, SWING_LOW_15M`; a level (anchor, price) is used once per session; a zone level is `Z.low` of an `ACTIVE` support zone at the close of `b − 1`. Exempt from the 15m context filter like §7. Disabled unless `setup.failed_breakout_enabled` is true. The mirror (failed breakout of a high) is bearish, not built and not executable (SD-06, D-4). Scoring points for this setup are not defined; it is outside the isolated runs (D-5).
 
 ## 8. Levels
 

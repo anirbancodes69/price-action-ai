@@ -118,6 +118,10 @@ Defines the mandatory test catalogue for the trading engine. Every test ID below
 | TV-SET-33 | Close 1479 (< 1479.26) after detection | `INVALIDATED` (`BREAK_RESUMED`) |
 | TV-SET-34 | 13 bars holding between 1479.6 and 1481; a reclaim bar ending after the cutoff; a breakdown bar after the cutoff | `EXPIRED` (`AGED_OUT`); no setup; no setup |
 | TV-SET-35 | Levels of the TV-SET-30 fixture | Entry 1482, stop 1475.262, target PDH 1510 (SESSION_HIGH / OR_HIGH 1493 give 1.63R), rr 4.16 |
+| TV-SET-36 | Close 1477 breaks PDL 1480 and a 15m swing low 1478; bar 6 reclaims 1478 only, bar 7 reclaims 1480 | The 1478 setup (detected on bar 6) stays; bar 7 does not replace it. If both are reclaimed on one bar, PDL 1480 (the highest) |
+| TV-SET-37 | Look-ahead: the day cut at each bar *k* against the full day | Every setup detected by *k* has the same level, breakdown bar, trigger and stop base in both |
+| TV-SET-38 | Close at 1479.26 and 1479.25 against `Y × (1 − sbuf)` = 1479.26; reclaim close 1480 and 1479.99; confirmation 1481.7405 and 1481.75 | No breakdown / breakdown; reclaim / none; awaiting / confirmed |
+| TV-SET-39 | Stop bases 1476, 1480.5, 1480.6, 1453.2, 1453 with tick 0.05 | Stops 1475.25, 1479.75, 1479.85, 1452.45, 1452.25; `STOP_TOO_TIGHT` for 1480.6 and `STOP_TOO_WIDE` for 1453 |
 
 ### 3.5 Risk (TRD-05)
 
