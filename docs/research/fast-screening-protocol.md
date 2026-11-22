@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Version | 0.1.0 (draft) |
-| Status | **Draft pre-registration, 2026-11-23. Not approved. Nothing has run.** It becomes binding when the owner approves it; after that a change is a new, separately logged pre-registration |
+| Version | 1.0.0 |
+| Status | **Approved by the owner, 2026-11-23** (as drafted, including running minimal entries out of roadmap order). Binding: a change is a new, separately logged pre-registration. Implementation clarifications are in §7.1 |
 | Owner request | 2026-11-23: test many possibilities quickly instead of full 50-stock, 427-session replays |
 | Related | [Framework diagnosis report](framework-diagnosis-report.md) · [Validation criteria](validation-criteria.md) · [Independent backtesting standards](independent-backtesting-standards.md) · [Experiment registry §5](experiment-registry.md#5-fast-screening-experiments) · [ADR-018](../adr/ADR-018-INDEPENDENT-STRATEGY-LIBRARY.md) |
 
@@ -98,7 +98,19 @@ A positive gross edge does not make a strategy profitable: net average R must st
 - Runner `scripts/run_screen.py`; raw output in the research directory outside the repository; the engine suite stays green and no detector, ruleset or replay behaviour changes.
 - One registry row per variant and per tier ([registry §5](experiment-registry.md#5-fast-screening-experiments)); results in a report, aggregates only.
 
-## 8. Limits
+### 7.1 Implementation clarifications (written before the run, no variant changed)
+
+1. Minimal-entry signals are read only on bars that start at or after 09:30 (after the opening range) for M1, M2 and M3; M2 and M3 are therefore not evaluated inside the first 15 minutes.
+2. Every Tier 1 variant also obeys the ruleset's stop limits (0.15% to 2.0% of the reference entry); the filter "none" means those limits only. Stop distance for the filter is measured on the reference entry; controls are matched on the stop distance of the filled trade (as in the diagnosis).
+3. Stops are rounded down to the 0.05 tick. M2 is skipped on a session with a missing or inconsistent previous-day bar (D-7).
+4. Tier 0 strategy results are the saved trades re-simulated with the common exit (target 2.5R from the fill price, as diagnosis DX-4), not the recorded exits.
+5. The runner screens, promotes and confirms mechanically in one run; confirmation data (2025) is read only for promoted variants.
+
+## 8. Results
+
+Screen done 2026-11-23: no variant promoted; Tier 2 did not run. See the [report](fast-screening-report.md).
+
+## 9. Limits
 
 - Survivorship bias (today's NIFTY 50), costs and slippage unverified (D-6 partly: charges match Groww's published schedule), the 2024 year was seen in aggregate (§3).
 - The minimal entries are simplifications, so a result is **not** a verdict on the full strategies in the library (Strategies 09 and 10 are specified separately). Running them out of roadmap order is a screening exercise, not strategy development; the owner's approval of this protocol covers that deviation from [ADR-018](../adr/ADR-018-INDEPENDENT-STRATEGY-LIBRARY.md) ordering.

@@ -36,8 +36,10 @@ def _mean(s: float, n: int) -> float:
     return s / n if n else 0.0
 
 
-def bootstrap_mean(a: Sums, b: Sums | None = None, *, resamples: int = 10_000, seed: int = 1) -> Interval:
-    """Mean of `a` (per observation), or the mean of `a` minus the mean of `b`, with a 95% session CI."""
+def bootstrap_mean(
+    a: Sums, b: Sums | None = None, *, resamples: int = 10_000, seed: int = 1, level: float = 0.95
+) -> Interval:
+    """Mean of `a` (per observation), or `a` minus `b`, with a session CI at `level` (default 95%)."""
     keys = sorted(set(a) | set(b or {}), key=str)
     m = len(keys)
     sa = [a.get(k, (0.0, 0))[0] for k in keys]
@@ -57,4 +59,6 @@ def bootstrap_mean(a: Sums, b: Sums | None = None, *, resamples: int = 10_000, s
             d -= _mean(sum(sb[i] for i in idx), sum(nb[i] for i in idx))
         draws.append(d)
     draws.sort()
-    return Interval(est, draws[int(0.025 * (resamples - 1))], draws[int(0.975 * (resamples - 1))], n_obs)
+    tail = (1 - level) / 2
+    lo, hi = draws[int(tail * (resamples - 1))], draws[int((1 - tail) * (resamples - 1))]
+    return Interval(est, lo, hi, n_obs)
