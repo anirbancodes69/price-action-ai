@@ -4,7 +4,7 @@
 |---|---|
 | Strategy id | `failed_breakout` |
 | Roadmap position | 02 of 12 ([roadmap](../development/strategy-development-roadmap.md)) |
-| Acceptance status | `IMPLEMENTATION_IN_PROGRESS` (specification approved 2026-11-22; Stage 2 code and 17 detector tests on branch `feat/strategy-02-failed-breakout`, PR pending; `IMPLEMENTED` once merged) |
+| Acceptance status | `FUNCTIONAL_TESTING` (Stage 2 merged in PR #74; Stage 3 tests written and green 2026-11-22, PR pending; no registry entry yet, so not `BACKTESTING`) |
 | Executable directions | Long (disabled in `0.1.0`-`0.3.0`; enabled only in the research ruleset `0.4.0`) |
 | Ruleset version | `pa-intraday 0.4.0` for research runs (`0.3.0` plus `setup.failed_breakout_enabled` and `setup.failed_break_max_bars`); `0.1.0`-`0.3.0` unchanged; the live scanner stays on `0.1.0` |
 | Specification approved | **Approved by the owner, 2026-11-22** (P-1..P-5 as written, §26) |
@@ -53,7 +53,7 @@ Setup and trigger: 5m closed bars. Levels: 5m and 15m confirmed swing lows (15m 
 3. **Breakdown bar `b`:** `C[b] < Y × (1 − sbuf)`. A wick below `Y` that closes at or above `Y × (1 − sbuf)` is not a breakdown (that is Strategy 01's event, and the two are disjoint by this close test).
 4. **Failure (reclaim bar `r`):** the first bar `r` with `b < r ≤ b + N` and `C[r] ≥ Y`. If no such bar exists by `b + N`, the candidate is dropped.
 5. `break_low = min(L[b..r])`. Detection bar = `r`. `trigger_price = H[r]`. Status `AWAITING_CONFIRMATION`.
-6. **One setup per breakdown:** if one close breaks several levels, the highest `Y` that is reclaimed is used; ties by anchor order `PDL, OR_LOW, EQUAL_LOWS, ZONE, SWING_LOW_5M, SWING_LOW_15M`. A level (anchor, price) is used once per session.
+6. **One setup per breakdown:** if one close breaks several levels, the level reclaimed **first** is used (the smallest `r`); among levels reclaimed on the same bar, the highest `Y`, then the anchor order `PDL, OR_LOW, EQUAL_LOWS, ZONE, SWING_LOW_5M, SWING_LOW_15M`. A bar after `r` never changes the choice (G-4). A level (anchor, price) is used once per session.
 
 ## 8. Bearish setup
 
@@ -109,7 +109,7 @@ Dependency on another strategy: **None.** It does not use Strategy 01 sweep sign
 
 - **Opening gap:** a gap down below `Y` that closes below `Y × (1 − sbuf)` on the first bar is a breakdown bar; the reclaim must still come from later closes.
 - **Same bar breaks and reclaims:** not possible by definition (`C[b]` is below, `C[r]` is at or above, `r > b`).
-- **Two levels broken by one close:** one setup, the highest reclaimed (rule 6).
+- **Two levels broken by one close:** one setup, the level reclaimed first, ties the highest (rule 6). The other level is not traded: its first break was this bar, so it cannot start a second breakdown.
 - **Missing candles / data gaps:** a session with a missing-bar issue for that symbol is excluded and logged (standards §7).
 - **Special sessions:** excluded (D-7).
 - **Cutoff:** no setup is detected or confirmed by a bar ending after the cutoff.
@@ -139,7 +139,22 @@ Module `python-engine/app/domain/setups/failed_breakdown.py` (`detect_failed_bre
 
 Stage 2 tests (`tests/trading/test_setups_failed_breakdown.py`, 17 tests, hand-computed, TV-SET-29..35): disabled before `0.4.0` and registered; breakdown by close, reclaim by close, confirmation; awaiting confirmation; a wick is not a breakdown (and is a sweep for Strategy 01); reclaim at the window edge and one bar later; window read from the ruleset; no reclaim; a level used once and a re-break is not a new breakdown; `BREAK_RESUMED`; expiry; reclaim after the cutoff; breakdown after the cutoff; stop at `break_low` and the ladder; determinism. Real-bar isolation proof (`scripts/check_strategy_isolation.py --strategy failed_breakout --ruleset pa-intraday@0.4.0`): 0 differences over 8,640 analyses (6 sessions, 20 symbols).
 
-Stage 3 still to write: one test per anchor (swing 5m, swing 15m with no look-ahead, `EQUAL_LOWS`, zone, `PDL`, `OR_LOW`); two levels broken by one close and the anchor tie order; the same level through two anchors; boundary values (close exactly at `Y × (1 − sbuf)`); stop distance gates; `RR_BELOW_MINIMUM`; replay fills and the run-mode tests for this strategy.
+**Stage 3 (2026-11-22):** `tests/trading/test_setups_failed_breakdown_stage3.py` (27 tests) and `tests/backtest/test_strategy_run_failed_breakout.py` (6 tests), all hand-computed.
+
+| Process §4 area | Covered by |
+|---|---|
+| Setups | one test per anchor (`OR_LOW`, 5m swing low, `EQUAL_LOWS`, zone, 15m swing low, `PDL` from Stage 2); inactive or non-support zone gives none; 15m swing low only from its confirmation; bearish form: not supported (§8), no test |
+| Several levels, one close | earliest reclaim wins, the highest wins on the same bar, anchor order for the same price |
+| Levels | stop at `break_low` with tick rounding; minimum and maximum stop distance at the boundary; target ladder; `RR_BELOW_MINIMUM` flagged |
+| Lifecycle | `BREAK_RESUMED` at and below the buffer; a wick below the break low does not invalidate; expiry at 12 / 13 bars; entry cutoff at the boundary; a level used once |
+| Data | opening gap below `PDL` on the first session bar; previous-session bars ignored; missing candle not filled; short and duplicate input give no signal |
+| Boundaries | close exactly at, and just below, `Y × (1 − sbuf)`; reclaim at and just below `Y`; confirmation at and above the trigger buffer; window `N` and `N + 1` (Stage 2) |
+| Look-ahead | a setup found at bar *k* equals the one from the day cut at *k*, on a two-level fixture (fails on the first implementation, G-4) |
+| Replay | bar-by-bar confirmations equal the full run |
+| Isolation | alone equals the strategy's own candidates of the combined run, bar by bar, with no score; the run is flagged and trades only this type; real-bar proof: 0 differences over 8,640 analyses (6 sessions, 20 symbols) |
+| Run mode | 4a and 4b records and flags; 4b slot limit; ruleset `0.4.0` differs from `0.3.0` only in the two new keys |
+
+Not covered: shorts (unsupported by design); a live-scanner or database path (the type is not in the CHECK constraints yet).
 
 ## 19. Independent backtest configuration
 
@@ -173,6 +188,8 @@ Data limits L-1.. in [research data limitations](../research/research-data-limit
 | P-3 (approved 2026-11-22) | Levels | The same six anchors as Strategy 01, so results compare cleanly. No anchor selection from Strategy 01's results |
 | P-4 (approved 2026-11-22) | Ruleset | `pa-intraday 0.4.0` = `0.3.0` plus `setup.failed_breakout_enabled` (false by default; the live scanner is unchanged) and `setup.failed_break_max_bars`. The ruleset registry (TRD-01 §6) and the ruleset changelog are updated in the Stage 2 PR |
 | P-5 (approved 2026-11-22) | Exits and target | Stop at `break_low`, shared target ladder with no strategy-specific candidate, exits stop / target / session end |
+
+| G-4 (Stage 3 finding, 2026-11-22) | Rule 6 read literally ("the highest `Y` that is reclaimed") | The first implementation chose the highest level reclaimed anywhere in the window, so a bar after `r` could replace a setup already detected (look-ahead; found by the Stage 3 look-ahead test). Fixed before any backtest: the earliest reclaim wins, ties the highest. Rule 6 above is reworded to say so. No result existed, so no parameter or outcome changed. **For the owner's information; no new approval is requested unless you want the highest-first reading instead (it cannot be run without look-ahead).** |
 
 ## 27. Acceptance decision
 

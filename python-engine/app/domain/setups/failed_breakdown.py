@@ -7,10 +7,10 @@ back at or above it within `N = setup.failed_break_max_bars` bars (reclaim bar `
 A wick below `Y` that closes at or above `Y x (1 - sbuf)` is not a breakdown: that is Strategy 01's event,
 so the two are disjoint.
 
-Implementation choices (specification §7): one setup per breakdown bar, for the highest level reclaimed
-(ties by anchor order); a level (anchor, price) is used once per session; zone level = `Z.low` of an
-`ACTIVE` support zone at the close of `b - 1`. Invalidated by a later close below `Y x (1 - sbuf)`
-(`BREAK_RESUMED`).
+Implementation choices (specification §7): one setup per breakdown bar, for the level reclaimed first
+(ties: the highest, then anchor order); a level (anchor, price) is used once per session; zone level =
+`Z.low` of an `ACTIVE` support zone at the close of `b - 1`. Invalidated by a later close below
+`Y x (1 - sbuf)` (`BREAK_RESUMED`).
 """
 
 from __future__ import annotations
@@ -60,12 +60,17 @@ def detect_failed_breakdown(ctx: SetupContext) -> tuple[list[Setup], list[str]]:
         for price, z in zone_levels(ctx, b):
             if close < price * (1 - sbuf):
                 cands.append((price, ANCHOR_ORDER.index("ZONE"), "ZONE", z))
-        for price, _, anchor, zone in sorted(cands, key=lambda c: (-c[0], c[1])):
+        # Causal choice: the level reclaimed first wins (a later bar cannot change a setup already detected);
+        # among levels reclaimed on the same bar, the highest, then the anchor order.
+        hits: list[tuple[int, Decimal, int, str, Zone | None]] = []
+        for price, order, anchor, zone in cands:
             if (anchor, price) in taken:
                 continue
             r = _reclaim(ctx, b, price, window)
-            if r is None or after_cutoff(ctx, r):
-                continue
+            if r is not None and not after_cutoff(ctx, r):
+                hits.append((r, -price, order, anchor, zone))
+        for r, neg_price, _, anchor, zone in sorted(hits, key=lambda h: h[:3])[:1]:
+            price = -neg_price
             taken.add((anchor, price))
             break_low = min(x.low for x in ctx.bars[b : r + 1])
             s = Setup(
@@ -90,5 +95,4 @@ def detect_failed_breakdown(ctx: SetupContext) -> tuple[list[Setup], list[str]]:
                     htf_blocks=False,
                 )
             )
-            break  # one setup per breakdown bar
     return out, []
