@@ -119,3 +119,14 @@ Pre-registered 2026-11-23 in the [Gate 0 plan](gate0-daily-diagnosis-plan.md) (a
 | DG-4 | 2026-11-23 | Simulator spot check, 20 trades (5 overnight gap exits) | in-sample | Done. 20 of 20 agree | — | [report §2](gate0-daily-diagnosis-report.md#2-hypotheses) |
 | DG-5 | 2026-11-23 | Survivorship and coverage sensitivity (44 full-history stocks vs all) | in-sample | Done. Difference within ±0.02R, intervals include zero (a weak test) | `survivorship_bias_risk` | [report §5](gate0-daily-diagnosis-report.md#5-dg-3-random-entry-baseline-grid-the-bar-a-strategy-must-beat) |
 | DG-6 | 2026-11-23 | Charges sensitivity (exchange rate, brokerage) | in-sample | Done. Exchange rate under 0.001R; brokerage 0 about +0.05R; cap ₹40 about 0.001R | `costs_unverified` | [report §5](gate0-daily-diagnosis-report.md#5-dg-3-random-entry-baseline-grid-the-bar-a-strategy-must-beat) |
+
+## 7. Daily screening experiments
+
+Draft pre-registration, 2026-11-23, in the [daily screening protocol](daily-screening-protocol.md) (not yet approved by the owner; nothing has run). Family size N = 8; promotion needs a gross edge over the month-matched random-entry control of at least +0.05R with a 99% interval excluding zero (screen 2015-01-01..2018-07-24, 50 stocks) and confirmation on 2018-07-25..2022-02-15. Out-of-sample and holdout are not used.
+
+| Experiment | Date | What runs | Data | Result | Flags | Report |
+|---|---|---|---|---|---|---|
+| P1a, P1b | — | Trend pullback (depth at least 3%, 6%), stop at the pullback low | screen, confirmation (promoted only) | Not run | `survivorship_bias_risk`, `costs_unverified` | protocol §4 |
+| B2a, B2b | — | Breakout of the 50-, 100-session high, stop at the 20-session low | screen, confirmation (promoted only) | Not run | `survivorship_bias_risk`, `costs_unverified` | protocol §4 |
+| F3a, F3b | — | Failed breakdown below the 20-, 50-session low, 3-session reclaim | screen, confirmation (promoted only) | Not run | `survivorship_bias_risk`, `costs_unverified` | protocol §4 |
+| C4a, C4b | — | Selling-climax reversal (fall of at least 4%, 6%, close in the top third) | screen, confirmation (promoted only) | Not run | `survivorship_bias_risk`, `costs_unverified` | protocol §4 |
