@@ -4,7 +4,7 @@
 |---|---|
 | Strategy id | `liquidity_sweep_reversal` |
 | Roadmap position | 01 of 12 ([roadmap](../development/strategy-development-roadmap.md)) |
-| Acceptance status | `BACKTESTING` (Stage 3 tests green 2026-11-21; 4a in-sample run recorded 2026-11-21, result negative, §21). Specification `SPECIFICATION_APPROVED`; run mode built |
+| Acceptance status | `DEFERRED` (parked by the owner 2026-11-22 after a negative 4a in-sample result, §21 and §27; improvement rounds used: 0 of 3). Specification `SPECIFICATION_APPROVED`; run mode built |
 | Executable directions | Long |
 | Ruleset version | `pa-intraday 0.3.0` for research runs (`0.2.0` plus the structure exit off, P-4); `0.2.0` enables the setup; the live scanner stays on `0.1.0` |
 | Specification approved | **Approved by the owner, 2026-11-21** (P-1..P-4 as written, §26) |
@@ -212,7 +212,7 @@ Data limits L-1.. in [research data limitations](../research/research-data-limit
 
 ## 27. Acceptance decision
 
-Not decided. Checklist ([process §5](../development/strategy-development-process.md#5-acceptance-checklist)): the in-sample 4a result is negative (§21). The owner chooses between a new ruleset version with a documented reason and rejecting the strategy (process §6) before any out-of-sample data is touched.
+**Parked, 2026-11-22 (owner decision).** Status `DEFERRED`; not `VALIDATION_FAILED`, because the full criteria were not evaluated: only the in-sample 4a run exists. Evidence: net average R -0.33 (gross -0.16), profit factor 0.54, negative in every anchor, 15m context, half hour and month (§21). Root cause is not established; costs and the G-3 shared-price effect (0.6% of trades) are ruled out as the cause. Rationale: no slice to filter on, and tuning on the same in-sample data risks overfitting ([process §6](../development/strategy-development-process.md#6-when-validation-fails)). What is preserved: the detector, the run mode, ruleset `pa-intraday 0.3.0`, the registry entries and §21. Not run: 4b, out-of-sample, holdout, walk-forward, Stage 5 (the out-of-sample and holdout data were never touched). Improvement rounds used: 0 of 3 ([criteria §5](../research/validation-criteria.md#5-improvement-rounds)). Reopening needs a stated hypothesis, a new ruleset version and data not used to choose the change, and it is a fresh owner decision. The checklist ([process §5](../development/strategy-development-process.md#5-acceptance-checklist)) is not ticked.
 
 ## 28. Future improvements
 
