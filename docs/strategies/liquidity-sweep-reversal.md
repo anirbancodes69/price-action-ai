@@ -4,13 +4,13 @@
 |---|---|
 | Strategy id | `liquidity_sweep_reversal` |
 | Roadmap position | 01 of 12 ([roadmap](../development/strategy-development-roadmap.md)) |
-| Acceptance status | `FUNCTIONAL_TESTING` (Stage 3 tests written and green 2026-11-21; no registry entry yet, so not `BACKTESTING`). Specification `SPECIFICATION_APPROVED`; run mode built |
+| Acceptance status | `BACKTESTING` (Stage 3 tests green 2026-11-21; 4a in-sample run recorded 2026-11-21, result negative, §21). Specification `SPECIFICATION_APPROVED`; run mode built |
 | Executable directions | Long |
 | Ruleset version | `pa-intraday 0.3.0` for research runs (`0.2.0` plus the structure exit off, P-4); `0.2.0` enables the setup; the live scanner stays on `0.1.0` |
 | Specification approved | **Approved by the owner, 2026-11-21** (P-1..P-4 as written, §26) |
-| Last updated | 2026-11-21 |
+| Last updated | 2026-11-22 |
 
-Sections 1-16 are the **specification** (what the strategy must do). Section 17 records what the **code does today**; §26 lists where they differ. The authoritative rule text stays in [TRD-04 §7](../trading/04_SETUP_DETECTION_RULES.md); this page adds the isolation statements and the pieces TRD-04 leaves open. Nothing here is a performance claim: no independent backtest exists.
+Sections 1-16 are the **specification** (what the strategy must do). Section 17 records what the **code does today**; §26 lists where they differ. The authoritative rule text stays in [TRD-04 §7](../trading/04_SETUP_DETECTION_RULES.md); this page adds the isolation statements and the pieces TRD-04 leaves open. The only performance evidence is the in-sample 4a result in §21.
 
 ## 1. Strategy overview
 
@@ -161,13 +161,29 @@ Not covered: the exact-tick boundary on `OR_LOW` and `PDL` set from the daily ba
 
 ## 19. Independent backtest configuration
 
-Run mode built (§17); the runs themselves are `Not run`. Per [standards §3-§5](../research/independent-backtesting-standards.md): a single-strategy run mode (only this detector, candidates taken directly, no PAQS gate, no 15m filter, exits stop / target / session end), experiment 4a (every candidate traded, no slot limits) then 4b (`calculate_risk` and account limits with a documented tie-break and a second tie-break rerun). Data 2024-01-01..2026-11-19 with daily bars from 2024 (D-7), special sessions excluded, costs unverified until D-6. Regimes by the recorded 15m structure state at signal time (`context_15m`), fixed before any result.
+Run mode built (§17). 4a in-sample done (§21); 4b, out-of-sample, holdout and walk-forward are `Not run`. Per [standards §3-§5](../research/independent-backtesting-standards.md): a single-strategy run mode (only this detector, candidates taken directly, no PAQS gate, no 15m filter, exits stop / target / session end), experiment 4a (every candidate traded, no slot limits) then 4b (`calculate_risk` and account limits with a documented tie-break and a second tie-break rerun). Data 2024-01-01..2026-11-19 with daily bars from 2024 (D-7), special sessions excluded, costs unverified until D-6. Regimes by the recorded 15m structure state at signal time (`context_15m`), fixed before any result.
 
 ## 20. Historical performance
 `Not run`.
 
 ## 21. In-sample results
-`Not run`.
+
+Experiment 4a (every candidate traded, fixed ₹500 risk unit, no account limits), `pa-intraday 0.3.0`, 2024-01-02..2025-09-23, 427 sessions (3 special sessions excluded), run 2026-11-21 from code `da8b0af` in 7 chunks and merged. Pre-registration and result: [registry §1.1](../research/experiment-registry.md). Raw output is kept outside the repository.
+
+| Measure | Value |
+|---|---|
+| Trades | 11,363 |
+| Win rate | 32.5% |
+| Average R, gross / net | -0.16 / -0.33 |
+| Profit factor | 0.54 |
+| Net P&L (at ₹500 risk unit) | -₹18,42,560 |
+| Cost drag | 15.5% of gross P&L |
+| Exits | STOP 5,778; SESSION_END 4,638; TARGET 927; STOP_GAP 16; TARGET_GAP 3; STOP_COLLISION 1 |
+| Skips | SKIPPED_RR_DEGRADED 7,556; ALREADY_IN_POSITION 3,627; SKIPPED_SESSION_CUTOFF 311; STOP_TOO_WIDE 89; RR_BELOW_MINIMUM 50 |
+
+Net average R by slice (all negative): anchor EQUAL_LOWS -0.37, OR_LOW -0.34, PDL -0.24, SWING_LOW_15M -0.35, SWING_LOW_5M -0.33, ZONE -0.28; 15m context BEARISH -0.31, BULLISH -0.37, TRANSITION -0.32; every half hour from 09:00 (-0.15) to 14:30 (-0.33); all 21 months (best 2025-04 -0.19, worst 2025-09 -0.47).
+
+Reading: the gross average R is negative, so costs (unverified, D-6) worsen the result but do not cause it. No slice is positive, so no regime filter would rescue it without a rule change. Drawdown percentage is not meaningful in 4a (no capital limit). Flags: `survivorship_bias_risk`, `costs_unverified`, `UNSUPPORTED_DIRECTION:SHORT`. G-3 (setups sharing a swept price) is not yet counted from the merged result. In-sample only: out-of-sample and holdout are untouched, 4b not run, no parameter changed.
 
 ## 22. Out-of-sample results
 `Not run`.
@@ -196,7 +212,7 @@ Data limits L-1.. in [research data limitations](../research/research-data-limit
 
 ## 27. Acceptance decision
 
-Not decided. Checklist ([process §5](../development/strategy-development-process.md#5-acceptance-checklist)): nothing ticked; no evidence yet beyond the merged code.
+Not decided. Checklist ([process §5](../development/strategy-development-process.md#5-acceptance-checklist)): the in-sample 4a result is negative (§21). The owner chooses between a new ruleset version with a documented reason and rejecting the strategy (process §6) before any out-of-sample data is touched.
 
 ## 28. Future improvements
 
