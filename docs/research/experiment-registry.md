@@ -108,14 +108,14 @@ Pre-registered 2026-11-23 in the [fast screening protocol](fast-screening-protoc
 
 ## 6. Daily Gate 0 experiments
 
-Pre-registered 2026-11-23 in the [Gate 0 plan](gate0-daily-diagnosis-plan.md) (approved by the owner the same day). Tooling is implemented (`app/backtest/diagnostics/daily.py`, `scripts/run_gate0.py`); **nothing has run on real history, it waits for the owner's one-run daily-history backfill** (plan §7). In-sample segment only; no strategy is tested.
+Pre-registered 2026-11-23 in the [Gate 0 plan](gate0-daily-diagnosis-plan.md) (approved by the owner the same day) and run 2026-11-23 on **data version 2026-11-23** (one backfill run, 2015-01-01..2026-11-19, today's NIFTY 50; in-sample 2015-01-01..2022-02-15, 1,761 sessions; out-of-sample and holdout prices not loaded). Three runs (plan §8.2): run 1 as registered, run 2 after the data fixes, run 3 after the sizing fix and the planned-risk R basis; results below are run 3. Report: [gate0-daily-diagnosis-report.md](gate0-daily-diagnosis-report.md).
 
 | Experiment | Date | What runs | Data | Result | Flags | Report |
 |---|---|---|---|---|---|---|
-| DG-0 | — | Data audit: coverage, missing sessions, OHLC sanity, gaps above 15%, adjustedness against known corporate actions | daily bars, one backfill (data version) | Not run | `survivorship_bias_risk` | plan §5 |
-| DG-1 | — | Drift baseline: buy the next open, hold 5, 10, 20 sessions, no stop or target | in-sample | Not run | `survivorship_bias_risk` | plan §5 |
-| DG-2 | — | Friction decomposition by stop distance under the delivery schedule | in-sample | Not run | `costs_unverified` | plan §5 |
-| DG-3 | — | Random-entry baseline grid (4 stops × 3 targets × 2 holds = 24 configurations), 5 seeds | in-sample | Not run | `survivorship_bias_risk`, `costs_unverified` | plan §5 |
-| DG-4 | — | Simulator spot check, 20 trades | in-sample | Not run | — | plan §5 |
-| DG-5 | — | Survivorship and coverage sensitivity | in-sample | Not run | `survivorship_bias_risk` | plan §5 |
-| DG-6 | — | Charges sensitivity (exchange rate, brokerage) | in-sample | Not run | `costs_unverified` | plan §5 |
+| DG-0 | 2026-11-23 | Data audit: coverage, missing sessions, OHLC sanity, gaps above 15%, adjustedness | daily bars, data version 2026-11-23 | Done. Adjusted for splits and bonuses, not for demergers and mergers: 3 unadjusted events (ADANIENT 2015-06-03 and 2018-09-06, GRASIM 2017-07-19) cut, 1 bad bar dropped, 4 special sessions excluded; ONGC 2020-03-23 genuine (COVID crash) | `survivorship_bias_risk` | [report §3](gate0-daily-diagnosis-report.md#3-dg-0-data-audit) |
+| DG-1 | 2026-11-23 | Drift baseline: buy the next open, hold 5, 10, 20 sessions | in-sample | Done. Gross mean +0.23% (5), +0.62% (10), +1.38% (20; interval +0.45 to +2.21) per entry; 2017, 2020, 2021 positive, 2015, 2018, 2022 negative | `survivorship_bias_risk` | [report §4](gate0-daily-diagnosis-report.md#4-dg-1-and-dg-2) |
+| DG-2 | 2026-11-23 | Friction decomposition by stop distance, delivery schedule | in-sample | Done. 0.30R (2%), 0.23R (3%), 0.19R (4%), 0.16R (5%), 0.12R (8%): ADR-019's table confirmed | `costs_unverified` | [report §4](gate0-daily-diagnosis-report.md#4-dg-1-and-dg-2) |
+| DG-3 | 2026-11-23 | Random-entry baseline grid (4 stops × 3 targets × 2 holds = 24 configurations), 5 seeds, 3 slippage levels | in-sample | Done. Gross +0.00 to +0.12R, net -0.29R (2% stops) to about 0 (5% to 8% stops, 20 sessions: -0.04 to +0.01R, intervals include zero); no net interval above zero | `survivorship_bias_risk`, `costs_unverified` | [report §5](gate0-daily-diagnosis-report.md#5-dg-3-random-entry-baseline-grid-the-bar-a-strategy-must-beat) |
+| DG-4 | 2026-11-23 | Simulator spot check, 20 trades (5 overnight gap exits) | in-sample | Done. 20 of 20 agree | — | [report §2](gate0-daily-diagnosis-report.md#2-hypotheses) |
+| DG-5 | 2026-11-23 | Survivorship and coverage sensitivity (44 full-history stocks vs all) | in-sample | Done. Difference within ±0.02R, intervals include zero (a weak test) | `survivorship_bias_risk` | [report §5](gate0-daily-diagnosis-report.md#5-dg-3-random-entry-baseline-grid-the-bar-a-strategy-must-beat) |
+| DG-6 | 2026-11-23 | Charges sensitivity (exchange rate, brokerage) | in-sample | Done. Exchange rate under 0.001R; brokerage 0 about +0.05R; cap ₹40 about 0.001R | `costs_unverified` | [report §5](gate0-daily-diagnosis-report.md#5-dg-3-random-entry-baseline-grid-the-bar-a-strategy-must-beat) |

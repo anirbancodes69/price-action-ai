@@ -15,6 +15,7 @@ How PriceAction AI strategies are researched and validated. The method is fixed 
 | [Framework diagnosis plan](framework-diagnosis-plan.md) | Pre-registered tests of why every rule set loses before costs (2026-11-22) |
 | [Framework diagnosis report](framework-diagnosis-report.md) | Results of the diagnosis: friction, not the entries or the machinery, explains the loss (2026-11-22) |
 | [Gate 0 plan (daily)](gate0-daily-diagnosis-plan.md) | Draft pre-registration: framework diagnosis on daily data under delivery costs, before any daily strategy (ADR-019, 2026-11-23, not approved) |
+| [Gate 0 report (daily)](gate0-daily-diagnosis-report.md) | Result: daily baseline about zero net at wide stops, friction 0.30R to 0.12R, data defects handled (2026-11-23) |
 | [Fast screening protocol](fast-screening-protocol.md) | Approved pre-registration: a fixed family of 13 variants screened cheaply against random-entry controls, then confirmed on other days (2026-11-23) |
 | [Fast screening report](fast-screening-report.md) | Screen result: no variant promoted; breakout entries worse than random (2026-11-23) |
 | [Experiment registry](experiment-registry.md) | Every experiment, including failed variants and the pre-framework combined runs |

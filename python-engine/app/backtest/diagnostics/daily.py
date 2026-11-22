@@ -59,7 +59,8 @@ class DailyTrade:
     hold_sessions: int
     gross_pnl: Decimal
     costs: Decimal
-    risk: Decimal
+    risk: Decimal  # at the fill: qty * (entry - stop)
+    ref: Decimal  # the signal close the order was planned from
 
     @property
     def r_gross(self) -> Decimal:
@@ -69,16 +70,33 @@ class DailyTrade:
     def r_net(self) -> Decimal:
         return (self.gross_pnl - self.costs) / self.risk
 
+    @property
+    def planned_risk(self) -> Decimal:
+        """Risk the order was planned with: qty * (signal close - stop). Unlike `risk` it does not shrink when
+        the open gaps down toward the stop, so R measured against it stays bounded."""
+        return self.qty * (self.ref - self.stop)
+
+    @property
+    def r_gross_planned(self) -> Decimal:
+        return self.gross_pnl / self.planned_risk
+
+    @property
+    def r_net_planned(self) -> Decimal:
+        return (self.gross_pnl - self.costs) / self.planned_risk
+
 
 def fill_entry(nxt: DayBar, ref: Decimal, stop: Decimal, rules: DailyRules) -> tuple[Decimal, int] | None:
     """Entry price and quantity for a signal whose close was `ref`, filled at the open of `nxt`; `None` when
-    skipped: the open is at or below the stop, more than `max_gap_up_pct` above `ref`, or size rounds to 0."""
+    skipped: the open is at or below the stop, more than `max_gap_up_pct` above `ref`, or size rounds to 0.
+    The quantity is planned from `ref` and **never increased at the fill** (TRD-05 section 7.1): a higher open
+    can only reduce it, a lower open leaves it unchanged."""
     if nxt.open <= stop or nxt.open > ref * (1 + rules.max_gap_up_pct / 100):
         return None
     entry = nxt.open * (1 + rules.slippage_pct / 100)
-    if entry <= stop:
+    if entry <= stop or ref <= stop:
         return None
-    qty = min(int(rules.risk_unit // (entry - stop)), int(rules.position_cap // entry))
+    planned = int(rules.risk_unit // (ref - stop))
+    qty = min(planned, int(rules.risk_unit // (entry - stop)), int(rules.position_cap // entry))
     return (entry, qty) if qty >= 1 else None
 
 
@@ -120,8 +138,10 @@ def run_daily(
         elif j - s == hold:
             price, reason = b.close * (1 - slip), "TIME_STOP"
         if price is not None:
-            return _trade(symbol, bars, s, j, entry, price, qty, reason, stop, schedule)
-    return _trade(symbol, bars, s, len(bars) - 1, entry, bars[-1].close, qty, "END_OF_DATA", stop, schedule)
+            return _trade(symbol, bars, s, j, entry, price, qty, reason, stop, ref, schedule)
+    return _trade(
+        symbol, bars, s, len(bars) - 1, entry, bars[-1].close, qty, "END_OF_DATA", stop, ref, schedule
+    )
 
 
 def _trade(
@@ -134,14 +154,29 @@ def _trade(
     qty: int,
     reason: str,
     stop: Decimal,
+    ref: Decimal,
     schedule: DeliverySchedule,
 ) -> DailyTrade:
     gross = (exit_price - entry) * qty
     costs = delivery_costs(entry * qty, exit_price * qty, schedule).total
     return DailyTrade(
         symbol, bars[s].day, bars[s + 1].day, bars[j].day, entry, exit_price, qty, reason, stop,
-        j - s, gross, costs, qty * (entry - stop),
+        j - s, gross, costs, qty * (entry - stop), ref,
     )  # fmt: skip
+
+
+def segment_at(bars: Sequence[DayBar], breaks: Sequence[date]) -> list[list[DayBar]]:
+    """Split a series before the first session on or after each break date (a corporate action the provider
+    does not adjust: demerger, merger). No trade or holding window crosses a break."""
+    out: list[list[DayBar]] = [[]]
+    pending = sorted(breaks)
+    for b in bars:
+        while pending and b.day >= pending[0]:
+            pending.pop(0)
+            if out[-1]:
+                out.append([])
+        out[-1].append(b)
+    return [seg for seg in out if seg]
 
 
 def eligible_signals(bars: Sequence[DayBar], hold: int) -> list[int]:
