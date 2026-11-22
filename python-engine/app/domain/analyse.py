@@ -18,6 +18,7 @@ from app.domain.params import RulesetParams
 from app.domain.pivots import detect_pivots, label_pivots
 from app.domain.session import DailyLevels, SessionLevels, entry_cutoff, session_levels
 from app.domain.setups.breakout_retest import detect_breakout_retest
+from app.domain.setups.failed_breakdown import detect_failed_breakdown
 from app.domain.setups.liquidity_sweep import detect_liquidity_sweep
 from app.domain.setups.opening_range import detect_opening_range
 from app.domain.setups.prev_day import detect_prev_day
@@ -57,6 +58,7 @@ ALL_DETECTORS: tuple[Detector, ...] = (
     detect_prev_day,
     detect_breakout_retest,
     detect_liquidity_sweep,
+    detect_failed_breakdown,
 )
 
 

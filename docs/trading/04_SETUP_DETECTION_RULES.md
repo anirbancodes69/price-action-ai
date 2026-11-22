@@ -141,6 +141,22 @@ When the anchor is `OR_HIGH` or `PDH` and both an `OPENING_RANGE_BREAKOUT`/`PREV
 
 A wick below `Y` whose close stays below `Y` without a timely reclaim is not a sweep; a close below `Y × (1 − sbuf)` is a structural break per TRD-02. "Unbroken" for a level means no close below `Y × (1 − sbuf)` since it formed and before bar `w`. The setup is exempt from the 15m context filter (SD-05: no `HTF_AGAINST` invalidation; the score gives structure alignment 0). Implementation: `python-engine/app/domain/setups/liquidity_sweep.py`; choices where this section is silent are OQ-SD-07 and OQ-SD-08.
 
+## 7A. Setup 6 — FAILED_BREAKDOWN_RECLAIM (long; `pa-intraday 0.4.0`)
+
+**Idea:** price closes below support, then closes back above it within a few bars; the breakdown was a trap. Authoritative page: [Strategy 02](../strategies/failed-breakout.md) (approved 2026-11-22, P-1..P-5).
+
+| Stage | Rule |
+|---|---|
+| Level `Y` | The same six anchors as §7: confirmed 5m or 15m swing low; `EQUAL_LOWS` pool; `Z.low` of an active support zone; `PDL`; `OR_LOW`. Known before bar `b`, with no earlier close below `Y × (1 − sbuf)` since it formed. |
+| Breakdown bar `b` | `C[b] < Y × (1 − sbuf)`. A wick below `Y` that closes at or above `Y × (1 − sbuf)` is not a breakdown (it is §7's event); the two are disjoint by this close test. |
+| Reclaim bar `r` (→ AWAITING_CONFIRMATION) | The first `r` with `b < r ≤ b + N` and `C[r] ≥ Y`, `N = setup.failed_break_max_bars` (6). `detected_at_index = r`; `break_low = min(L[b..r])`; `trigger_price = H[r]`. No reclaim by `b + N` drops the candidate. |
+| Confirmation | Close `> trigger_price × (1 + bb)`, within `setup.expiry_bars` of `r`. |
+| Invalidation | Any close after `r` below `Y × (1 − sbuf)` (reason `BREAK_RESUMED`). |
+| Stop | `break_low × (1 − sb)`. |
+| Target | §8.3, no setup-specific candidate. |
+
+One setup per breakdown bar (the highest level reclaimed, ties by anchor order `PDL, OR_LOW, EQUAL_LOWS, ZONE, SWING_LOW_5M, SWING_LOW_15M`); a level (anchor, price) is used once per session; a zone level is `Z.low` of an `ACTIVE` support zone at the close of `b − 1`. Exempt from the 15m context filter like §7. Disabled unless `setup.failed_breakout_enabled` is true. The mirror (failed breakout of a high) is bearish, not built and not executable (SD-06, D-4). Scoring points for this setup are not defined; it is outside the isolated runs (D-5).
+
 ## 8. Levels
 
 ### 8.1 Entry

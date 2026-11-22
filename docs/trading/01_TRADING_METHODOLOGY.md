@@ -242,3 +242,12 @@ User overrides are bounded so that a user can only make risk rules **stricter** 
 A ruleset without the key (`0.1.0`) has the setup disabled. The score version stays `paqs-intraday-0.1.0` (the sweep checklist and the unscored anchors are in TRD-04 §10, OQ-SD-07).
 
 `pa-intraday 0.3.0` is `0.2.0` with `exit.structure_exit_enabled = false` (the Strategy 01 research ruleset: no bearish-CHoCH exit in single-strategy runs). Every other value is identical; it is not seeded as active, and its files are `python-engine/rulesets/pa-intraday/0.3.0.json` and the byte-identical seeder copy.
+
+`pa-intraday 0.4.0` is `0.3.0` plus two parameters (the Strategy 02 research ruleset); every other value is identical. It is not seeded as active, and its files are `python-engine/rulesets/pa-intraday/0.4.0.json` and the byte-identical seeder copy.
+
+| Parameter | Value | Unit | Range | User-overridable | Source |
+|---|---|---|---|---|---|
+| `setup.failed_breakout_enabled` | true | flag | true/false | No | TRD-04 §7A |
+| `setup.failed_break_max_bars` | 6 | bars | 3–9 (sensitivity only) | No | TRD-04 §7A |
+
+A ruleset without the keys (`0.1.0` to `0.3.0`) has the setup disabled.

@@ -93,6 +93,9 @@ def level_component(s: Setup, ctx: SetupContext, zones: Sequence[Zone]) -> Compo
         return Component(
             "key_level_quality", int((Decimal(s.zone.strength) * Decimal("0.2")).quantize(Decimal(1))), 20
         )
+    if s.type is SetupType.FAILED_BREAKDOWN_RECLAIM:
+        # Scoring is outside the isolated runs (D-5); no points are defined for this setup yet.
+        return Component("key_level_quality", 0, 20, True, "no points defined for this setup")
     if s.type is SetupType.LIQUIDITY_SWEEP_REVERSAL:
         # TRD-04 §10 gives points only for a zone anchor; other sweep anchors are not scored (OQ-SD-07).
         return Component(

@@ -9,10 +9,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from app.domain.analyse import Detector
+from app.domain.setups.failed_breakdown import detect_failed_breakdown
 from app.domain.setups.liquidity_sweep import detect_liquidity_sweep
 
 STRATEGY_DETECTORS: dict[str, Sequence[Detector]] = {
     "liquidity_sweep_reversal": (detect_liquidity_sweep,),
+    "failed_breakout": (detect_failed_breakdown,),
 }
 
 

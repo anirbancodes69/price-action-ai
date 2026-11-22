@@ -111,6 +111,13 @@ Defines the mandatory test catalogue for the trading engine. Every test ID below
 | TV-SET-26 | Stop and target ladder of the TV-SET-20 fixture | Stop 1477.261, target PDH 1510, rr 3.23 |
 | TV-SET-27 | `EQUAL_HIGHS` pool above the entry | First target candidate, ahead of a nearer PDH that also meets `risk.min_rr` |
 | TV-SET-28 | Sweep checklist points | 25 with same-bar + listed anchor + depth ≤ 0.30%; depth 0.3007% loses the 8; non-zone key-level anchors score 0, `missing = true` (OQ-SD-07) |
+| TV-SET-29 | `FAILED_BREAKDOWN_RECLAIM` in `pa-intraday 0.1.0` to `0.3.0` | Disabled: never emitted. Enabled in `0.4.0`; registered as strategy `failed_breakout` |
+| TV-SET-30 | Close 1477 below PDL 1480 (`Y × (1 − sbuf)` = 1479.26), next close 1480.5, then a close 1482 | Breakdown bar 5, detected on reclaim bar 6: trigger 1481, break low 1476 (stop base); `ENTRY_CONFIRMED` on bar 7 at 1482 |
+| TV-SET-31 | Low 1476 but close 1481 (a wick) | No failed-breakdown setup; the same bars are a sweep for §7 |
+| TV-SET-32 | Reclaim 6 bars after the breakdown; 7 bars after; `N` = 7 | Detected; none; detected (the window is the ruleset's) |
+| TV-SET-33 | Close 1479 (< 1479.26) after detection | `INVALIDATED` (`BREAK_RESUMED`) |
+| TV-SET-34 | 13 bars holding between 1479.6 and 1481; a reclaim bar ending after the cutoff; a breakdown bar after the cutoff | `EXPIRED` (`AGED_OUT`); no setup; no setup |
+| TV-SET-35 | Levels of the TV-SET-30 fixture | Entry 1482, stop 1475.262, target PDH 1510 (SESSION_HIGH / OR_HIGH 1493 give 1.63R), rr 4.16 |
 
 ### 3.5 Risk (TRD-05)
 

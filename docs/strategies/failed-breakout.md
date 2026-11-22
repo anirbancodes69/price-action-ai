@@ -4,13 +4,13 @@
 |---|---|
 | Strategy id | `failed_breakout` |
 | Roadmap position | 02 of 12 ([roadmap](../development/strategy-development-roadmap.md)) |
-| Acceptance status | `SPECIFICATION_APPROVED` (P-1..P-5 approved by the owner 2026-11-22; no code yet) |
-| Executable directions | None until implemented; the specified direction is Long |
-| Ruleset version | None assigned yet (proposal P-4: `pa-intraday 0.4.0`) |
+| Acceptance status | `IMPLEMENTATION_IN_PROGRESS` (specification approved 2026-11-22; Stage 2 code and 17 detector tests on branch `feat/strategy-02-failed-breakout`, PR pending; `IMPLEMENTED` once merged) |
+| Executable directions | Long (disabled in `0.1.0`-`0.3.0`; enabled only in the research ruleset `0.4.0`) |
+| Ruleset version | `pa-intraday 0.4.0` for research runs (`0.3.0` plus `setup.failed_breakout_enabled` and `setup.failed_break_max_bars`); `0.1.0`-`0.3.0` unchanged; the live scanner stays on `0.1.0` |
 | Specification approved | **Approved by the owner, 2026-11-22** (P-1..P-5 as written, §26) |
 | Last updated | 2026-11-22 |
 
-Sections 1-16 are the **specification** (what the strategy must do). Section 17 records what the **code does today** (nothing). The rule text moves into TRD-04 in the Stage 2 PR together with the code and the ruleset change (P-4); until then this page is the approved specification. No performance claim exists for this strategy.
+Sections 1-16 are the **specification** (what the strategy must do). Section 17 records what the **code does today**. The authoritative rule text is [TRD-04 §7A](../trading/04_SETUP_DETECTION_RULES.md); the vectors are TV-SET-29..35 ([TRD-08](../trading/08_TRADING_ENGINE_VALIDATION.md)). No performance claim exists for this strategy.
 
 ## 1. Strategy overview
 
@@ -119,11 +119,27 @@ Dependency on another strategy: **None.** It does not use Strategy 01 sweep sign
 
 ## 17. Implementation details (code today)
 
-None. No setup type exists. The string `FAILED_BREAKOUT` appears only as an end reason inside Breakout-Retest (`python-engine/app/domain/setups/breakout_retest.py`). Stage 2 will add `detect_failed_breakout`, register it in `app/domain/strategies.py`, and add the two parameters above in `pa-intraday 0.4.0` (P-4), reusing the single-strategy run mode.
+Module `python-engine/app/domain/setups/failed_breakdown.py` (`detect_failed_breakdown`, Stage 2, T-I143). Setup type `FAILED_BREAKDOWN_RECLAIM` (the name `FAILED_BREAKOUT` stays only the Breakout-Retest end reason).
+
+| Concept | Code |
+|---|---|
+| `evaluate()` | `detect_failed_breakdown(ctx)`: levels from `support_levels` / `zone_levels` (`setups/support_levels.py`), breakdown test `first_break == b`, reclaim `_reclaim`, emits `Setup` |
+| `validate()` | `replay_simple(..., invalid_close=("BREAK_RESUMED", Y × (1 − sbuf), True), htf_blocks=False)` |
+| `get_entry()` | `entry_reference()` in `levels.py` |
+| `get_exit()` | `trade_levels()` in `levels.py` (shared ladder, no strategy-specific candidate, P-5); `risk/exits.py` |
+| `get_invalidation()` | `BREAK_RESUMED`, `AGED_OUT`, `SESSION_CUTOFF` |
+| `get_metadata()` | `Setup` fields `swept_level` (the level `Y`), `sweep_low` (`break_low`), `breakdown_index`, `anchor` |
+
+- **Shared level facts.** The level construction that Strategy 01 used (`Level`, `first_break`, `support_levels`, `zone_levels`, `ANCHOR_ORDER`) moved unchanged from `liquidity_sweep.py` into the neutral `setups/support_levels.py`, so neither strategy imports the other. Strategy 01's tests, the golden outputs and its real-bar isolation proof are unchanged.
+- **Ruleset** `pa-intraday 0.4.0` ([changelog](../../python-engine/rulesets/CHANGELOG.md)); the type is not yet in the database `setup_type` CHECK constraints or the API enum, so `0.4.0` must not be activated for the scanner before a schema and contract change.
+- **Run mode.** `strategy_detectors("failed_breakout")`; the Strategy 01 run mode is reused unchanged: `scripts/run_backtest.py --ruleset pa-intraday@0.4.0 --strategy failed_breakout --experiment 4a|4b`. Scoring gives this setup no points (outside the isolated runs).
+- Limits: long only; PAQS points are not defined.
 
 ## 18. Functional test coverage
 
-Not written. Stage 3 will cover, at minimum: breakdown by close and reclaim by close (one level per anchor); a wick-only breach is not a breakdown; reclaim exactly at `N` and at `N + 1`; no reclaim in the window; level already broken; one setup per breakdown and anchor tie order; level used once per session; confirmation, expiry, cutoff and `BREAK_RESUMED`; stop at `break_low`, distance gates, ladder and `RR_BELOW_MINIMUM`; no look-ahead (15m levels only after confirmation); determinism; an isolation proof on real bars.
+Stage 2 tests (`tests/trading/test_setups_failed_breakdown.py`, 17 tests, hand-computed, TV-SET-29..35): disabled before `0.4.0` and registered; breakdown by close, reclaim by close, confirmation; awaiting confirmation; a wick is not a breakdown (and is a sweep for Strategy 01); reclaim at the window edge and one bar later; window read from the ruleset; no reclaim; a level used once and a re-break is not a new breakdown; `BREAK_RESUMED`; expiry; reclaim after the cutoff; breakdown after the cutoff; stop at `break_low` and the ladder; determinism. Real-bar isolation proof (`scripts/check_strategy_isolation.py --strategy failed_breakout --ruleset pa-intraday@0.4.0`): 0 differences over 8,640 analyses (6 sessions, 20 symbols).
+
+Stage 3 still to write: one test per anchor (swing 5m, swing 15m with no look-ahead, `EQUAL_LOWS`, zone, `PDL`, `OR_LOW`); two levels broken by one close and the anchor tie order; the same level through two anchors; boundary values (close exactly at `Y × (1 − sbuf)`); stop distance gates; `RR_BELOW_MINIMUM`; replay fills and the run-mode tests for this strategy.
 
 ## 19. Independent backtest configuration
 

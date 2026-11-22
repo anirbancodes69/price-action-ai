@@ -8,6 +8,7 @@ No release has been tagged yet. The entries below come from the merged git histo
 
 ### Added
 
+- Strategy 02 Stage 2: `FAILED_BREAKDOWN_RECLAIM` setup (`setups/failed_breakdown.py`), registered as strategy `failed_breakout`; ruleset `pa-intraday 0.4.0` (`setup.failed_breakout_enabled`, `setup.failed_break_max_bars` = 6); shared level facts moved to `setups/support_levels.py` (Strategy 01 behaviour unchanged); TRD-04 §7A, TRD-01 §6 and vectors TV-SET-29..35. 17 tests; real-bar isolation proof 0 differences. The setup type is not yet in the DB CHECK constraints or the API enum.
 - Strategy 01 parked by the owner (2026-11-22, `DEFERRED`). Strategy 02 (Failed Breakout) specification approved by the owner (long-side failed breakdown, P-1..P-5 as written, status `SPECIFICATION_APPROVED`); T-I143 added. No code changed.
 - Strategy 01 finding G-3 measured on the 4a in-sample result: 32 pairs (64 of 11,363 trades, 0.6%) share a swept price in a session; no change to the strategy.
 - Strategy 01 experiment 4a in-sample result recorded (2026-11-21, 427 sessions, 11,363 trades, net -0.33R, PF 0.54, negative in every slice); strategy page §21 and the roadmap tracker updated; status `BACKTESTING`. No parameter changed.
