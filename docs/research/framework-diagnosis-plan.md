@@ -69,6 +69,7 @@ Found while reading the saved chunks and the replay code. They narrow the method
 4. **DX-2 cannot measure signals the fill rule skipped**: skipped signals are not in the saved chunks (counts only). Recorded as a limitation, as the plan allows.
 5. **DX-3 fill gap** is the fill bar's open minus the previous bar's close (the signal bar close), taken from the stored bars; the entry reference is not stored.
 6. **DX-5 (a)-(c) run on the common 2.5R exit**, with the baseline being the same entries under the same common exit (not the recorded exits), so each variant isolates one change.
+7. **DX-6 uses the broker's published schedule** (added 2026-11-23): the owner has never traded on Kite and has no contract notes. The charge items are compared with Groww's published schedule (the planned broker) and the saved trades are recomputed. Slippage cannot be checked this way.
 
 ## 5. Decision rules (fixed now)
 
@@ -96,4 +97,4 @@ The result is a report, not a rule change. Whatever it finds, a framework change
 | Strategy programme | New strategy stages paused (owner, 2026-11-22). The pre-registered Strategy 02 4a in-sample run (registry §1.2) finished and the strategy was parked; Stages 4b and later wait for the owner's decision on this report |
 | DX-0 | Done 2026-11-22: 570 trades, -0.18R gross, -0.37R net, net -₹50,433 ([log §7](../trading/backtests/2026-11-20-pa-intraday-0.1.0-nifty50.md#7-baseline-pa-intraday-010-on-2026-01-01-to-2026-08-31-t-i134-dx-0)). Context only |
 | DX-1..DX-5, DX-7 | Done 2026-11-22: [report](framework-diagnosis-report.md); registry §4. Implementation amendments in §4a |
-| DX-6 | Waits for the owner's contract notes (D-6) |
+| DX-6 | Done 2026-11-23 against the broker's published schedule (§4a item 7): charges match within +0.005R per trade; slippage still unverified ([report §6](framework-diagnosis-report.md#6-dx-6-charges-check-published-schedule)) |

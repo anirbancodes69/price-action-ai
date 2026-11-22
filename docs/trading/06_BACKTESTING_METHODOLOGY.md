@@ -90,6 +90,8 @@ Costs are applied per side through a **dated cost schedule** (`cost_schedule_ver
 
 > **ASSUMPTION — MUST VERIFY:** these values are the author's understanding and may be wrong or outdated. They must be checked against current exchange and broker schedules before any result is presented, and historical schedules should be used for historical periods where available (OQ-BT-02). Slippage 0.05% is a hypothesis.
 
+**Check, 2026-11-23 (DX-6):** against Groww's published equity intraday charges the statutory items match; brokerage differs (0.1% per order, cap ₹20, against 0.03% here), which moves the charges of the saved Strategy 01 and 02 trades by about +0.005R per trade. The published rates were read on that date; historical schedules and the slippage remain unverified (OQ-BT-02). See the [framework diagnosis report §6](../research/framework-diagnosis-report.md#6-dx-6-charges-check-published-schedule); `GROWW_PUBLISHED` in `app/backtest/costs.py`.
+
 **Illustration** (the TRD-05 §3.1 trade, 33 shares, buy at ₹1,498.10, sell at the ₹1,529.00 target, assumed schedule): brokerage ₹14.83 + ₹15.14, STT ₹12.61, exchange ₹2.97, SEBI ₹0.10, stamp ₹1.48, GST ₹5.95 → **₹53.08**. Gross P&L ₹1,019.70 (2.40 R) becomes net ₹966.62 (2.28 R) before slippage. On a stopped-out trade the same costs add to the loss.
 
 `net_pnl = gross_pnl − Σ charges`. R-multiples are reported gross and net: `R = net_pnl / initial_risk_amount`.

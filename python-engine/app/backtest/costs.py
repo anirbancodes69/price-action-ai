@@ -22,6 +22,15 @@ class CostSchedule:
     gst_pct: Decimal = Decimal(18)  # on brokerage + exchange + SEBI
 
 
+# Groww's published equity intraday charges read on 2026-11-23 (DX-6, framework-diagnosis-report.md):
+# brokerage 0.1% per order capped at 20 rupees; NSE exchange charge 0.00307% (its pricing page; the help
+# page says 0.00297%); the other items are unchanged. The investor-protection-fund charge (0.0001%, both
+# sides) is not modelled. Not used by any run unless chosen; no dated history is verified (OQ-BT-02).
+GROWW_PUBLISHED = CostSchedule(
+    version="groww-published-2026-11-23", brokerage_pct=Decimal("0.1"), exchange_pct=Decimal("0.00307")
+)
+
+
 @dataclass(frozen=True, slots=True)
 class Costs:
     brokerage: Decimal
