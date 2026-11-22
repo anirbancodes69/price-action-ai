@@ -1,7 +1,7 @@
 """Isolation proof on stored real bars (independent backtesting standards §3). Run from `python-engine/`:
 
   uv run python scripts/check_strategy_isolation.py --strategy liquidity_sweep_reversal \
-      --ruleset pa-intraday@0.3.0 --sessions 3 --symbols 8 [--to 2026-11-19] [--members-on 2026-11-19]
+      --ruleset pa-intraday@0.3.0|0.4.0 --sessions 3 --symbols 8 [--to 2026-11-19] [--members-on 2026-11-19]
 
 For each chosen session and symbol, at every 5m bar, the strategy's setups from the single-strategy run (only
 its detector) must equal the same strategy's setups from the combined run (every detector), including levels.
@@ -29,7 +29,10 @@ from app.rulesets import load_ruleset
 from app.settings import get_settings
 
 # Setup type names per strategy id (the combined run's setups are filtered to the strategy's own type).
-STRATEGY_TYPE = {"liquidity_sweep_reversal": "LIQUIDITY_SWEEP_REVERSAL"}
+STRATEGY_TYPE = {
+    "liquidity_sweep_reversal": "LIQUIDITY_SWEEP_REVERSAL",
+    "failed_breakout": "FAILED_BREAKDOWN_RECLAIM",
+}
 
 
 def _run(sym: SymbolData, k: int, spec: SessionSpec, params, **kw):  # type: ignore[no-untyped-def]

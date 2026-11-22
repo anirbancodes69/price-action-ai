@@ -25,6 +25,7 @@ class SetupType(StrEnum):
     PREV_DAY_LOW_BREAK = "PREV_DAY_LOW_BREAK"
     BREAKOUT_RETEST = "BREAKOUT_RETEST"
     LIQUIDITY_SWEEP_REVERSAL = "LIQUIDITY_SWEEP_REVERSAL"
+    FAILED_BREAKDOWN_RECLAIM = "FAILED_BREAKDOWN_RECLAIM"
 
 
 TYPE_ORDER = {t: i for i, t in enumerate(SetupType)}
@@ -64,9 +65,10 @@ class Setup:
     breakout_index: int | None = None
     retest_index: int | None = None
     retest_closes_hold: bool | None = None
-    swept_level: Decimal | None = None  # the liquidity level `Y` a sweep reclaimed
-    sweep_low: Decimal | None = None  # lowest low of the sweep (and reclaim) bar(s)
+    swept_level: Decimal | None = None  # level `Y` a sweep reclaimed / a failed breakdown regained
+    sweep_low: Decimal | None = None  # lowest low of the sweep (or breakdown) bar(s)
     same_bar_reclaim: bool | None = None
+    breakdown_index: int | None = None  # the bar that closed below the level (failed breakdown)
 
     @property
     def informational(self) -> bool:

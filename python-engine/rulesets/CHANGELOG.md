@@ -8,6 +8,12 @@ needs an entry here, updated TRD docs (TRD-01 §6 and the TRD that defines the r
 The backend seeds from `backend/database/seeders/data/<code>-<version>.json` because the backend container cannot see
 this directory; both files are kept byte-identical.
 
+## pa-intraday 0.4.0 (2026-11-22, Strategy 02 research ruleset)
+
+- `0.3.0` plus two parameters, approved as P-2 and P-4 of the Strategy 02 specification ([page](../../docs/strategies/failed-breakout.md)): `setup.failed_breakout_enabled: true` enables `FAILED_BREAKDOWN_RECLAIM` (TRD-04 §7A; vectors TV-SET-29..35) and `setup.failed_break_max_bars: 6` is the reclaim window `N`, fixed before any result. Every other value is identical to `0.3.0`, so `0.1.0` to `0.3.0` are unchanged and the setup is disabled in them.
+- Used only for single-strategy research runs (`run_backtest.py --ruleset pa-intraday@0.4.0 --strategy failed_breakout --experiment 4a|4b`). Not seeded as active; the live scanner stays on `0.1.0`. The seeder copy exists and is byte-identical. The setup type is not yet in the database `setup_type` CHECK constraints or the API enum, so a ruleset that enables it must not be activated for the scanner before that schema and contract change.
+- Not validated: no backtest has been run on it yet.
+
 ## pa-intraday 0.3.0 (2026-11-21, Strategy 01 research ruleset)
 
 - `0.2.0` plus one change: `exit.structure_exit_enabled: false`. Approved decision P-4 of the Strategy 01 specification ([page](../../docs/strategies/liquidity-sweep-reversal.md)): the bearish-CHoCH structure exit is not part of the Liquidity Sweep strategy, so its isolated backtests exit only at the stop, the target or the session end. Every other value is identical to `0.2.0`.
