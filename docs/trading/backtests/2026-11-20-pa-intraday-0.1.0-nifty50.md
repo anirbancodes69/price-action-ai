@@ -139,3 +139,47 @@ By setup: OPENING_RANGE_BREAKOUT 75 trades −0.12R, −₹4,021; PREV_DAY_HIGH_
 - Costs and slippage are assumptions; verify them against your actual Zerodha contract notes (OQ-BT-02).
 - Kite equity bars end at 15:15, so the last 15 minutes of each session are not replayed.
 - January–August is a single further period of 164 sessions: a better test than 55 days, still one market period. The first sessions of January have a short lookback.
+
+## 7. Baseline: `pa-intraday 0.1.0` on 2026-01-01 to 2026-08-31 (T-I134, DX-0)
+
+`pa-intraday 0.1.0`, unchanged, replayed on the same 164 sessions as §5, so variant D can be compared with the rule set it came from. Same sizing (FIXED, capital ₹1,00,000), costs (`nse-intraday-assumed-0`), slippage and universe (`--members-on 2026-11-19`); combined run (`NOT_ISOLATED`), 4 chunks of 41 sessions run on 2026-11-22, engine `priceaction-engine 0.1.0`, input hashes `1229094ed2d0`, `59e0a79fa0b1`, `bdf5ea618d3e`, `bc4b3efafab3`. The last three equal §5's. The first differs: December 2025 bars were stored after §5 ran (T-I140), so the first January sessions now have their full lookback. Recorded as PRE-005 / DX-0 in the [experiment registry §4](../../research/experiment-registry.md#4-framework-diagnosis-experiments). These days lie in the out-of-sample and holdout segments of the strategy library's split, so the run is context only and no decision of the [framework diagnosis plan](../../research/framework-diagnosis-plan.md) rests on it.
+
+| | `0.1.0` baseline | Variant D (§5) |
+|---|---|---|
+| Sessions | 164 | 164 |
+| Trades | 570 | 164 |
+| Win rate | 30.7% | 32.3% |
+| Avg R net / gross | −0.37 / −0.18 | −0.18 / −0.08 |
+| **Net P&L** | **−₹50,433** | −₹13,310 |
+| Gross P&L | −₹22,119 | −₹6,106 |
+| Costs | ₹28,314 | ₹7,205 |
+| Profit factor | 0.56 | 0.63 |
+| Avg win / loss | +₹368 / −₹291 | +₹431 / −₹326 |
+| Max drawdown (daily net, fixed sizing) | ₹51,038 (51.0%) | ₹13,914 (13.9%) |
+| Positive trading days | 53 of 164 | 32 of 99 |
+
+| Period | Trades | Win | Avg R net / gross | Net | Profit factor |
+|---|---|---|---|---|---|
+| Jan–Apr | 276 | 29.0% | −0.39 / −0.20 | −₹25,966 | 0.56 |
+| May–Aug | 294 | 32.3% | −0.35 / −0.15 | −₹24,467 | 0.56 |
+
+| Setup | Trades | Avg R net / gross | Net | Avg R gross Jan–Apr / May–Aug |
+|---|---|---|---|---|
+| BREAKOUT_RETEST | 437 | −0.42 / −0.21 | −₹40,897 | −0.28 / −0.14 |
+| PREV_DAY_HIGH_BREAK | 84 | −0.29 / −0.17 | −₹9,375 | −0.02 / −0.37 |
+| OPENING_RANGE_BREAKOUT | 49 | −0.02 / +0.08 | −₹161 | +0.14 / +0.02 |
+
+| Exit | Trades | Avg R gross | Net |
+|---|---|---|---|
+| STOP (incl. 1 STOP_GAP) | 267 | −1.10 | −₹92,917 |
+| SESSION_END | 154 | +0.49 | +₹14,462 |
+| STRUCTURE_EXIT | 93 | −0.17 | −₹9,269 |
+| TARGET | 56 | +2.36 | +₹37,291 |
+
+By 15m context: BULLISH −0.24R gross (339 trades), TRANSITION −0.09R (231). By signal time: 09:30–09:59 −₹19,343 over 207 trades (the largest loss). Seven of eight months lost money (only April was positive, +₹3,684). The setups competed for two position slots, so the per-setup rows are not evidence for any single strategy (ORB has 49 trades here and 75 in D because BREAKOUT_RETEST took the slots).
+
+**Reading:**
+
+- Variant D was better than the baseline on these months (−0.18R against −0.37R net per trade), mainly because it drops BREAKOUT_RETEST, which loses before costs in both halves here and in §1. Both lose before costs, so neither is adopted, as §5 concluded.
+- Charges (₹28,314, about 0.19R per trade) are larger than the whole gross loss (₹22,119), and stop exits average −1.10R gross, about 0.10R beyond the stop from slippage.
+- Trades that survive to the session end are profitable on average (+0.49R gross) while stops are 47% of exits; BULLISH context is worse than TRANSITION here and in D. These are observations for the [framework diagnosis](../../research/framework-diagnosis-plan.md) (hypotheses H2, H3 and H5), which tests them on in-sample data; they are not conclusions from this run.
