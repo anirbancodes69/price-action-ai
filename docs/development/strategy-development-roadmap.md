@@ -14,7 +14,7 @@ The order is fixed. It changes only for a documented technical dependency and wi
 | # | Strategy | Starting position (verified) |
 |---|---|---|
 | 01 | [Liquidity Sweep / Reversal](../strategies/liquidity-sweep-reversal.md) | Implemented (long), requires validation |
-| 02 | [Failed Breakout](../strategies/failed-breakout.md) | Partially detected, requires independent implementation |
+| 02 | [Failed Breakout](../strategies/failed-breakout.md) | Specification drafted, requires independent implementation |
 | 03 | [Trend Following / Pullback](../strategies/trend-following-pullback.md) | Specified, requires implementation |
 | 04 | [CHoCH Reversal](../strategies/choch-reversal.md) | Structure detection exists, requires independent trade setup |
 | 05 | [Support & Resistance Reversal](../strategies/support-resistance-reversal.md) | Zone detection exists, requires trade setup |
@@ -26,7 +26,7 @@ The order is fixed. It changes only for a documented technical dependency and wi
 | 11 | [Breakout & Retest](../strategies/breakout-retest.md) | Long implemented; historical performance requires investigation |
 | 12 | [VWAP Pullback](../strategies/vwap-pullback.md) | `DEFERRED` pending methodology approval |
 
-Strategy 01 is the next authorised task. Strategy 02 does not start until Strategy 01 has a recorded decision and the owner has reviewed it.
+Strategy 01 was parked on 2026-11-22 (owner decision, `DEFERRED`). Strategy 02 (Failed Breakout) is the next authorised task: Stage 1 specification.
 
 ## 2. Methodology decision: VWAP
 
@@ -60,8 +60,8 @@ Verified against source and tests on 2026-11-21. "Independent backtest" is `NOT_
 
 | # | Strategy | Specification | Implementation | Functional tests | Independent backtest | Robustness | Acceptance status | Directions (executable) | Timeframes | Last milestone | Known blockers | Next action |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 01 | Liquidity Sweep / Reversal | Approved by the owner 2026-11-21 (P-1..P-4 as written; OQ-SD-08 resolved, OQ-SD-07 left open and outside isolated runs) | Long, merged (T-I141, PR #66) | 13 + 24 sweep tests and 11 run-mode tests; the Stage 3 list is covered, real-bar isolation proof 0 differences (page §18) | `4a IN-SAMPLE DONE, NEGATIVE` (2026-11-21: 11,363 trades, net -0.33R, PF 0.54; 4b and OOS not run) | `NOT_STARTED` | `BACKTESTING` (spec `SPECIFICATION_APPROVED`; run mode built) | Long | 5m setup; 5m and 15m swing levels; PDL, OR low, zones | 2026-11-21 4a in-sample result recorded | Special-session exclusion and 2024 daily bars (D-7); cost schedule check (D-6, before Stage 5); short side unsupported; data limits | [Owner decision: new ruleset version or reject (process §6); 4b and out-of-sample not started](../strategies/liquidity-sweep-reversal.md) |
-| 02 | Failed Breakout | None | None; only the end reason `FAILED_BREAKOUT` inside Breakout-Retest | None | `NOT_STARTED` | `NOT_STARTED` | `NOT_STARTED` | None | Not defined | — | Needs a specification | Wait for Strategy 01 decision |
+| 01 | Liquidity Sweep / Reversal | Approved by the owner 2026-11-21 (P-1..P-4 as written; OQ-SD-08 resolved, OQ-SD-07 left open and outside isolated runs) | Long, merged (T-I141, PR #66) | 13 + 24 sweep tests and 11 run-mode tests; the Stage 3 list is covered, real-bar isolation proof 0 differences (page §18) | `4a IN-SAMPLE DONE, NEGATIVE` (2026-11-21: 11,363 trades, net -0.33R, PF 0.54; 4b and OOS not run) | `NOT_STARTED` | `DEFERRED` (parked 2026-11-22; spec `SPECIFICATION_APPROVED`; run mode built) | Long | 5m setup; 5m and 15m swing levels; PDL, OR low, zones | 2026-11-21 4a in-sample result recorded | Special-session exclusion and 2024 daily bars (D-7); cost schedule check (D-6, before Stage 5); short side unsupported; data limits | [Parked; reopen only with a hypothesis and a new ruleset version](../strategies/liquidity-sweep-reversal.md) |
+| 02 | Failed Breakout | Approved by the owner 2026-11-22 (P-1..P-5 as written; long-side failed breakdown) | None; only the end reason `FAILED_BREAKOUT` inside Breakout-Retest | None | `NOT_STARTED` | `NOT_STARTED` | `SPECIFICATION_APPROVED` | Long specified, not built | 5m setup; 5m and 15m swing lows; PDL, OR low, zones | 2026-11-22 specification approved | Strategy 01 gross-negative result is a stated risk (page §3) | [Stage 2: implementation and run mode](../strategies/failed-breakout.md) |
 | 03 | Trend Following / Pullback | Draft: TRD-04 §6 `TREND_CONTINUATION` (long, "after validation"); not approved | None (`SetupType` has no such member) | None | `NOT_STARTED` | `NOT_STARTED` | `SPECIFICATION_IN_PROGRESS` | None | 5m setup, 15m context (draft) | — | Overlap with 08; no short mirror | Wait |
 | 04 | CHoCH Reversal | None | CHoCH events detected (`structure.py`); used only for invalidation and exits | None for a setup | `NOT_STARTED` | `NOT_STARTED` | `NOT_STARTED` | None | Not defined | — | Needs a specification | Wait |
 | 05 | Support & Resistance Reversal | None; zones specified in TRD-03 | Zone engine (`zone_build.py`, `zone_break.py`, `zone_strength.py`); no reversal setup. The `setup.rejection_min_wick_ratio` parameter is unused | Zone tests only | `NOT_STARTED` | `NOT_STARTED` | `NOT_STARTED` | None | Not defined | — | Needs a specification | Wait |

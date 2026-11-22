@@ -4,7 +4,7 @@
 |---|---|
 | Strategy id | `liquidity_sweep_reversal` |
 | Roadmap position | 01 of 12 ([roadmap](../development/strategy-development-roadmap.md)) |
-| Acceptance status | `BACKTESTING` (Stage 3 tests green 2026-11-21; 4a in-sample run recorded 2026-11-21, result negative, §21). Specification `SPECIFICATION_APPROVED`; run mode built |
+| Acceptance status | `DEFERRED` (parked by the owner 2026-11-22 after a negative 4a in-sample result, §21 and §27; improvement rounds used: 0 of 3). Specification `SPECIFICATION_APPROVED`; run mode built |
 | Executable directions | Long |
 | Ruleset version | `pa-intraday 0.3.0` for research runs (`0.2.0` plus the structure exit off, P-4); `0.2.0` enables the setup; the live scanner stays on `0.1.0` |
 | Specification approved | **Approved by the owner, 2026-11-21** (P-1..P-4 as written, §26) |
@@ -183,7 +183,7 @@ Experiment 4a (every candidate traded, fixed ₹500 risk unit, no account limits
 
 Net average R by slice (all negative): anchor EQUAL_LOWS -0.37, OR_LOW -0.34, PDL -0.24, SWING_LOW_15M -0.35, SWING_LOW_5M -0.33, ZONE -0.28; 15m context BEARISH -0.31, BULLISH -0.37, TRANSITION -0.32; every half hour from 09:00 (-0.15) to 14:30 (-0.33); all 21 months (best 2025-04 -0.19, worst 2025-09 -0.47).
 
-Reading: the gross average R is negative, so costs (unverified, D-6) worsen the result but do not cause it. No slice is positive, so no regime filter would rescue it without a rule change. Drawdown percentage is not meaningful in 4a (no capital limit). Flags: `survivorship_bias_risk`, `costs_unverified`, `UNSUPPORTED_DIRECTION:SHORT`. G-3 (setups sharing a swept price) is not yet counted from the merged result. In-sample only: out-of-sample and holdout are untouched, 4b not run, no parameter changed.
+Reading: the gross average R is negative, so costs (unverified, D-6) worsen the result but do not cause it. No slice is positive, so no regime filter would rescue it without a rule change. Drawdown percentage is not meaningful in 4a (no capital limit). Flags: `survivorship_bias_risk`, `costs_unverified`, `UNSUPPORTED_DIRECTION:SHORT`. G-3 (setups sharing a swept price): 64 trades, 0.6%, measured 2026-11-22 (§26). In-sample only: out-of-sample and holdout are untouched, 4b not run, no parameter changed.
 
 ## 22. Out-of-sample results
 `Not run`.
@@ -207,12 +207,12 @@ Data limits L-1.. in [research data limitations](../research/research-data-limit
 | P-3 (approved 2026-11-21) | Exit set | Stop, target and session-end only. The bearish-CHoCH structure exit is not part of the strategy; a run with it is logged as a variant |
 | P-4 (approved 2026-11-21) | Strategy-only ruleset | Done as `pa-intraday 0.3.0`: `0.2.0` plus `exit.structure_exit_enabled=false`. Isolation of the detector comes from the run mode, not from the ruleset (the other setups have no enable flag). The live scanner stays on `0.1.0` |
 | G-1 | Spec vs code | No difference found by reading or by the Stage 3 tests |
-| G-3 | Same price through two anchors | A level is used once per (anchor, price), so a price that is both a swing low and an `EQUAL_LOWS` level can give two setups on two different sweep bars (tested, `test_tie_between_equal_lows_and_swing_low_at_the_same_price_takes_the_anchor_order`). TRD-04 SD-04 and OQ-SD-08 allow it. Not changed: it would alter which trades exist. Impact is measured in the 4a run (count of setups sharing a swept price) and reported before any decision |
+| G-3 | Same price through two anchors | A level is used once per (anchor, price), so a price that is both a swing low and an `EQUAL_LOWS` level can give two setups on two different sweep bars (tested, `test_tie_between_equal_lows_and_swing_low_at_the_same_price_takes_the_anchor_order`). TRD-04 SD-04 and OQ-SD-08 allow it. Not changed: it would alter which trades exist. **Measured on the 4a in-sample result (2026-11-22):** 32 (session, symbol, swept price) groups have two trades, 64 trades of 11,363 (0.6%); none has three. Pairs: SWING_LOW_5M with SWING_LOW_15M 9, EQUAL_LOWS with SWING_LOW_5M 8, EQUAL_LOWS with SWING_LOW_15M 5, other combinations 10. The 64 trades average -0.60R net against -0.33R for the rest; the 32 later trades of each pair average +0.08R net. Too few trades to move the aggregate (-0.33R either way), so no change is justified |
 | G-2 | Adverse slippage on exits (audit R-2) | Run records state which exits carry slippage until the shared simulator is corrected |
 
 ## 27. Acceptance decision
 
-Not decided. Checklist ([process §5](../development/strategy-development-process.md#5-acceptance-checklist)): the in-sample 4a result is negative (§21). The owner chooses between a new ruleset version with a documented reason and rejecting the strategy (process §6) before any out-of-sample data is touched.
+**Parked, 2026-11-22 (owner decision).** Status `DEFERRED`; not `VALIDATION_FAILED`, because the full criteria were not evaluated: only the in-sample 4a run exists. Evidence: net average R -0.33 (gross -0.16), profit factor 0.54, negative in every anchor, 15m context, half hour and month (§21). Root cause is not established; costs and the G-3 shared-price effect (0.6% of trades) are ruled out as the cause. Rationale: no slice to filter on, and tuning on the same in-sample data risks overfitting ([process §6](../development/strategy-development-process.md#6-when-validation-fails)). What is preserved: the detector, the run mode, ruleset `pa-intraday 0.3.0`, the registry entries and §21. Not run: 4b, out-of-sample, holdout, walk-forward, Stage 5 (the out-of-sample and holdout data were never touched). Improvement rounds used: 0 of 3 ([criteria §5](../research/validation-criteria.md#5-improvement-rounds)). Reopening needs a stated hypothesis, a new ruleset version and data not used to choose the change, and it is a fresh owner decision. The checklist ([process §5](../development/strategy-development-process.md#5-acceptance-checklist)) is not ticked.
 
 ## 28. Future improvements
 
