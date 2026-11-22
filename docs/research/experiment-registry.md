@@ -39,6 +39,30 @@ Fixed in advance so that nothing below can change after results are seen. Any ch
 |---|---|---|---|---|---|---|---|---|---|---|
 | S01-4a-IS-chunks | 2026-11-21 | `liquidity_sweep_reversal` | `pa-intraday 0.3.0` | 4a, 7 chunks | EXPLORATION | 2024-01-02..2025-09-23 | as above | as above | Completed 2026-11-21 (code da8b0af, 7/7 chunks rc=0, 427 sessions, 3 special sessions excluded). 11,363 trades; win 32.5%; avg R gross -0.16, net -0.33; PF 0.54; net P&L -₹1,842,560 at fixed ₹500 risk unit (unlimited-capital 4a, so drawdown % is not meaningful); cost drag 15.5% of gross. Every anchor, every 15m regime, every half hour and all 21 months have negative net avg R (best month 2025-04 -0.19R, worst 2025-09 -0.47R). Skips: SKIPPED_RR_DEGRADED 7556, ALREADY_IN_POSITION 3627. Flags: survivorship_bias_risk, costs_unverified, UNSUPPORTED_DIRECTION:SHORT. Raw output kept outside the repo (research dir, merged.json). G-3 count (2026-11-22): 32 pairs, 64 trades (0.6%) share a swept price within a session and symbol; no effect on the aggregate. No parameter changed | this section |
 
+### 1.2 Pre-registration: Strategy 02, experiment 4a, in-sample (registered 2026-11-22, before any chunk ran)
+
+Same protocol as §1.1, fixed in advance. Any change is a new, separately logged experiment.
+
+| Item | Value |
+|---|---|
+| Strategy / ruleset | `failed_breakout` (`FAILED_BREAKDOWN_RECLAIM`), `pa-intraday 0.4.0` (`0.3.0` plus `setup.failed_breakout_enabled`, `setup.failed_break_max_bars` = 6; approved P-1..P-5, 2026-11-22) |
+| Experiment / purpose | `4a` trade-level quality; `EXPLORATION` on the in-sample segment only |
+| Sessions and split | Identical to §1.1: 427 in-sample sessions (2024-01-02 to 2025-09-23). Out-of-sample (142 sessions, 2025-09-24 to 2026-04-24) and holdout (143 sessions, 2026-04-27 to 2026-11-19) are not touched |
+| Chunks (run sequentially, each saved) | Same seven as §1.1 |
+| Sizing | FIXED, capital ₹1,00,000, risk 0.5% = ₹500 per trade; no position, open-risk, daily-loss, streak, value or capital limit; one open trade per symbol |
+| Costs / slippage | `nse-intraday-assumed-0` (unverified, D-6); 0.05% adverse slippage on entries and stop exits only |
+| Universe, data, exclusions | As §1.1: today's NIFTY 50 (`--members-on 2026-11-19`), 1D-bar previous-day levels (D-7), the special sessions and the previous-day exclusions, reported per run |
+| Regime key | `context_15m`, fixed before results |
+| Also reported | by anchor, month, half hour; skip counts; the number of bars from breakdown to reclaim (descriptive only, not used to tune `N`); trades sharing a level. Strategy 01's in-sample result is shown beside it as context, never pooled |
+| Flags | `survivorship_bias_risk`, `costs_unverified`, `UNSUPPORTED_DIRECTION:SHORT` |
+| Decision rule, fixed now | The run changes no parameter. If gross average R is not positive, or net average R is negative in every anchor and regime as it was for Strategy 01, the strategy goes to the owner for a decision (park, or a hypothesis-led variant under the 3-round limit of [criteria §5](validation-criteria.md#5-improvement-rounds)). No variant is tried on this in-sample data before that decision. No result of this run is used to choose between experiments on the out-of-sample or holdout data |
+| Code | `main` at `b0af09c` (Stage 3 merged, PR #75); chunks merged by `scripts/merge_backtests.py` |
+| Harness check | A 4-session smoke run (2024-01-02..2024-01-05, 45 trades, about 44 s) confirmed the harness runs this strategy end to end. Those 4 sessions are inside chunk 1 and are re-run with it; the smoke figures are not recorded as a result |
+
+| Experiment | Date | Strategy | Ruleset | Type | Purpose | Data range | Exclusions | Flags | Result | Report |
+|---|---|---|---|---|---|---|---|---|---|---|
+| S02-4a-IS-chunks | 2026-11-22 | `failed_breakout` | `pa-intraday 0.4.0` | 4a, 7 chunks | EXPLORATION | 2024-01-02..2025-09-23 | as above | as above | Not run yet; filled in below as each chunk is saved | this section |
+
 ## 2. Pre-framework experiments (combined strategies)
 
 These ran several strategies together under one position limit and one score ranking, before [ADR-018](../adr/ADR-018-INDEPENDENT-STRATEGY-LIBRARY.md). They are kept as history. They are `NOT_ISOLATED` and **are not evidence for any single strategy**, including the per-setup breakdowns inside them (the strategies competed for two slots, ordered by a score that did not rank outcomes). Figures are copied from the linked log and were not re-derived.

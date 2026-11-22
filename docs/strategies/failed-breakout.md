@@ -158,7 +158,7 @@ Not covered: shorts (unsupported by design); a live-scanner or database path (th
 
 ## 19. Independent backtest configuration
 
-`Not run`. Same as Strategy 01: single-strategy run mode, experiment 4a then 4b, data 2024-01-01..2026-11-19 with 1D-bar levels and special sessions excluded, costs unverified until D-6, regimes by `context_15m`, 60/20/20 split. The 4a in-sample run is pre-registered in the [registry](../research/experiment-registry.md) before it starts.
+`Not run`. Same as Strategy 01: single-strategy run mode, experiment 4a then 4b, data 2024-01-01..2026-11-19 with 1D-bar levels and special sessions excluded, costs unverified until D-6, regimes by `context_15m`, 60/20/20 split. The 4a in-sample run is pre-registered in the [registry §1.2](../research/experiment-registry.md#12-pre-registration-strategy-02-experiment-4a-in-sample-registered-2026-11-22-before-any-chunk-ran) (2026-11-22) before it starts.
 
 ## 20. Historical performance
 `Not run`.
