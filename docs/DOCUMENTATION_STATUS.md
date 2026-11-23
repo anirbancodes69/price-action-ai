@@ -91,6 +91,17 @@
 | [ADR index](adr/README.md) | Current | — | — | 2026-11-15 |
 | [Documentation audit report](AUDIT_REPORT.md) | Current | — | — | 2026-11-15 |
 
+### Phase 1 stabilization documents (2026-11-23)
+
+| Document | Status | Notes |
+|---|---|---|
+| [Phase 1 status](development/phase1-stabilization.md) | Current | Workstreams, decisions, test report, blockers, Phase 2 readiness |
+| [Exit execution specification](trading/exit-execution-specification.md) | Current; supersedes TRD-06 §4.2 and TRD-07 §7.1 where they differ (both now point to it) | One rule for backtest and live monitor |
+| [Ruleset comparison](trading/ruleset-comparison.md), [Configuration inventory](trading/configuration-inventory.md) | Current | Open decisions D-1..D-3 |
+| [API strategy contract](architecture/api-strategy-contract.md) | Current | Registry in `contracts/strategy-registry.json` |
+| TRD-05 §2, TRD-06 §4.2 and §5.1, TRD-01 Appendix B | Updated 2026-11-23 (2% ceiling, slippage models, `pa-intraday 0.5.0`) | DEC-024 |
+| [Rule evaluation logging](trading/rule-evaluation-logging.md) | Current (read-only layer; detector-internal rules not captured) | |
+
 ### Strategy library and research documents (ADR-018, 2026-11-21)
 
 | Document | Status | Notes |

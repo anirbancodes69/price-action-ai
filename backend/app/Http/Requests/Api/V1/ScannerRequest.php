@@ -27,7 +27,7 @@ class ScannerRequest extends FormRequest
             'signal' => ['sometimes', Rule::in(['NO_TRADE', 'BUY_WATCH', 'ENTRY_CONFIRMED'])],
             'setup_type' => ['sometimes', Rule::in([
                 'OPENING_RANGE_BREAKOUT', 'PREV_DAY_HIGH_BREAK', 'PREV_DAY_LOW_BREAK', 'BREAKOUT_RETEST',
-                'TREND_CONTINUATION', 'LIQUIDITY_SWEEP_REVERSAL',
+                'LIQUIDITY_SWEEP_REVERSAL', 'FAILED_BREAKDOWN_RECLAIM',
             ])],
             'setup_status' => ['sometimes', Rule::in([
                 'FORMING', 'AWAITING_CONFIRMATION', 'ENTRY_CONFIRMED', 'INVALIDATED', 'EXPIRED',

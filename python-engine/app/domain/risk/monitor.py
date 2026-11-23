@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
+from app.domain.risk.exits import evaluate_bar_exit
 from app.domain.types import Bar
 
 
@@ -33,21 +34,27 @@ def monitor_position(
 ) -> PositionSignal:
     """The signal for a position entered at `entry_at`, given the closed 5m bars up to the latest.
 
-    Only bars that start at or after `entry_at` count: the entry bar itself is partly before the fill,
-    so a low or high in it says nothing about the position. Bars are checked in time order and the
-    first condition wins: a low at or below the stop (`STOP`, which also wins a stop-and-target bar),
-    a high at or above the target (`TARGET`), or a bearish 5m CHoCH that closed on the bar
-    (`STRUCTURE_EXIT`; `structure_exit_bars` holds the indices into `bars`). After the last bar,
-    `SESSION_END` applies once the latest bar has ended at or after the session-end exit time. A
-    missing stop or target is simply never hit.
+    Same exit semantics as the backtest (docs/trading/exit-execution-specification.md): each bar from the
+    entry is judged by `evaluate_bar_exit`, so a gap through the stop or target at the open, the session-end
+    open and the stop-wins-a-collision rule match `step_position`. Only bars that start at or after
+    `entry_at` count: an entry bar that began before the fill says nothing about the position (a backtest
+    fill is at a bar start, so its fill bar counts in both). A bearish 5m CHoCH that closed on a bar
+    (`structure_exit_bars` holds indices into `bars`) is reported at that bar's close; the backtest executes
+    it at the next open, which is the same decision, made one bar edge earlier because live code cannot see
+    the next bar. After the last bar, `SESSION_END` applies once it has ended at or after the exit time.
     """
     for i, bar in enumerate(bars):
         if bar.start < entry_at:
             continue
-        if stop is not None and bar.low <= stop:
-            return PositionSignal("EXIT", "STOP", bar.end)
-        if target is not None and bar.high >= target:
-            return PositionSignal("EXIT", "TARGET", bar.end)
+        r = evaluate_bar_exit(
+            bar,
+            stop,
+            target,
+            session_exit_time=session_exit_time,
+            session_exit_enabled=session_exit_enabled,
+        )
+        if r is not None:
+            return PositionSignal("EXIT", r.reason, bar.start if r.reason == "SESSION_END" else bar.end)
         if structure_exit_enabled and i in structure_exit_bars:
             return PositionSignal("EXIT", "STRUCTURE_EXIT", bar.end)
     if session_exit_enabled and session_exit_time is not None and bars and bars[-1].end >= session_exit_time:

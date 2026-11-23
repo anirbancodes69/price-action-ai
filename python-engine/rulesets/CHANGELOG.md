@@ -8,6 +8,11 @@ needs an entry here, updated TRD docs (TRD-01 §6 and the TRD that defines the r
 The backend seeds from `backend/database/seeders/data/<code>-<version>.json` because the backend container cannot see
 this directory; both files are kept byte-identical.
 
+## pa-intraday 0.5.0 (2026-11-23, RESEARCH role; DEC-024 D-2)
+
+- `0.1.0` minus three keys that no code reads: `score.min_display`, `setup.rejection_min_wick_ratio`, `zone.max_width_pct` (obsolete or a never-written guard; see docs/trading/configuration-inventory.md). Every other value is identical, so analysis output equals `0.1.0` (test `test_0_5_0_gives_the_same_analysis_as_0_1_0_on_the_same_bars`). `0.1.0` to `0.4.0` are not modified.
+- Role RESEARCH, not live: `0.1.0` remains the canonical live ruleset (D-1). Promotion to LIVE needs independent strategy validation, out-of-sample evidence, paper-trading evidence, risk and execution validation, and a separate owner approval with an ADR. The API refuses it (`RULESET_NOT_LIVE`). The seeder copy exists and is byte-identical; it is not seeded as active. TRD-01 Appendix B documents it.
+
 ## pa-intraday 0.4.0 (2026-11-22, Strategy 02 research ruleset)
 
 - `0.3.0` plus two parameters, approved as P-2 and P-4 of the Strategy 02 specification ([page](../../docs/strategies/failed-breakout.md)): `setup.failed_breakout_enabled: true` enables `FAILED_BREAKDOWN_RECLAIM` (TRD-04 §7A; vectors TV-SET-29..35) and `setup.failed_break_max_bars: 6` is the reclaim window `N`, fixed before any result. Every other value is identical to `0.3.0`, so `0.1.0` to `0.3.0` are unchanged and the setup is disabled in them.

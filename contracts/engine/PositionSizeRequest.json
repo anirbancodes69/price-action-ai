@@ -142,6 +142,7 @@
       "title": "Min Rr"
     },
     "risk_pct": {
+      "description": "Percent of capital risked on the trade, above 0 and at most 2 (a technical ceiling, not a recommendation; the default is 0.5). Requests above 2 are rejected with 422.",
       "pattern": "^-?\\d+(\\.\\d+)?$",
       "title": "Risk Pct",
       "type": "string"

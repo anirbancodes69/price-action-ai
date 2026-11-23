@@ -51,6 +51,8 @@ export const SETUP_TYPE: Record<string, SetupType> = {
   PREV_DAY_LOW_BREAK: "prev-day-low-break",
   BREAKOUT_RETEST: "breakout-retest",
   TREND_CONTINUATION: "trend-continuation",
+  LIQUIDITY_SWEEP_REVERSAL: "liquidity-sweep-reversal",
+  FAILED_BREAKDOWN_RECLAIM: "failed-breakdown-reclaim",
 };
 
 export const SETUP_STATUS: Record<string, SetupStatus> = {

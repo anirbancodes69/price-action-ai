@@ -251,3 +251,5 @@ A ruleset without the key (`0.1.0`) has the setup disabled. The score version st
 | `setup.failed_break_max_bars` | 6 | bars | 3–9 (sensitivity only) | No | TRD-04 §7A |
 
 A ruleset without the keys (`0.1.0` to `0.3.0`) has the setup disabled.
+
+`pa-intraday 0.5.0` (2026-11-23, DEC-024 D-2) is `0.1.0` **without** three keys that no code reads: `score.min_display`, `setup.rejection_min_wick_ratio` and `zone.max_width_pct` ([configuration inventory](configuration-inventory.md)). Every other value is identical and its analysis output equals `0.1.0` (tested). Role **RESEARCH**: `0.1.0` stays the canonical live ruleset, and promotion to LIVE needs independent strategy validation, out-of-sample evidence, paper-trading evidence, risk and execution validation, and a separate owner approval with an ADR. Released files `0.1.0` to `0.4.0` are unchanged (their hashes are pinned in a test). Its files are `python-engine/rulesets/pa-intraday/0.5.0.json` and the byte-identical seeder copy; it is not seeded as active.

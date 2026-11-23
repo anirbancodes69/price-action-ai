@@ -216,6 +216,21 @@ class ScannerTest extends TestCase
         $this->actingAs($u, 'web')->getJson('/api/v1/scanner?near=SUPPORT')->assertStatus(422)->assertJsonStructure(['error' => ['details' => ['field_errors' => ['near']]]]);
     }
 
+    public function test_setup_type_filter_follows_the_strategy_registry(): void
+    {
+        $this->fakeEngine($this->threeRows());
+        $u = $this->user();
+
+        // implemented, informational and research types the engine can emit are valid filters
+        foreach (['OPENING_RANGE_BREAKOUT', 'PREV_DAY_HIGH_BREAK', 'PREV_DAY_LOW_BREAK', 'BREAKOUT_RETEST', 'LIQUIDITY_SWEEP_REVERSAL', 'FAILED_BREAKDOWN_RECLAIM'] as $type) {
+            $this->actingAs($u, 'web')->getJson('/api/v1/scanner?setup_type='.$type)->assertOk();
+        }
+        // unsupported and legacy identifiers must not silently return an empty list (Phase 1 P4)
+        foreach (['TREND_CONTINUATION', 'SUPPORT_REJECTION', 'TREND_PULLBACK'] as $type) {
+            $this->actingAs($u, 'web')->getJson('/api/v1/scanner?setup_type='.$type)->assertStatus(422)->assertJsonPath('error.code', 'VALIDATION_FAILED');
+        }
+    }
+
     public function test_an_unavailable_engine_is_a_503_envelope(): void
     {
         Http::fake(['*' => Http::response([], 500)]);

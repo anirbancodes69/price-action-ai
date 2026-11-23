@@ -82,3 +82,21 @@ def test_the_trades_carry_their_anchor_and_swept_level() -> None:
     assert (t.anchor, t.swept_level) == ("PDL", D("1480"))
     # The fixture ends before the session exit, so its trade is an end-of-data trade, outside the metrics.
     assert t.end_of_data
+
+
+def test_chunks_with_different_slippage_models_do_not_merge_and_the_model_survives_a_merge(
+    tmp_path: Path,
+) -> None:
+    from app.backtest.slippage import SlippageModel
+
+    u, legacy = SlippageModel.uniform(D("0.05")), SlippageModel.legacy(D("0.05"))
+    save_chunk(tmp_path / "a.pkl", _run([0]), {**META, "slippage": u.to_dict()}, [])
+    save_chunk(tmp_path / "b.pkl", _run([1]), {**META, "slippage": legacy.to_dict()}, [])
+    with pytest.raises(ValueError, match="different configurations"):
+        merge_chunks([tmp_path / "a.pkl", tmp_path / "b.pkl"])
+    save_chunk(tmp_path / "c.pkl", _run([1]), {**META, "slippage": u.to_dict()}, [])
+    merged, _, _ = merge_chunks([tmp_path / "a.pkl", tmp_path / "c.pkl"])
+    assert merged.record.slippage["id"] == "adverse-all"
+    # chunks saved before D-4 carry no model: they merge as the legacy model
+    save_chunk(tmp_path / "d.pkl", _run([0]), META, [])
+    assert merge_chunks([tmp_path / "d.pkl"])[0].record.slippage["id"] == "legacy-stop-only"

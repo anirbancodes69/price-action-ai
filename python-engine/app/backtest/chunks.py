@@ -19,10 +19,12 @@ from typing import Any
 from app.backtest.costs import CostSchedule
 from app.backtest.exclusions import Exclusion
 from app.backtest.run import BacktestResult, assemble_result
+from app.backtest.slippage import SlippageModel
 from app.backtest.strategy_run import strategy_config
 from app.rulesets import load_ruleset
 
 META_KEYS = ("ruleset", "strategy_id", "experiment", "capital", "tie_break_seed", "data_source", "universe")
+# Chunks saved before D-4 have no slippage entry: they were run with the legacy model.
 
 
 def save_chunk(
@@ -45,7 +47,9 @@ def merge_chunks(paths: Sequence[Path]) -> tuple[BacktestResult, list[Exclusion]
     chunks.sort(key=lambda c: c["sessions"][0].spec.session_date)
     first = chunks[0]["meta"]
     for c in chunks[1:]:
-        if {k: c["meta"][k] for k in META_KEYS} != {k: first[k] for k in META_KEYS}:
+        if {k: c["meta"][k] for k in META_KEYS} != {k: first[k] for k in META_KEYS} or c["meta"].get(
+            "slippage"
+        ) != first.get("slippage"):
             raise ValueError("chunks were run with different configurations")
     sessions = [s for c in chunks for s in c["sessions"]]
     days = [s.spec.session_date for s in sessions]
@@ -63,6 +67,7 @@ def merge_chunks(paths: Sequence[Path]) -> tuple[BacktestResult, list[Exclusion]
         first["universe"],
         tie_break_seed=first["tie_break_seed"],
         purpose=first.get("purpose", "EXPLORATION"),
+        slippage=SlippageModel.from_dict(first["slippage"]) if first.get("slippage") else None,
     )
     digest = hashlib.sha256("|".join(c["inputs_hash"] for c in chunks).encode()).hexdigest()
     exclusions = [e for c in chunks for e in c["exclusions"]]

@@ -132,14 +132,16 @@ The `/portfolio` page shows the paper book or the actual book via an explicit to
 
 The monitor gives each open actual position `HOLD` or `EXIT` from **closed 5m bars** only, with the owner's own stop and target (either may be absent: an absent level is never hit). It is decision support: `EXIT` means an exit condition has been met and the exit is due now; the owner exits on the broker platform (ADR-010).
 
-Only bars that start at or after the position's entry time count (the entry bar itself is partly before the fill). The bars are checked in time order and the first condition wins:
+Only bars that start at or after the position's entry time count (the entry bar itself is partly before the fill). Each bar is judged by the same function as the backtest ([exit execution specification](exit-execution-specification.md), `evaluate_bar_exit`), and the first bar with a condition wins:
 
-| Order | Condition on a closed bar | Reason |
+| Order on a bar | Condition | Reason |
 |---|---|---|
-| 1 | `low <= stop` (also wins a bar that touches both) | `STOP` |
-| 2 | `high >= target` | `TARGET` |
-| 3 | a bearish 5m CHoCH closed on the bar and `exit.structure_exit_enabled` | `STRUCTURE_EXIT` |
-| after the last bar | the latest bar ended at or after the session-end exit time and `exit.session_end_exit_enabled` | `SESSION_END` |
+| 1 | `open <= stop` (gap through the stop), or `low <= stop` (also wins a bar that touches both) | `STOP` |
+| 2 | `open >= target` (gap through the target; checked before the low, so it beats a stop touched later in the bar) | `TARGET` |
+| 3 | the bar starts at or after the session-end exit time and `exit.session_end_exit_enabled` (beats an intrabar stop or target on that bar) | `SESSION_END` |
+| 4 | `high >= target` | `TARGET` |
+| after a bar | a bearish 5m CHoCH closed on it and `exit.structure_exit_enabled` | `STRUCTURE_EXIT` |
+| after the last bar | the latest bar ended at or after the session-end exit time | `SESSION_END` |
 
 Otherwise `HOLD`. A symbol with no stored bars has no signal (`null`), never a guessed one. Test vectors: [TRD-08](08_TRADING_ENGINE_VALIDATION.md) TV-MON-01..09.
 - Broker order/trade sync is **future scope** (read-only import, never order placement).

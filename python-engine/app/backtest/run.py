@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from typing import Literal
@@ -22,6 +22,7 @@ from app.backtest.replay import (
     replay_session,
     score_then_symbol,
 )
+from app.backtest.slippage import SlippageModel
 from app.backtest.trade import Trade
 from app.domain.candles import candles_hash
 from app.domain.params import RulesetParams
@@ -46,6 +47,12 @@ class BacktestConfig:
     experiment: str | None = None  # "4a" or "4b" (standards §4)
     profile_fn: Callable[[RulesetParams, Decimal], RiskProfile] = RiskProfile.from_params
     order_key: OrderKey = score_then_symbol
+    # D-4: `None` = the legacy stop-only model at `backtest.slippage_pct`, so earlier runs reproduce exactly.
+    slippage: SlippageModel | None = None
+
+    @property
+    def slippage_model(self) -> SlippageModel:
+        return self.slippage or SlippageModel.legacy(self.params.decimal("backtest.slippage_pct"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +79,8 @@ class RunRecord:
     sessions: int
     strategy_id: str | None = None
     experiment: str | None = None
+    ruleset_hash: str = ""  # SHA-256 of the exact ruleset values (identifies configuration differences)
+    slippage: dict[str, str] = field(default_factory=dict)  # the assumed model (D-4); never measured
 
 
 @dataclass(frozen=True, slots=True)
@@ -114,7 +123,16 @@ def run_backtest(
     for s in ordered:
         capital = equity if cfg.sizing_mode == "COMPOUNDING" else cfg.capital
         profile = cfg.profile_fn(cfg.params, capital)
-        r = replay_session(s.symbols, s.spec, cfg.params, profile, cfg.schedule, analyse_fn, cfg.order_key)
+        r = replay_session(
+            s.symbols,
+            s.spec,
+            cfg.params,
+            profile,
+            cfg.schedule,
+            analyse_fn,
+            cfg.order_key,
+            slippage=cfg.slippage_model,
+        )
         results.append(r)
         equity += r.net_pnl
     return assemble_result(results, cfg, inputs_hash(ordered))
@@ -156,5 +174,7 @@ def assemble_result(results: Sequence[SessionResult], cfg: BacktestConfig, input
         len(results),
         cfg.strategy_id,
         cfg.experiment,
+        cfg.params.content_hash,
+        cfg.slippage_model.to_dict(),
     )
     return BacktestResult(record, tuple(results), metrics, tuple(curve), tuple(flags))

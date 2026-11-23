@@ -27,3 +27,38 @@ def load_ruleset(code: str, version: str, root: Path = RULESETS_DIR) -> RulesetP
         raise FileNotFoundError(f"unknown ruleset {code!r} {version!r}")
     values = json.loads(path.read_text(encoding="utf-8"))
     return RulesetParams(code=code, version=version, values=values)
+
+
+# Explicit role of every ruleset on disk (docs/trading/ruleset-comparison.md). A new ruleset file must be
+# given a role here (tests enforce it) so no version can become the live one by accident.
+#   LIVE      may be the engine's `ACTIVE_RULESET` and requested by an API caller
+#   RESEARCH  backtests and research scripts only; refused by the API
+#   RETIRED   kept for history; refused everywhere except explicit research loads
+ROLE_LIVE, ROLE_RESEARCH, ROLE_RETIRED = "LIVE", "RESEARCH", "RETIRED"
+RULESET_ROLES: dict[tuple[str, str], str] = {
+    ("pa-core", "0.1.0"): ROLE_RETIRED,
+    ("pa-intraday", "0.1.0"): ROLE_LIVE,
+    ("pa-intraday", "0.2.0"): ROLE_RESEARCH,
+    ("pa-intraday", "0.3.0"): ROLE_RESEARCH,
+    ("pa-intraday", "0.4.0"): ROLE_RESEARCH,
+    # 0.1.0 minus three dormant keys (DEC-024 D-2). Not live: promotion needs evidence and an ADR.
+    ("pa-intraday", "0.5.0"): ROLE_RESEARCH,
+}
+
+
+def ruleset_role(code: str, version: str) -> str | None:
+    return RULESET_ROLES.get((code, version))
+
+
+def diff_rulesets(a: RulesetParams, b: RulesetParams) -> dict[str, tuple[object, object]]:
+    """Every key whose value differs between two rulesets, as `{key: (value in a, value in b)}`.
+
+    A key present in only one side is reported with the string `"<absent>"` on the other.
+    """
+    absent = "<absent>"
+    keys = sorted(set(a.values) | set(b.values))
+    return {
+        k: (a.values.get(k, absent), b.values.get(k, absent))
+        for k in keys
+        if a.values.get(k, absent) != b.values.get(k, absent)
+    }

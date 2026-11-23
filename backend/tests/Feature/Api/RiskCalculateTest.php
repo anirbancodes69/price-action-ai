@@ -135,6 +135,24 @@ class RiskCalculateTest extends TestCase
             ->assertJsonStructure(['error' => ['request_id']]);
     }
 
+    public function test_risk_per_trade_is_capped_at_the_two_percent_technical_ceiling(): void
+    {
+        Http::fake(['*' => Http::response($this->engineResult())]);
+        $u = $this->user();
+
+        // 2% is a ceiling, not a recommendation (DEC-024): accepted at the limit, rejected above, never sent to the engine
+        $this->actingAs($u, 'web')->postJson('/api/v1/risk/calculate', $this->body(['risk_per_trade_pct' => 2]))->assertOk();
+        $this->assertSame('2', (string) Http::recorded()->last()[0]->data()['risk_pct']);
+        foreach ([2.01, 3, 5] as $over) {
+            $this->actingAs($u, 'web')->postJson('/api/v1/risk/calculate', $this->body(['risk_per_trade_pct' => $over]))
+                ->assertStatus(422)->assertJsonPath('error.code', 'VALIDATION_FAILED');
+        }
+        Http::assertSentCount(1);
+        // without an override the 0.5% default applies; nothing raises it
+        $this->actingAs($u, 'web')->postJson('/api/v1/risk/calculate', $this->body())->assertOk();
+        $this->assertEquals('0.5', Http::recorded()->last()[0]->data()['risk_pct']);
+    }
+
     public function test_input_validation_and_unknown_instruments(): void
     {
         Http::fake(['*' => Http::response($this->engineResult())]);

@@ -172,6 +172,11 @@ class TradePlanTest extends TestCase
         $this->create($u, ['quantity' => 500])->assertStatus(422);
         $this->create($u, ['analysis_run_id' => (string) Str::uuid()])->assertStatus(422);
         $this->create($u, ['setup_type' => 'NOT_A_SETUP'])->assertStatus(422);
+        // unsupported, legacy and informational-short types cannot become plans (Phase 1 P4)
+        foreach (['TREND_CONTINUATION', 'SUPPORT_REJECTION', 'PREV_DAY_LOW_BREAK'] as $type) {
+            $this->create($u, ['setup_type' => $type])->assertStatus(422);
+        }
+        $this->create($u, ['risk_per_trade_pct' => 2.01])->assertStatus(422); // 2% technical ceiling (DEC-024)
         $this->create($u, ['instrument' => 'NOPE'])->assertStatus(404);
     }
 

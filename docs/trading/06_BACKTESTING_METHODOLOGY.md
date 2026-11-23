@@ -50,7 +50,7 @@ Defines how a ruleset version is replayed over intraday history to produce trade
 
 ### 4.2 Exits
 
-Stop and target are treated as resting orders from the fill bar onward.
+Stop and target are treated as resting orders from the fill bar onward. The implementation is `evaluate_bar_exit`, shared with the live position monitor; its full ordering (gap, session end, structure exit, intrabar) and the audit of differences are in the [exit execution specification](exit-execution-specification.md), which wins if this table differs.
 
 | Situation on 5m bar `j ≥ c+1` | Exit |
 |---|---|
@@ -65,7 +65,7 @@ Stop and target are treated as resting orders from the fill bar onward.
 
 On the **fill bar** `c+1`, after filling at the open, the bar's own low and high are checked against stop and target with the same rules (stop first).
 
-Stop exits apply adverse slippage: `exit = stop × (1 − slippage)`; gap exits fill at the open with adverse slippage as well. Target exits receive no positive slippage.
+Slippage is an **assumption**, never a measurement (DEC-024 D-4). A slippage model gives one adverse percentage per execution type (entry, stop, target, session end, structure exit): buys fill higher, sells lower. Under the default `adverse-all` model every exit type above fills adversely: for example a stop exit at `stop × (1 − s_stop)`, a target exit at `target × (1 − s_target)` and a gap exit at its open less the percentage of its type. The `legacy-stop-only` model (entry and stop exits only, target, session-end and structure exits unslipped) is kept so earlier results reproduce exactly. See §5.1.
 
 > 5m bars hide the path inside the bar, so collisions are resolved against the trader. With 1m data the order could be resolved more precisely (OQ-BT-07); until then results are a conservative bound for collision-heavy setups.
 
@@ -86,11 +86,18 @@ Costs are applied per side through a **dated cost schedule** (`cost_schedule_ver
 | Stamp duty | 0.003% of turnover | buy only |
 | GST | 18% on (brokerage + exchange charge + SEBI fee) | both sides |
 | DP charge | none (no delivery) | — |
-| Slippage | 0.05% adverse per side (`backtest.slippage_pct`) | entry, stop and gap exits |
+| Slippage | 0.05% adverse (`backtest.slippage_pct`), assumed | `adverse-all` (default for new runs): entry and every exit type, separately configurable; `legacy-stop-only`: entry and stop exits only |
 
 > **ASSUMPTION — MUST VERIFY:** these values are the author's understanding and may be wrong or outdated. They must be checked against current exchange and broker schedules before any result is presented, and historical schedules should be used for historical periods where available (OQ-BT-02). Slippage 0.05% is a hypothesis.
 
 **Check, 2026-11-23 (DX-6):** against Groww's published equity intraday charges the statutory items match; brokerage differs (0.1% per order, cap ₹20, against 0.03% here), which moves the charges of the saved Strategy 01 and 02 trades by about +0.005R per trade. The published rates were read on that date; historical schedules and the slippage remain unverified (OQ-BT-02). See the [framework diagnosis report §6](../research/framework-diagnosis-report.md#6-dx-6-charges-check-published-schedule); `GROWW_PUBLISHED` in `app/backtest/costs.py`.
+
+### 5.1 Slippage models and the three performance figures (DEC-024 D-4)
+
+- **Models** (`app/backtest/slippage.py`): `adverse-all` (default for `scripts/run_backtest.py` and `run_chunks.py`), `legacy-stop-only`, or a custom list (`--slippage entry=0.05,stop=0.1,target=0.05`). The library default when no model is given is `legacy-stop-only`, so code that predates D-4 and saved chunks without a model reproduce unchanged. The model id and every per-type percentage are written in the run record, the report and the saved chunks, and chunks with different models refuse to merge.
+- **Sensitivity:** `--sensitivity 0,0.05,0.1,0.2` re-runs the same inputs with each uniform percentage and prints the results side by side.
+- **Three figures, never mixed:** *gross before slippage* (before assumed slippage and charges), *after slippage, before charges* (the existing "gross"), and *estimated net* (after assumed slippage and the charge schedule). *Measured net* needs actual executions and is reported as **NOT AVAILABLE** until real fills exist; it is never printed as zero.
+- Reports state "ASSUMED, not measured real-world slippage". Results from before D-4 used the legacy model and are not rewritten.
 
 **Illustration** (the TRD-05 §3.1 trade, 33 shares, buy at ₹1,498.10, sell at the ₹1,529.00 target, assumed schedule): brokerage ₹14.83 + ₹15.14, STT ₹12.61, exchange ₹2.97, SEBI ₹0.10, stamp ₹1.48, GST ₹5.95 → **₹53.08**. Gross P&L ₹1,019.70 (2.40 R) becomes net ₹966.62 (2.28 R) before slippage. On a stopped-out trade the same costs add to the loss.
 

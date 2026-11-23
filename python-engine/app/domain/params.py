@@ -5,6 +5,8 @@ Pure: the JSON file is read by `app.rulesets`, not here.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import Decimal
@@ -22,6 +24,13 @@ class RulesetParams:
     code: str
     version: str
     values: Mapping[str, object]
+
+    @property
+    def content_hash(self) -> str:
+        """SHA-256 of the canonical JSON values (the seeder hash form): identifies the configuration."""
+        return hashlib.sha256(
+            json.dumps(dict(self.values), sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+        ).hexdigest()
 
     def get(self, key: str) -> object:
         try:

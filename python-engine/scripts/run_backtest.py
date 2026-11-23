@@ -21,6 +21,7 @@ import json
 import sys
 import tomllib
 import uuid
+from dataclasses import replace
 from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -33,8 +34,9 @@ from app.backtest.chunks import save_chunk
 from app.backtest.costs import CostSchedule
 from app.backtest.exclusions import SPECIAL_SESSIONS, Exclusion, summarise
 from app.backtest.loader import load_backtest_inputs, load_daily_levels
-from app.backtest.report import format_report, report_dict
+from app.backtest.report import format_report, report_dict, sensitivity_table
 from app.backtest.run import BacktestConfig, run_backtest
+from app.backtest.slippage import SlippageModel, from_options
 from app.backtest.splits import split_sessions
 from app.backtest.strategy_run import run_strategy_backtest
 from app.domain.strategies import STRATEGY_DETECTORS
@@ -69,6 +71,24 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--experiment", choices=["4a", "4b"])
     p.add_argument("--tie-break-seed", type=int, default=1)
     p.add_argument(
+        "--slippage-model",
+        choices=["legacy", "adverse-all"],
+        default="adverse-all",
+        help="adverse-all (default): backtest.slippage_pct on the entry and every exit type; "
+        "legacy: entry and stop exits only (reproduces results from before DEC-024). "
+        "Always an assumption, never measured",
+    )
+    p.add_argument(
+        "--slippage",
+        help="custom per-type percentages, e.g. entry=0.05,stop=0.1,target=0.05 "
+        "(unnamed types take backtest.slippage_pct); overrides --slippage-model",
+    )
+    p.add_argument(
+        "--sensitivity",
+        help="comma-separated uniform slippage percentages to compare, e.g. 0,0.05,0.1,0.2 "
+        "(extra runs on the same inputs; combined runs and single-strategy runs)",
+    )
+    p.add_argument(
         "--save-chunk", type=Path, help="save the replayed sessions (for scripts/merge_backtests.py)"
     )
     return p
@@ -86,6 +106,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     code, version = a.ruleset.split("@")
     params = load_ruleset(code, version)
+    slip_model = from_options(a.slippage_model, a.slippage, params.decimal("backtest.slippage_pct"))
     engine = create_engine(s.database_url.get_secret_value())
     with engine.connect() as conn:
         members = universe_members(conn, a.code, a.members_on or a.to)
@@ -140,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
             a.code,
             tie_break_seed=a.tie_break_seed,
             purpose=f"EXPLORATION:{a.split}",
+            slippage=slip_model,
         )
         if a.save_chunk:
             meta = {
@@ -151,12 +173,25 @@ def main(argv: list[str] | None = None) -> int:
                 "data_source": s.ingest_provider,
                 "universe": a.code,
                 "purpose": f"EXPLORATION:{a.split}",
+                "slippage": slip_model.to_dict(),
                 "from": a.from_.isoformat(),
                 "to": a.to.isoformat(),
                 "members_on": (a.members_on or a.to).isoformat(),
             }
             save_chunk(a.save_chunk, result, meta, exclusions)
         print(format_report(result))
+        if a.sensitivity:
+            rows = [result]
+            for pct in a.sensitivity.split(","):
+                rows.append(
+                    run_strategy_backtest(
+                        a.strategy, a.experiment, inputs, params, a.capital, CostSchedule(),
+                        _engine_version(), s.ingest_provider, a.code,
+                        tie_break_seed=a.tie_break_seed, purpose=f"EXPLORATION:{a.split}",
+                        slippage=SlippageModel.uniform(Decimal(pct.strip()), f"uniform-{pct.strip()}"),
+                    )
+                )  # fmt: skip
+            print("\n" + sensitivity_table(rows))
         print("Exclusions: " + (", ".join(f"{k} {v}" for k, v in summarise(exclusions).items()) or "none"))
         if a.json_out:
             out = report_dict(result)
@@ -175,9 +210,16 @@ def main(argv: list[str] | None = None) -> int:
         a.code,
         sizing_mode=a.sizing,
         purpose=f"EXPLORATION:{a.split}",
+        slippage=slip_model,
     )
     result = run_backtest(inputs, cfg)
     print(format_report(result))
+    if a.sensitivity:
+        rows = [result]
+        for pct in a.sensitivity.split(","):
+            m = SlippageModel.uniform(Decimal(pct.strip()), f"uniform-{pct.strip()}")
+            rows.append(run_backtest(inputs, replace(cfg, slippage=m)))
+        print("\n" + sensitivity_table(rows))
     if a.json_out:
         a.json_out.write_text(json.dumps(report_dict(result), indent=2))
         print(f"\nFull result written to {a.json_out}")

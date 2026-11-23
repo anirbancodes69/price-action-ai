@@ -30,6 +30,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out-dir", required=True, type=Path)
     p.add_argument("--chunk", action="append", required=True, help="FROM:TO (inclusive session dates)")
     p.add_argument("--tie-break-seed", default="1")
+    p.add_argument("--slippage-model", choices=["legacy", "adverse-all"], default="adverse-all")
     a = p.parse_args(argv)
     a.out_dir.mkdir(parents=True, exist_ok=True)
     for spec in a.chunk:
@@ -47,6 +48,7 @@ def main(argv: list[str] | None = None) -> int:
             "--ruleset", a.ruleset, "--members-on", a.members_on,
             "--strategy", a.strategy, "--experiment", a.experiment,
             "--tie-break-seed", a.tie_break_seed,
+            "--slippage-model", a.slippage_model,
             "--save-chunk", str(stem.with_suffix(".pkl")),
         ]  # fmt: skip
         with stem.with_suffix(".txt").open("w") as out:

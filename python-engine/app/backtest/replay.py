@@ -13,8 +13,10 @@ from decimal import Decimal
 from typing import Any
 
 from app.backtest.costs import CostSchedule
+from app.backtest.slippage import SlippageModel
 from app.backtest.trade import ExitConfig, Position, Trade, close_trade, step_position
 from app.domain.analyse import AnalysisResult, analyse
+from app.domain.audit import DecisionRecord, build_decision_records
 from app.domain.params import RulesetParams
 from app.domain.risk.account import (
     AccountState,
@@ -25,7 +27,7 @@ from app.domain.risk.account import (
     derive_account_state,
 )
 from app.domain.risk.fill import simulate_entry
-from app.domain.risk.request import RiskRequest, calculate_risk
+from app.domain.risk.request import RiskRequest, RiskResult, calculate_risk
 from app.domain.session import DailyLevels, entry_cutoff
 from app.domain.setups.signal import Signal
 from app.domain.setups.types import SetupDirection
@@ -133,7 +135,11 @@ def replay_session(
     schedule: CostSchedule,
     analyse_fn: AnalyseFn = default_analyse,
     order_key: OrderKey = score_then_symbol,
+    decision_sink: Callable[[DecisionRecord], None] | None = None,
+    slippage: SlippageModel | None = None,
 ) -> SessionResult:
+    """Replay one session. `decision_sink` (Phase 1 P5) receives one `DecisionRecord` per evaluated setup at
+    each bar close, read-only: it never changes a decision. Fill-time skips stay in `SessionResult.skips`."""
     cutoff = entry_cutoff(spec.session_close, params.int_("session.entry_cutoff_minutes_before_close"))
     exit_time = spec.session_close - timedelta(minutes=params.int_("session.exit_minutes_before_close"))
     ecfg = ExitConfig(
@@ -141,8 +147,10 @@ def replay_session(
         exit_time,
         bool(params.get("exit.session_end_exit_enabled")),
         bool(params.get("exit.structure_exit_enabled")),
+        slippage,
     )
-    slip = ecfg.slippage_pct
+    model = ecfg.model
+    slip = model.entry  # entry slippage; exits use `model` per execution type
     min_rr = params.decimal("risk.min_rr")
     max_gap = params.decimal("risk.max_entry_gap_pct")
 
@@ -219,15 +227,20 @@ def replay_session(
             bar = by_sym[sym_name].bars_5m[i]
             ex = step_position(open_pos[sym_name], bar, ecfg)
             if ex:
-                closed.append(close_trade(open_pos.pop(sym_name), ex[0], bar.start, ex[1], schedule))
+                closed.append(
+                    close_trade(open_pos.pop(sym_name), ex[0], bar.start, ex[1], schedule, slippage=model)
+                )
         # C. analysis at the close of this bar
         cands: list[tuple[int, str, AnalysisResult]] = []
+        analysed: dict[str, AnalysisResult] = {}
+        risks: dict[str, RiskResult] = {}
         for s in symbols:
             i = index[s.symbol].get(start)
             if i is None:
                 continue
             last_idx[s.symbol] = i
             res = analyse_fn(s, i + 1, spec, params)
+            analysed[s.symbol] = res
             if res.check.status is not SnapshotStatus.VALID or res.signal is None:
                 continue
             pos = open_pos.get(s.symbol)
@@ -268,6 +281,7 @@ def replay_session(
                 cutoff,
             )
             rr = calculate_risk(req, params)
+            risks[name] = rr
             if not rr.ok or rr.sizing is None or rr.entry is None or rr.stop is None or rr.target is None:
                 skips.append(Skip(name, stype, sig_at, _skip_reason(rr.blocked_reason, rr.errors)))
                 continue
@@ -289,15 +303,36 @@ def replay_session(
                 )
             )
 
+        if decision_sink is not None:
+            for sym_name, res in analysed.items():
+                bar_end = by_sym[sym_name].bars_5m[index[sym_name][start]].end
+                for rec in build_decision_records(
+                    res,
+                    sym_name,
+                    params.values,
+                    bar_end,
+                    params.content_hash,
+                    risks.get(sym_name),
+                    index[sym_name][start],
+                ):
+                    decision_sink(rec)
+
     for o in pending:
         skips.append(Skip(o.symbol, o.setup_type, o.signal_at, "SKIPPED_NO_BAR"))
     # session end: positions still open exit at the last close of their data
     for name, pos in list(open_pos.items()):
         bar = by_sym[name].bars_5m[last_idx[name]]
         at_exit = bar.end >= exit_time
+        price = model.exit_price("session_end", bar.close) if at_exit else bar.close  # data cut: none
         closed.append(
             close_trade(
-                pos, bar.close, bar.end, "SESSION_END" if at_exit else "END_OF_DATA", schedule, not at_exit
+                pos,
+                price,
+                bar.end,
+                "SESSION_END" if at_exit else "END_OF_DATA",
+                schedule,
+                not at_exit,
+                model,
             )
         )
     net = sum((t.net_pnl for t in closed), Decimal(0))
