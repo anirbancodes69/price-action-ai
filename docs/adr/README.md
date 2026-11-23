@@ -38,6 +38,7 @@ Each ADR has: Status, Date, Context, Decision, Alternatives considered, Conseque
 | [ADR-017](ADR-017-TRADE-PLANS-WITHOUT-STORED-ANALYSIS-RUNS.md) | Trade Plans Without Stored Analysis Runs (Personal Mode) | Accepted | 2026-11-19 |
 | [ADR-018](ADR-018-INDEPENDENT-STRATEGY-LIBRARY.md) | Independent Strategy Library, Developed and Validated One Strategy at a Time | Accepted | 2026-11-21 |
 | [ADR-019](ADR-019-DAILY-TIMEFRAME-RESEARCH-TRACK.md) | Daily-Timeframe Research Track (Longer Holding Period) | Accepted | 2026-11-23 |
+| [ADR-020](ADR-020-VOLUME-AND-CANDLE-FACTORS-IN-RESEARCH.md) | Volume and Candle-Shape Factors in the Research Track | Accepted | 2026-11-23 |
 
 ## Candidate future ADRs
 
