@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           enable-cache: true
           cache-dependency-glob: python-engine/uv.lock
@@ -90,7 +90,7 @@ jobs:
           export APP_KEY="base64:$(openssl rand -base64 32)"
           php artisan migrate --force --no-interaction
 
-      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           enable-cache: true
           cache-dependency-glob: python-engine/uv.lock
