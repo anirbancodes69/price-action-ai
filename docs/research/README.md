@@ -15,7 +15,10 @@ How PriceAction AI strategies are researched and validated. The method is fixed 
 | [Framework diagnosis plan](framework-diagnosis-plan.md) | Pre-registered tests of why every rule set loses before costs (2026-11-22) |
 | [Framework diagnosis report](framework-diagnosis-report.md) | Results of the diagnosis: friction, not the entries or the machinery, explains the loss (2026-11-22) |
 | [Gate 0 plan (daily)](gate0-daily-diagnosis-plan.md) | Draft pre-registration: framework diagnosis on daily data under delivery costs, before any daily strategy (ADR-019, 2026-11-23, not approved) |
-| [Daily screening protocol](daily-screening-protocol.md) | Draft pre-registration: four daily ideas, eight fixed variants, matched controls, screen 2015 to mid 2018 then confirm to 2022 (2026-11-23, not approved) |
+| [Candle and volume screening protocol](candle-volume-screening-protocol.md) | Pre-registration (run 2026-11-23): hammer, engulfing and doji, with context and volume, 12 fixed variants and a candle-exit study on daily bars |
+| [Candle and volume screening report](candle-volume-screening-report.md) | Result: no variant promoted; patterns anywhere worse than random, volume adds nothing, at-support variants under-powered (2026-11-23) |
+| [Daily screening protocol](daily-screening-protocol.md) | Approved pre-registration: four daily ideas, eight fixed variants, matched controls, screen 2015 to mid 2018 then confirm to 2022 (2026-11-23) |
+| [Daily screening report](daily-screening-report.md) | Screen result: no variant promoted; strength-buying entries worse than random, failed breakdown beats its control but gross is negative (2026-11-23) |
 | [Gate 0 report (daily)](gate0-daily-diagnosis-report.md) | Result: daily baseline about zero net at wide stops, friction 0.30R to 0.12R, data defects handled (2026-11-23) |
 | [Fast screening protocol](fast-screening-protocol.md) | Approved pre-registration: a fixed family of 13 variants screened cheaply against random-entry controls, then confirmed on other days (2026-11-23) |
 | [Fast screening report](fast-screening-report.md) | Screen result: no variant promoted; breakout entries worse than random (2026-11-23) |

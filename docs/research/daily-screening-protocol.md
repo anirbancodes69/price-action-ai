@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Version | 0.1 (draft) |
-| Status | **Draft pre-registration, 2026-11-23. Not approved. Nothing has run.** It becomes binding when the owner approves it; after that a change is a new, separately logged pre-registration |
+| Version | 1.0 |
+| Status | **Approved by the owner, 2026-11-23** (as drafted, including the planned-risk R basis, the 4% to 10% stop range and the single 20-session hold). Binding: a change is a new, separately logged pre-registration. Implementation clarifications are in §7.1 |
 | Task | T-I147 |
 | Authority | [ADR-019](../adr/ADR-019-DAILY-TIMEFRAME-RESEARCH-TRACK.md) (accepted); Gate 0 is done ([report](gate0-daily-diagnosis-report.md)) |
 | Related | [Gate 0 plan](gate0-daily-diagnosis-plan.md) (conventions) · [Fast screening protocol](fast-screening-protocol.md) (the model for this one) · [Validation criteria](validation-criteria.md) · [Experiment registry §7](experiment-registry.md#7-daily-screening-experiments) |
@@ -67,7 +67,21 @@ All four read only closed daily bars up to and including the signal session. No 
 - Detectors as pure functions of daily bars (closed bars only, no look-ahead, one signal per episode), with unit tests: pivots confirmed with their lag, trend and pullback conditions, first-breakout rule, breakdown and 3-session reclaim window, climax conditions, stop and range filters, series cuts, month-matched control sampling, promotion and confirmation rules. In `python-engine/app/backtest/diagnostics/`, reusing `daily.py`, `stats.py` and the delivery schedule.
 - Runner `scripts/run_daily_screen.py`: screen, promote and confirm mechanically in one run; confirmation data is read only for promoted variants. Raw output outside the repository; one registry row per variant ([§7](experiment-registry.md#7-daily-screening-experiments)); a report with aggregates only. No detector, ruleset or replay behaviour changes; the engine suite stays green.
 
-## 8. Limits
+### 7.1 Implementation clarifications (written before the run, no variant changed)
+
+1. **Pivots** use the intraday rule (TRD-02 §3): a high is strictly above the 2 sessions before it and at least as high as the 2 after it (a low mirrors that); a session that is both is listed in both. In P1 the latest swing low must be strictly before the latest swing high, so a session that is both pivots does not satisfy it.
+2. **P1 episode:** one signal per latest swing high; the pullback low is the first lowest low after that swing high up to the session before the signal; the depth is measured from the swing high's high.
+3. **B2 and F3 "first":** a B2 signal needs the previous session not to be itself a breakout; an F3 breakdown is the first of consecutive sessions closing below `Y * (1 - 0.05%)` and Y is fixed at the breakdown session. A breakdown without a reclaim in 3 sessions gives no signal.
+4. **Lookback:** a segment's detectors may read earlier sessions as history (the 50- and 100-session ranges need it), never later ones; trades are counted only when the signal session is inside the segment and the whole 20-session window ends inside it. Controls are drawn only from sessions inside the segment, in the matched calendar month.
+5. **One position per stock:** a signal on a session before the open trade's exit session is skipped (a signal at the close of the exit session is allowed); series cut at a corporate action are separate series.
+6. **Order of filters** (all counted): signal, stop range, one-position rule, fill skip. Controls are matched on the planned stop distance of the signal.
+7. **Promotion and confirmation** reuse the rules of the intraday screen (`promoted`, `confirmed`) unchanged: 100 trades, gross planned-risk R above 0, edge at least +0.05R, 99% (screen) or 95% (confirmation) month-block interval above zero, same sign in each half. The runner screens, promotes and confirms mechanically in one run; confirmation data is read only for promoted variants.
+
+## 8. Results
+
+Screen done 2026-11-23: no variant promoted; confirmation did not run. See the [report](daily-screening-report.md).
+
+## 9. Limits
 
 - Survivorship (today's NIFTY 50 over 2015 to 2022), costs unverified, slippage an assumption, a largely rising period, and 8 variants tried (hence the 99% interval).
 - Intervals resample about 40 calendar months per segment, so they are wide: a real small edge can be missed, and a false one can pass the screen.

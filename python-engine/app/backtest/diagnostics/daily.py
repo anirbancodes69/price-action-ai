@@ -35,6 +35,7 @@ class DayBar:
     high: Decimal
     low: Decimal
     close: Decimal
+    volume: int = 0  # shares; 0 when not loaded
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +101,15 @@ def fill_entry(nxt: DayBar, ref: Decimal, stop: Decimal, rules: DailyRules) -> t
     return (entry, qty) if qty >= 1 else None
 
 
+def is_candle_exit(prev: DayBar, cur: DayBar) -> bool:
+    """A bearish engulfing (a red session opening at or above the previous close and closing at or below the
+    previous open, after a green one) or a close below the previous session's low."""
+    engulf = (
+        prev.close > prev.open and cur.close < cur.open and cur.open >= prev.close and cur.close <= prev.open
+    )
+    return engulf or cur.close < prev.low
+
+
 def run_daily(
     bars: Sequence[DayBar],
     s: int,
@@ -110,11 +120,14 @@ def run_daily(
     hold: int,
     rules: DailyRules,
     schedule: DeliverySchedule,
+    candle_exit: bool = False,
 ) -> DailyTrade | None:
     """Fill at the open of `s + 1` and hold until the first exit: an open at or below the stop (gap), an open
     at or above the target (gap), the intraday stop (adverse slippage; a session touching stop and target
     counts as the stop), the target (no slippage), or the close of the `hold`-th session from the fill
-    session (adverse slippage). Bars running out before that exit at the last close (`END_OF_DATA`)."""
+    session (adverse slippage). With `candle_exit` a bearish candle exit (`is_candle_exit`) closes the trade
+    at the close of the first session after the fill session that shows it. Bars running out before that
+    exit at the last close (`END_OF_DATA`)."""
     if s + 1 >= len(bars):
         return None
     filled = fill_entry(bars[s + 1], ref, stop, rules)
@@ -135,6 +148,8 @@ def run_daily(
             reason = "STOP_COLLISION" if target is not None and b.high >= target else "STOP"
         elif target is not None and b.high >= target:
             price, reason = target, "TARGET"
+        elif candle_exit and j > s + 1 and is_candle_exit(bars[j - 1], b):
+            price, reason = b.close * (1 - slip), "CANDLE_EXIT"
         elif j - s == hold:
             price, reason = b.close * (1 - slip), "TIME_STOP"
         if price is not None:
