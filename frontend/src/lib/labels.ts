@@ -65,6 +65,8 @@ export const SETUP_TYPES: Record<SetupType, { label: string; short: string }> = 
   "range-breakout": { label: "Range Breakout", short: "Range BO" },
   "breakdown-retest": { label: "Breakdown & Retest", short: "BD-Retest" },
   "trend-continuation": { label: "Trend Continuation", short: "Continuation" },
+  "liquidity-sweep-reversal": { label: "Liquidity Sweep Reversal", short: "Sweep" },
+  "failed-breakdown-reclaim": { label: "Failed Breakdown Reclaim", short: "Reclaim" },
   "range-bound": { label: "Range-bound", short: "Range" },
 };
 

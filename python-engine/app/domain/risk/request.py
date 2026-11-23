@@ -20,6 +20,9 @@ from app.domain.risk.validation import (
 from app.domain.setups.types import SetupDirection
 
 MIN_CAPITAL = Decimal(10_000)  # TRD-05 §9
+# DEC-024 (D-3): 2% of capital is the technical ceiling on risk per trade, not a recommended risk (the default
+# is 0.5%, `risk.default_risk_per_trade_pct`). Nothing in the engine raises the risk after wins or losses.
+MAX_RISK_PER_TRADE_PCT = Decimal(2)
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,6 +72,8 @@ def calculate_risk(req: RiskRequest, params: RulesetParams) -> RiskResult:
         return fail("SHORT_NOT_SUPPORTED")
     if req.profile.capital < MIN_CAPITAL:
         return fail("CAPITAL_BELOW_MINIMUM")
+    if not 0 < req.profile.risk_pct <= MAX_RISK_PER_TRADE_PCT:
+        return fail("RISK_PCT_ABOVE_CEILING")
     blocked = check_account_limits(req.state, req.profile, req.session_open, req.bar_end, req.cutoff)
     if blocked:
         return fail(blocked, blocked=blocked)

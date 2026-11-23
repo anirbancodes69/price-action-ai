@@ -1,0 +1,14 @@
+{
+  "_comment": "Single source of truth for setup/strategy identifiers (Phase 1 P4, docs/architecture/api-strategy-contract.md). Checked against the engine enum, OpenAPI, Laravel validators and the frontend map by contracts/scripts/check_strategy_registry.py.",
+  "strategies": {
+    "OPENING_RANGE_BREAKOUT":   {"status": "IMPLEMENTED",               "direction": "LONG",  "engine_enum": true,  "scanner_filter": true,  "trade_plan": true,  "live_ruleset": true},
+    "PREV_DAY_HIGH_BREAK":      {"status": "IMPLEMENTED",               "direction": "LONG",  "engine_enum": true,  "scanner_filter": true,  "trade_plan": true,  "live_ruleset": true},
+    "BREAKOUT_RETEST":          {"status": "IMPLEMENTED",               "direction": "LONG",  "engine_enum": true,  "scanner_filter": true,  "trade_plan": true,  "live_ruleset": true},
+    "PREV_DAY_LOW_BREAK":       {"status": "IMPLEMENTED_INFORMATIONAL", "direction": "SHORT", "engine_enum": true,  "scanner_filter": true,  "trade_plan": false, "live_ruleset": true},
+    "LIQUIDITY_SWEEP_REVERSAL": {"status": "RESEARCH_ONLY",             "direction": "LONG",  "engine_enum": true,  "scanner_filter": true,  "trade_plan": true,  "live_ruleset": false},
+    "FAILED_BREAKDOWN_RECLAIM": {"status": "RESEARCH_ONLY",             "direction": "LONG",  "engine_enum": true,  "scanner_filter": true,  "trade_plan": true,  "live_ruleset": false},
+    "TREND_CONTINUATION":       {"status": "UNSUPPORTED",               "direction": "LONG",  "engine_enum": false, "scanner_filter": false, "trade_plan": false, "live_ruleset": false},
+    "SUPPORT_REJECTION":        {"status": "LEGACY",                    "direction": "LONG",  "engine_enum": false, "scanner_filter": false, "trade_plan": false, "live_ruleset": false},
+    "TREND_PULLBACK":           {"status": "LEGACY",                    "direction": "LONG",  "engine_enum": false, "scanner_filter": false, "trade_plan": false, "live_ruleset": false}
+  }
+}

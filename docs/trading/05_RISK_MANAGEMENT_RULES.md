@@ -31,7 +31,7 @@ Defines deterministic position sizing, per-trade validation and **account-level 
 | Input | Source | Example (owner's planning values, HYPOTHESIS) |
 |---|---|---|
 | `capital` | Risk profile `trading_capital`, or paper account capital | ₹1,00,000 |
-| `risk_pct` | Risk profile `risk_per_trade_pct` (default `risk.default_risk_per_trade_pct`) | 0.5% (₹500) |
+| `risk_pct` | Risk profile `risk_per_trade_pct` (default `risk.default_risk_per_trade_pct`). **Technical ceiling 2%** (DEC-024 D-3): a request above 2% is rejected (422 in Laravel and the engine; `RISK_PCT_ABOVE_CEILING` in `calculate_risk`). 2% is a limit, not a recommended risk; nothing raises the risk automatically | 0.5% (₹500) |
 | `max_position_value` | Risk profile (default `risk.default_max_position_value`) | ₹50,000 |
 | `daily_loss_limit` | Risk profile, % of capital (default `risk.default_daily_loss_limit_pct`) | 1.5% (₹1,500) — placeholder |
 | `max_consecutive_losses` | Risk profile (default `risk.default_max_consecutive_losses`) | 3 — placeholder |

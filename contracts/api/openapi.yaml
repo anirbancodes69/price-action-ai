@@ -6340,6 +6340,7 @@ components:
           "$ref": "#/components/schemas/Price"
         risk_per_trade_pct:
           "$ref": "#/components/schemas/Ratio"
+          description: "Percent of capital risked. Maximum 2 (a technical ceiling, not a recommended risk; the default is 0.5). Above 2 is rejected with 422 VALIDATION_FAILED."
       required:
         - "instrument"
         - "direction"
@@ -6873,11 +6874,12 @@ components:
         - "PREV_DAY_HIGH_BREAK"
         - "PREV_DAY_LOW_BREAK"
         - "BREAKOUT_RETEST"
-        - "TREND_CONTINUATION"
         - "LIQUIDITY_SWEEP_REVERSAL"
+        - "FAILED_BREAKDOWN_RECLAIM"
+        - "TREND_CONTINUATION"
         - "SUPPORT_REJECTION"
         - "TREND_PULLBACK"
-      description: "pa-intraday vocabulary (TRD-01 §7). SUPPORT_REJECTION and TREND_PULLBACK belong to the retired pa-core and appear only on pre-ADR-014 runs."
+      description: "pa-intraday vocabulary (TRD-01 §7); per-identifier status in contracts/strategy-registry.json. LIQUIDITY_SWEEP_REVERSAL and FAILED_BREAKDOWN_RECLAIM are research-only (never emitted under the live ruleset). TREND_CONTINUATION has no detector and is never emitted (kept only for rows already stored). SUPPORT_REJECTION and TREND_PULLBACK belong to the retired pa-core and appear only on pre-ADR-014 runs."
     SignalState:
       type: "string"
       enum:
@@ -7308,6 +7310,7 @@ components:
           "$ref": "#/components/schemas/Price"
         risk_per_trade_pct:
           "$ref": "#/components/schemas/Ratio"
+          description: "Percent of capital risked. Maximum 2 (a technical ceiling, not a recommended risk; the default is 0.5). Above 2 is rejected with 422 VALIDATION_FAILED."
         paper_tracking:
           type: "boolean"
         note:

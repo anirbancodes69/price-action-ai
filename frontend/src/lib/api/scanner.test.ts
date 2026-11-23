@@ -68,8 +68,14 @@ describe("mapScannerRow", () => {
     expect([r.direction, r.setupType, r.setupStatus, r.levels]).toEqual(["short", "prev-day-low-break", "expired", null]);
   });
 
+  it("shows every engine-emittable setup type as itself, never as range-bound (Phase 1 P4)", () => {
+    const sweep = mapScannerRow({ ...base, primary_setup: { ...base.primary_setup!, type: "LIQUIDITY_SWEEP_REVERSAL" } });
+    const reclaim = mapScannerRow({ ...base, primary_setup: { ...base.primary_setup!, type: "FAILED_BREAKDOWN_RECLAIM" } });
+    expect([sweep.setupType, reclaim.setupType]).toEqual(["liquidity-sweep-reversal", "failed-breakdown-reclaim"]);
+  });
+
   it("falls back safely for a setup type the frontend does not know", () => {
-    const r = mapScannerRow({ ...base, primary_setup: { ...base.primary_setup!, type: "LIQUIDITY_SWEEP_REVERSAL" } });
+    const r = mapScannerRow({ ...base, primary_setup: { ...base.primary_setup!, type: "SOMETHING_NEW" } });
     expect(r.setupType).toBe("range-bound");
   });
 });

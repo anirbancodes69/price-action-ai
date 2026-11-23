@@ -24,7 +24,8 @@ class RiskCalculateRequest extends FormRequest
             'entry' => $price,
             'stop' => $price,
             'target' => $price,
-            'risk_per_trade_pct' => ['sometimes', 'nullable', 'numeric', 'gt:0', 'lte:5'],
+            // 2% is the technical ceiling (DEC-024), not a recommended risk; the default is 0.5%.
+            'risk_per_trade_pct' => ['sometimes', 'nullable', 'numeric', 'gt:0', 'lte:2'],
         ];
     }
 }

@@ -21,6 +21,7 @@ from decimal import Decimal
 from app.backtest.costs import CostSchedule
 from app.backtest.replay import AnalyseFn, OrderKey, SessionSpec, SymbolData
 from app.backtest.run import BacktestConfig, BacktestResult, SessionInput, run_backtest
+from app.backtest.slippage import SlippageModel
 from app.domain.analyse import AnalysisResult, analyse
 from app.domain.params import RulesetParams
 from app.domain.risk.account import RiskProfile
@@ -93,6 +94,7 @@ def strategy_config(
     *,
     tie_break_seed: int = 1,
     purpose: str = "EXPLORATION",
+    slippage: SlippageModel | None = None,
 ) -> BacktestConfig:
     if experiment not in ("4a", "4b"):
         raise ValueError("experiment must be '4a' or '4b'")
@@ -108,6 +110,7 @@ def strategy_config(
         experiment=experiment,
         profile_fn=unlimited_profile if experiment == "4a" else RiskProfile.from_params,
         order_key=seeded_order(tie_break_seed),
+        slippage=slippage,
     )
 
 
@@ -124,6 +127,7 @@ def run_strategy_backtest(
     *,
     tie_break_seed: int = 1,
     purpose: str = "EXPLORATION",
+    slippage: SlippageModel | None = None,
 ) -> BacktestResult:
     cfg = strategy_config(
         strategy_id,
@@ -136,5 +140,6 @@ def run_strategy_backtest(
         universe,
         tie_break_seed=tie_break_seed,
         purpose=purpose,
+        slippage=slippage,
     )
     return run_backtest(sessions, cfg, strategy_analyse(strategy_id))

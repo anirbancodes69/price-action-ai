@@ -18,6 +18,8 @@ export type SetupType =
   | "range-breakout"
   | "breakdown-retest"
   | "trend-continuation"
+  | "liquidity-sweep-reversal"
+  | "failed-breakdown-reclaim"
   | "range-bound";
 
 /**

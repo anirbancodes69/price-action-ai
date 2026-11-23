@@ -159,6 +159,14 @@ def test_account_state_reports_what_remains_and_the_first_blocking_rule(client: 
     assert client.post("/internal/v1/risk/account-state", json={}, headers=AUTH).status_code == 422
 
 
+def test_risk_pct_above_the_two_percent_ceiling_is_a_422(client: TestClient) -> None:
+    ok = client.post("/internal/v1/risk/position-size", json=sizing_body(risk_pct="2"), headers=AUTH)
+    assert ok.status_code == 200
+    for bad in ("2.01", "5", "0"):
+        r = client.post("/internal/v1/risk/position-size", json=sizing_body(risk_pct=bad), headers=AUTH)
+        assert r.status_code == 422, bad
+
+
 def test_unknown_ruleset_version_and_invalid_body(client: TestClient) -> None:
     res = client.post(
         "/internal/v1/risk/position-size", json=sizing_body(ruleset_version="9.9.9"), headers=AUTH

@@ -38,5 +38,8 @@ jobs:
       - name: Rulesets are identical in the engine, the seeder and TRD-01 §6
         run: python3 -I contracts/scripts/check_ruleset_hash.py
 
+      - name: Strategy identifiers agree across engine, OpenAPI, Laravel and frontend
+        run: python3 -I contracts/scripts/check_strategy_registry.py
+
       - name: Checker tests
         run: python3 -I -m unittest discover -s contracts/scripts -p "test_*.py"

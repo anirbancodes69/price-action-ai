@@ -1,9 +1,11 @@
 """``POST /internal/v1/risk/position-size`` and ``/risk/validate-levels`` (ARC-08 §5, TRD-05 v0.2.0)."""
 
 from datetime import datetime
+from decimal import Decimal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
+from app.domain.risk.request import MAX_RISK_PER_TRADE_PCT
 from app.schemas.common import BookKind, ContractModel, DecimalStr, Direction, RoundedLevels
 
 _VERSION = r"^[0-9]+\.[0-9]+\.[0-9]+$"
@@ -31,7 +33,10 @@ class PositionSizeRequest(ContractModel):
     book: BookKind
     direction: Direction
     capital: DecimalStr
-    risk_pct: DecimalStr
+    risk_pct: DecimalStr = Field(
+        description="Percent of capital risked on the trade, above 0 and at most 2 (a technical "
+        "ceiling, not a recommendation; the default is 0.5). Requests above 2 are rejected with 422."
+    )
     entry: DecimalStr
     stop: DecimalStr
     target: DecimalStr
@@ -51,6 +56,13 @@ class PositionSizeRequest(ContractModel):
         description="Entry cutoff of the session (TRD-01 §4.1), from the calendar."
     )
     ruleset_version: str = Field(pattern=_VERSION)
+
+    @field_validator("risk_pct")
+    @classmethod
+    def _risk_within_ceiling(cls, v: Decimal) -> Decimal:
+        if not 0 < v <= MAX_RISK_PER_TRADE_PCT:
+            raise ValueError("risk_pct must be above 0 and at most 2 (technical ceiling, DEC-024)")
+        return v
 
 
 class SizingConstraints(ContractModel):

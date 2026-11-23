@@ -18,8 +18,8 @@ class ExitResult:
 
 def evaluate_bar_exit(
     bar: Bar,
-    stop: Decimal,
-    target: Decimal,
+    stop: Decimal | None,
+    target: Decimal | None,
     slippage_pct: Decimal = Decimal(0),
     session_exit_time: datetime | None = None,
     session_exit_enabled: bool = True,
@@ -31,17 +31,21 @@ def evaluate_bar_exit(
     Order: gap through the stop or target at the open; session end at the open of the first bar starting at
     the exit time; structure exit at the open (a bearish 5m CHoCH closed on the previous bar); then intrabar
     stop (adverse slippage) and target (no positive slippage). Stop and target in one bar: the stop wins.
+
+    This is the single authoritative exit rule (docs/trading/exit-execution-specification.md): the backtest
+    (`step_position`) and the live monitor (`monitor_position`) both call it. A missing stop or target
+    (`None`, a manual trade logged without one) is never hit.
     """
-    if bar.open <= stop:
+    if stop is not None and bar.open <= stop:
         return ExitResult(bar.open, "STOP", gap=True)
-    if bar.open >= target:
+    if target is not None and bar.open >= target:
         return ExitResult(bar.open, "TARGET", gap=True)
     if session_exit_enabled and session_exit_time is not None and bar.start >= session_exit_time:
         return ExitResult(bar.open, "SESSION_END", gap=True)
     if structure_exit_enabled and structure_exit_pending:
         return ExitResult(bar.open, "STRUCTURE_EXIT", gap=True)
-    if bar.low <= stop:
+    if stop is not None and bar.low <= stop:
         return ExitResult(stop * (1 - slippage_pct / 100), "STOP")
-    if bar.high >= target:
+    if target is not None and bar.high >= target:
         return ExitResult(target, "TARGET")
     return None
