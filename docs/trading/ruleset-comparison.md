@@ -28,6 +28,8 @@ Behavioural meaning:
 
 Because `0.3.0` and `0.4.0` switch the structure exit off, **their results are not comparable with `0.1.0` results** even for the same strategy, and the exit differences are not only a strategy difference. Account limits are also lifted in the single-strategy run mode (`strategy_run.py`), so a research backtest differs from the live system in sizing as well as exits.
 
+`pa-intraday 0.6.0` (OD-8 Step 2, 2026-11-25, RESEARCH) is `0.5.0` with `exit.structure_exit_enabled` false and the six `orb.*` keys of the ORB B0 reference configuration; only the `orb_b0` strategy reads them ([changelog](../../python-engine/rulesets/CHANGELOG.md)).
+
 `pa-intraday 0.5.0` (DEC-024 D-2, 2026-11-23) is `0.1.0` minus `score.min_display`, `setup.rejection_min_wick_ratio` and `zone.max_width_pct`. Strategies, exits and every value are identical to `0.1.0` and its analysis output is equal (tested); it exists so the dormant keys are retired without touching a released file. Role RESEARCH: promotion to LIVE needs independent strategy validation, out-of-sample evidence, paper-trading evidence, risk and execution validation, and a separate owner approval with an ADR. A test pins the hash of every released file.
 
 ## 2. Explicit selection

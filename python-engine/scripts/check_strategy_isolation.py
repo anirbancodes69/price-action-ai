@@ -20,6 +20,7 @@ from sqlalchemy import create_engine
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app.backtest.b0_contract import legacy_refusal
 from app.backtest.loader import load_backtest_inputs
 from app.backtest.replay import SessionSpec, SymbolData
 from app.domain.analyse import analyse
@@ -32,6 +33,7 @@ from app.settings import get_settings
 STRATEGY_TYPE = {
     "liquidity_sweep_reversal": "LIQUIDITY_SWEEP_REVERSAL",
     "failed_breakout": "FAILED_BREAKDOWN_RECLAIM",
+    "opening_range_breakout": "OPENING_RANGE_BREAKOUT",  # E1: not run on real data until P0-3 is authorised
 }
 
 
@@ -57,6 +59,10 @@ def main(argv: list[str] | None = None) -> int:
     s = get_settings()
     if not s.ingest_data_source_id:
         print("Set INGEST_DATA_SOURCE_ID.", file=sys.stderr)
+        return 2
+    refusal = legacy_refusal(None, a.ruleset)
+    if refusal:
+        print(refusal, file=sys.stderr)
         return 2
     code, version = a.ruleset.split("@")
     params = load_ruleset(code, version)

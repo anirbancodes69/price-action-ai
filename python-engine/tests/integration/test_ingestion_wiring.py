@@ -7,7 +7,6 @@ Creates its own rows (random symbols) and deletes them afterwards.
 
 from __future__ import annotations
 
-import os
 import random
 import uuid
 from collections.abc import Iterator
@@ -44,8 +43,10 @@ from app.providers.base import (
     Timeframe,
 )
 
-URL = os.environ.get("SCHEMA_DIFF_DATABASE_URL")
-if not URL and os.environ.get("REQUIRE_SCHEMA_DIFF") != "1":
+from .db_guard import approved_database_url, assert_approved_connection
+
+URL = approved_database_url()  # fail closed: refuses any database that is not an approved test database
+if URL is None:
     pytest.skip("SCHEMA_DIFF_DATABASE_URL not set", allow_module_level=True)
 
 D = Decimal
@@ -191,6 +192,7 @@ def fx() -> Iterator[Fx]:
     assert URL
     engine = create_engine(URL)
     with engine.connect() as conn:
+        assert_approved_connection(conn)
         f = Fx(conn)
         try:
             yield f

@@ -28,6 +28,7 @@ from app.analysis.account import AccountInput, read_account
 from app.analysis.format import format_scan, scan_dict
 from app.analysis.scan import scan_universe
 from app.analysis.snapshot import load_symbol_snapshot
+from app.backtest.b0_contract import legacy_refusal
 from app.db.tables import data_sources
 from app.ingestion.session import IST
 from app.ingestion.universe import universe_members
@@ -53,6 +54,10 @@ def run_once(a: argparse.Namespace) -> int:
         print("Set INGEST_DATA_SOURCE_ID (the data source whose candles to scan).", file=sys.stderr)
         return 2
     source = uuid.UUID(s.ingest_data_source_id)
+    refusal = legacy_refusal(None, a.ruleset)
+    if refusal:
+        print(refusal, file=sys.stderr)
+        return 2
     code, version = a.ruleset.split("@")
     params = load_ruleset(code, version)
     account = read_account(a.account) if a.account else AccountInput(Decimal(100000))

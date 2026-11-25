@@ -4,7 +4,6 @@ Uses ``SCHEMA_DIFF_DATABASE_URL`` (same as the schema-diff test); skipped withou
 ``REQUIRE_SCHEMA_DIFF=1`` (CI). Creates its own rows and deletes them afterwards.
 """
 
-import os
 import random
 import uuid
 from collections.abc import Iterator
@@ -28,8 +27,10 @@ from app.ingestion.session import IST
 from app.providers import ProviderBar, ProviderContext, ProviderInstrumentRef
 from app.providers.demo import DemoProvider
 
-URL = os.environ.get("SCHEMA_DIFF_DATABASE_URL")
-if not URL and os.environ.get("REQUIRE_SCHEMA_DIFF") != "1":
+from .db_guard import approved_database_url, assert_approved_connection
+
+URL = approved_database_url()  # fail closed: refuses any database that is not an approved test database
+if URL is None:
     pytest.skip("SCHEMA_DIFF_DATABASE_URL not set", allow_module_level=True)
 
 # A random past date per test session: a leftover RUNNING run from a crashed session cannot collide.
@@ -109,6 +110,7 @@ def fx() -> Iterator[Fixture]:
     assert URL
     engine = create_engine(URL)
     with engine.connect() as conn:
+        assert_approved_connection(conn)
         f = Fixture(conn)
         try:
             yield f

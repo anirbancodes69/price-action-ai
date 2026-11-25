@@ -22,6 +22,7 @@ How PriceAction AI strategies are researched and validated. The method is fixed 
 | [Gate 0 report (daily)](gate0-daily-diagnosis-report.md) | Result: daily baseline about zero net at wide stops, friction 0.30R to 0.12R, data defects handled (2026-11-23) |
 | [Fast screening protocol](fast-screening-protocol.md) | Approved pre-registration: a fixed family of 13 variants screened cheaply against random-entry controls, then confirmed on other days (2026-11-23) |
 | [Fast screening report](fast-screening-report.md) | Screen result: no variant promoted; breakout entries worse than random (2026-11-23) |
+| [ORB validation plan](orb-validation-plan.md) | Draft (2026-11-23), not approved or registered (Phase 3 approval pending OD-8, OD-14, OD-15, OD-16): Phase 3 plan for Strategy 09 with data classes, a matched random-entry control, Stage A stopping criteria, 38 pre-registered variants and a prospective validation protocol |
 | [Experiment registry](experiment-registry.md) | Every experiment, including failed variants and the pre-framework combined runs |
 | [Research readiness audit](adaptive-strategy-validation/RESEARCH_READINESS.md) | Evidence behind the limitations (2026-11-21) |
 | [Backtest logs](../trading/backtests/) | Full reports of individual runs |

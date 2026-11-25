@@ -18,6 +18,10 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # make `app` importable when run as a script
+
+from app.backtest.b0_contract import legacy_refusal
+
 HERE = Path(__file__).resolve().parent
 
 
@@ -32,6 +36,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--tie-break-seed", default="1")
     p.add_argument("--slippage-model", choices=["legacy", "adverse-all"], default="adverse-all")
     a = p.parse_args(argv)
+    refusal = legacy_refusal(a.strategy, a.ruleset)
+    if refusal:  # before any directory or process is created
+        print(refusal, file=sys.stderr)
+        return 2
     a.out_dir.mkdir(parents=True, exist_ok=True)
     for spec in a.chunk:
         first, last = spec.split(":")

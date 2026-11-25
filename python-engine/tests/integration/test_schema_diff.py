@@ -6,7 +6,6 @@ Without it the database test is skipped locally; CI sets ``REQUIRE_SCHEMA_DIFF=1
 instead of skipping.
 """
 
-import os
 from collections.abc import Mapping
 
 import pytest
@@ -15,6 +14,8 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import TypeEngine
 
 from app.db.tables import TABLES
+
+from .db_guard import approved_database_url
 
 ColumnFacts = tuple[str, bool]  # (compiled type, nullable)
 TableFacts = tuple[Mapping[str, ColumnFacts], tuple[str, ...]]  # (columns, primary key columns)
@@ -118,10 +119,8 @@ def test_read_model_covers_the_tables_the_engine_touches() -> None:
 
 
 def test_read_model_matches_the_migrated_schema() -> None:
-    url = os.environ.get("SCHEMA_DIFF_DATABASE_URL")
-    if not url:
-        if os.environ.get("REQUIRE_SCHEMA_DIFF") == "1":
-            pytest.fail("REQUIRE_SCHEMA_DIFF=1 but SCHEMA_DIFF_DATABASE_URL is not set")
+    url = approved_database_url()  # fail closed: refuses any database that is not an approved test database
+    if url is None:
         pytest.skip("SCHEMA_DIFF_DATABASE_URL not set (needs a database migrated by Laravel)")
 
     engine = create_engine(url)

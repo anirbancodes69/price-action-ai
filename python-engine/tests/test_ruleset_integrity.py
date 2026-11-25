@@ -67,7 +67,7 @@ def test_content_hash_identifies_a_configuration() -> None:
     assert v1.content_hash != v2.content_hash
 
 
-@pytest.mark.parametrize("version", ["0.2.0", "0.3.0", "0.4.0", "0.5.0"])
+@pytest.mark.parametrize("version", ["0.2.0", "0.3.0", "0.4.0", "0.5.0", "0.6.0"])
 def test_the_api_refuses_research_rulesets_as_active_or_requested(version: str) -> None:
     with pytest.raises(HTTPException) as e:
         ruleset_for(Settings(), version)
@@ -84,7 +84,7 @@ def test_the_api_serves_the_live_ruleset_and_rejects_unknown_versions() -> None:
     assert e.value.detail == "UNKNOWN_RULESET_VERSION"
 
 
-@pytest.mark.parametrize("version", ["0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0"])
+@pytest.mark.parametrize("version", ["0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0", "0.6.0"])
 def test_every_key_is_read_by_code_or_declared_dormant(version: str) -> None:
     unread = {k for k in load_ruleset("pa-intraday", version).values if not _read(k)}
     assert unread == DORMANT_KEYS & set(load_ruleset("pa-intraday", version).values)
@@ -123,6 +123,23 @@ def test_0_5_0_is_0_1_0_without_exactly_the_three_retired_keys_and_is_research()
     assert not {k for k in new.values if not _read(k)}  # no key without a reader remains
 
 
+def test_0_6_0_is_0_5_0_plus_exactly_the_b0_configuration_and_is_research() -> None:
+    """OD-8 Step 2, D7: one changed value and six new keys; nothing else; research only (never live)."""
+    old, new = load_ruleset("pa-intraday", "0.5.0"), load_ruleset("pa-intraday", "0.6.0")
+    a = "<absent>"
+    assert diff_rulesets(old, new) == {
+        "exit.structure_exit_enabled": (True, False),
+        "orb.range_basis": (a, "WICK"),
+        "orb.breakout_window_minutes": (a, 60),
+        "orb.requalify": (a, "FIRST_ONLY"),
+        "orb.stop_method": (a, "S-A"),
+        "orb.target_method": (a, "FIXED_R"),
+        "orb.target_k": (a, 2.0),
+    }
+    assert RULESET_ROLES[("pa-intraday", "0.6.0")] == "RESEARCH"
+    assert not {k for k in new.values if not _read(k)}  # every new key is consumed by application code
+
+
 def test_released_rulesets_are_byte_identical_to_their_seeder_copies_and_unmodified() -> None:
     root = Path(__file__).resolve().parents[2] / "backend/database/seeders/data"
     if not root.exists():
@@ -141,6 +158,7 @@ RELEASED_HASHES = {
     ("pa-intraday", "0.3.0"): "2665c96a7d0dcac4187b47cf085a85208873e61349191c7300db497a4ed7354a",
     ("pa-intraday", "0.4.0"): "2cf26f81c1ba573e03472517c6a5c0f8376675908d112250883bd626fdbe6f0c",
     ("pa-intraday", "0.5.0"): "31b11969017c0a831d4c64eb8c0f39555bd3838cb3da79d7fed1e0d9e342e581",
+    ("pa-intraday", "0.6.0"): "aaa4ab079aa1da614c26be3dde958598e514106dba42bbd07405d88f538fc426",
 }
 
 

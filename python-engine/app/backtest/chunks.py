@@ -16,6 +16,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+from app.backtest.b0_contract import B0ContractError, legacy_refusal
 from app.backtest.costs import CostSchedule
 from app.backtest.exclusions import Exclusion
 from app.backtest.run import BacktestResult, assemble_result
@@ -30,6 +31,7 @@ META_KEYS = ("ruleset", "strategy_id", "experiment", "capital", "tie_break_seed"
 def save_chunk(
     path: Path, result: BacktestResult, meta: dict[str, Any], exclusions: Sequence[Exclusion]
 ) -> None:
+    _refuse_b0(meta)
     payload = {
         "sessions": result.sessions,
         "meta": meta,
@@ -42,8 +44,17 @@ def save_chunk(
     tmp.replace(path)  # a chunk file is complete or absent
 
 
+def _refuse_b0(meta: dict[str, Any]) -> None:
+    """Chunk files carry no execution context or approval evidence: a B0 run cannot be chunked or merged."""
+    msg = legacy_refusal(meta.get("strategy_id"), meta.get("ruleset"))
+    if msg:
+        raise B0ContractError(msg)
+
+
 def merge_chunks(paths: Sequence[Path]) -> tuple[BacktestResult, list[Exclusion], dict[str, Any]]:
     chunks = [pickle.loads(p.read_bytes()) for p in paths]  # noqa: S301 - own harness files
+    for c in chunks:
+        _refuse_b0(c["meta"])  # before anything else: chunk files cannot carry B0 evidence
     chunks.sort(key=lambda c: c["sessions"][0].spec.session_date)
     first = chunks[0]["meta"]
     for c in chunks[1:]:

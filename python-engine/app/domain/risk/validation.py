@@ -8,7 +8,7 @@ from decimal import Decimal
 def validate_stop(
     entry: Decimal,
     stop: Decimal,
-    tick: Decimal,
+    tick: Decimal | None,
     min_distance_pct: Decimal,
     max_distance_pct: Decimal,
 ) -> list[str]:
@@ -17,7 +17,7 @@ def validate_stop(
         return ["STOP_NOT_BELOW_ENTRY"]
     distance = entry - stop
     errors: list[str] = []
-    if distance < max(2 * tick, entry * min_distance_pct / 100):
+    if distance < max(2 * tick if tick is not None else Decimal(0), entry * min_distance_pct / 100):
         errors.append("STOP_TOO_TIGHT")
     if distance / entry * 100 > max_distance_pct:
         errors.append("STOP_TOO_WIDE")

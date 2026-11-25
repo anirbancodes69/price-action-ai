@@ -29,6 +29,7 @@ from sqlalchemy import create_engine
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # make `app` importable when run as a script
 
+from app.backtest.b0_contract import legacy_refusal
 from app.backtest.costs import CostSchedule
 from app.backtest.diagnostics.decompose import (
     BUCKETS,
@@ -359,6 +360,10 @@ def main(argv: list[str] | None = None) -> int:
         print("Set INGEST_DATA_SOURCE_ID.", file=sys.stderr)
         return 2
     source = uuid.UUID(s.ingest_data_source_id)
+    refusal = legacy_refusal(None, a.ruleset)
+    if refusal:
+        print(refusal, file=sys.stderr)
+        return 2
     code, version = a.ruleset.split("@")
     rules = rules_from(load_ruleset(code, version))
     trades = {"s01": load_trades(a.s01), "s02": load_trades(a.s02)}
