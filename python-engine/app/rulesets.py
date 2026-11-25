@@ -43,6 +43,8 @@ RULESET_ROLES: dict[tuple[str, str], str] = {
     ("pa-intraday", "0.4.0"): ROLE_RESEARCH,
     # 0.1.0 minus three dormant keys (DEC-024 D-2). Not live: promotion needs evidence and an ADR.
     ("pa-intraday", "0.5.0"): ROLE_RESEARCH,
+    # 0.5.0 plus the ORB B0 reference configuration (OD-8 Step 2, D7). Research only.
+    ("pa-intraday", "0.6.0"): ROLE_RESEARCH,
 }
 
 

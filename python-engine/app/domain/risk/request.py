@@ -31,7 +31,7 @@ class RiskRequest:
     entry: Decimal
     stop: Decimal
     target: Decimal
-    tick_size: Decimal
+    tick_size: Decimal | None  # None: no tick rounding (provider-adjusted scale)
     lot_size: int
     profile: RiskProfile
     state: AccountState

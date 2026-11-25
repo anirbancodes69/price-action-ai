@@ -4,6 +4,8 @@ namespace Tests;
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\DB;
+use Tests\Support\DatabaseGuard;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -19,6 +21,30 @@ abstract class TestCase extends BaseTestCase
             $_ENV[$key] = $_SERVER[$key] = $value;
         }
 
-        return parent::createApplication();
+        $app = parent::createApplication();
+
+        // Fail closed before any connection: the resolved default connection must be an approved test database.
+        $config = $app->make('config');
+        DatabaseGuard::assertConnectionConfig((array) $config->get('database.connections.'.$config->get('database.default')));
+
+        return $app;
+    }
+
+    /**
+     * Runs before any test trait is set up: `RefreshDatabase` (which runs `migrate:fresh`), seeding, transactions.
+     * So the live connection is verified before migrations, fixtures, cleanup or writes. (A hook named
+     * `beforeRefreshingDatabase` on this class would be shadowed by the trait's own empty method.)
+     */
+    protected function setUpTraits()
+    {
+        $this->assertLiveTestDatabase();
+
+        return parent::setUpTraits();
+    }
+
+    private function assertLiveTestDatabase(): void
+    {
+        $row = DB::selectOne('select current_database() as db, current_user as role');
+        DatabaseGuard::assertLive((string) $row->db, (string) $row->role);
     }
 }

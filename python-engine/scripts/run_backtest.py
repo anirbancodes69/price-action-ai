@@ -30,6 +30,7 @@ from sqlalchemy import create_engine
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # make `app` importable when run as a script
 
+from app.backtest.b0_contract import legacy_refusal
 from app.backtest.chunks import save_chunk
 from app.backtest.costs import CostSchedule
 from app.backtest.exclusions import SPECIAL_SESSIONS, Exclusion, summarise
@@ -96,6 +97,10 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     a = _parser().parse_args(argv)
+    refusal = legacy_refusal(a.strategy, a.ruleset)
+    if refusal:
+        print(refusal, file=sys.stderr)
+        return 2
     s = get_settings()
     if not s.ingest_data_source_id:
         print("Set INGEST_DATA_SOURCE_ID (the data source whose candles to replay).", file=sys.stderr)

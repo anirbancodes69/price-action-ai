@@ -1,0 +1,26 @@
+{
+  "artifact": "docs/research/evidence/od8/price_scale_matrix_dev_v2.csv",
+  "kind": "price_basis_matrix",
+  "sha256": "33f9a1d7afaf180ecb58764c3ae23c1d82a7352f9c9716565a10a0dadfea954b",
+  "bytes": 2703546,
+  "rows": 32500,
+  "columns": ["symbol", "date", "scale_class", "reason", "kite_over_nse_close", "nse_close", "intraday_consistency", "bars_5m", "first", "last", "has_or_bars"],
+  "coverage": {"instruments": 50, "sessions": 650, "first_session": "2024-01-01", "last_session": "2026-11-19"},
+  "class_counts": {"TRADED_SCALE_VERIFIED": 23509, "PROVIDER_ADJUSTED": 8991},
+  "original_filename": "price_scale_matrix_dev_v2.csv",
+  "original_location": "/Users/anirbanbhowmick/priceaction-backups/d1-20261125/stage-a-evidence/analysis/price_scale_matrix_dev_v2.csv (read-only backup; the original is preserved, this is a copy)",
+  "original_recorded_in": "stage-a-evidence/SHA256SUMS and MANIFEST.tsv of that backup (same SHA-256)",
+  "generation_context": {
+    "generated_utc": "2026-11-25T13:33:05Z (MANIFEST.tsv timestamp)",
+    "method": "per instrument and session, stored Kite 1D close compared with the NSE unadjusted close from the public NSE bhavcopy archive (sec_bhavdata_full_DDMMYYYY.csv, 717 files, acquisition manifest ACQUISITION_MANIFEST_BHAVCOPY.tsv in the backup), plus an intraday consistency check; v2 reclassifies sessions after the intraday-extremes test (scripts/extremes_check.py)",
+    "scripts_in_backup": {
+      "scripts/scale_matrix.py": "0bece7c4a39b53c4472a2f334d7e592ed208cdd46e69d78a579cd105bd5c5a0d",
+      "scripts/extremes_check.py": "de2dfdc2c8645a64bc7ff2e8da43dbf8d2f8443d74607004947c69d801047257"
+    },
+    "described_in": "docs/development/orb-stage-a-readiness-report.md section 1; docs/development/orb-d1-results.md"
+  },
+  "status": "DEVELOPMENT_ONLY",
+  "data_class": "DEVELOPMENT",
+  "review_status": "UNREVIEWED",
+  "statement": "This file is an archived copy of development-window evidence. It is NOT independently reviewed (DR-7a is open), it is NOT approved for backtesting, and it is NOT an approved reference table. It must not be loaded by the B0 runner: the loader refuses any matrix whose manifest review_status is not INDEPENDENTLY_REVIEWED. Reserve-window sessions are not covered. Provider-adjusted versus traded scale is an inference from NSE closes, not a statement of exchange truth."
+}

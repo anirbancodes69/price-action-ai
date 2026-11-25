@@ -16,12 +16,21 @@ from decimal import Decimal
 
 from sqlalchemy import Connection, select
 
+from app.backtest.b0_eligibility import (
+    FROZEN_TIMING_NOT_APPLICABLE,
+    B0Reference,
+    Eligibility,
+    frozen_timing_applies,
+    instrument_session_eligibility,
+    ratio_step,
+)
 from app.backtest.exclusions import (
     INCONSISTENT_PREV_DAY_LEVELS,
     MISSING_PREV_DAY_LEVELS,
     SPECIAL_SESSIONS,
     Exclusion,
 )
+from app.backtest.reference_tables import SESSION_HOURS_UNKNOWN
 from app.backtest.replay import SessionSpec, SymbolData
 from app.backtest.run import SessionInput
 from app.db.tables import candles, instrument_snapshots
@@ -114,6 +123,8 @@ def load_backtest_inputs(
     daily_levels: Mapping[str, Mapping[date, DailyLevels]] | None = None,
     skip_days: Collection[date] = (),
     exclusions: list[Exclusion] | None = None,
+    b0: B0Reference | None = None,
+    eligibility_out: dict[tuple[str, date], Eligibility] | None = None,
 ) -> list[SessionInput]:
     """One `SessionInput` per session in `first_day..last_day` that has 5m bars for at least one member.
 
@@ -124,9 +135,24 @@ def load_backtest_inputs(
     session and recorded as `MISSING_PREV_DAY_LEVELS`; one whose daily range does not contain the previous
     day's 5m range is left out as `INCONSISTENT_PREV_DAY_LEVELS`.
 
+    `b0` (OD-8 Step 2) switches to the strict B0 path: session hours come from the dated session-facts table
+    (an unknown date excludes the whole session as `SESSION_HOURS_UNKNOWN`, never 15:30), the tick from the
+    historical tick table (never `instrument_snapshots`, never 0.05), and every instrument-session is decided
+    once by `instrument_session_eligibility`; ineligible ones are left out and recorded. The decisions are
+    written to `eligibility_out` so a control arm reads the same objects. Without `b0` nothing changes.
+
     Each symbol's bars are its lookback sessions plus the session itself (earlier bars only), so a replay
     sees exactly what a live run would have had at that time.
+
+    On the B0 path (`b0` given): `skip_days` is refused (the legacy special-session list is not a source
+    there); a session that is not the regular 09:15-15:30 one is left out whole as
+    `FROZEN_TIMING_NOT_APPLICABLE` and reported separately (the frozen cutoff and exit times are never moved);
+    B0 consumes no previous-day level, so a missing previous-day 1D bar never excludes anything there.
+    `daily_levels`, when given, feeds only the optional provider-ratio safety net (D5); without it that net is
+    simply not applied.
     """
+    if b0 is not None and skip_days:
+        raise ValueError("the B0 path takes its special sessions from the session table, not skip_days")
     sessions_by_symbol: dict[str, dict[date, list[Bar]]] = {}
     bars15: dict[str, list[Bar]] = {}
     margin = timedelta(days=lookback_sessions * 2 + 7)  # calendar days wide enough for the lookback
@@ -153,7 +179,25 @@ def load_backtest_inputs(
         idx = ordered_all.index(day)
         window = ordered_all[max(0, idx - lookback_sessions) : idx + 1]
         previous = ordered_all[idx - 1] if idx > 0 else None
-        spec = session_spec(conn, day, previous)
+        if b0 is None:
+            spec = session_spec(conn, day, previous)
+        else:
+            facts = b0.sessions.facts(day)
+            if facts is None:
+                if exclusions is not None:
+                    exclusions.append(Exclusion(day, None, SESSION_HOURS_UNKNOWN))
+                continue
+            if not frozen_timing_applies(facts.session_open, facts.continuous_end):
+                if exclusions is not None:
+                    exclusions.append(Exclusion(day, None, FROZEN_TIMING_NOT_APPLICABLE))
+                continue
+            prev_open = datetime.combine(previous, facts.session_open, IST) if previous else None
+            spec = SessionSpec(
+                day,
+                datetime.combine(day, facts.session_open, IST),
+                datetime.combine(day, facts.continuous_end, IST),
+                prev_open,
+            )
         symbols: list[SymbolData] = []
         for sym, by_day in sessions_by_symbol.items():
             if day not in by_day:
@@ -162,8 +206,25 @@ def load_backtest_inputs(
             horizon = by_day[day][-1].end
             five_bars = [b for b in hist if b.end <= horizon]
             fifteen = [b for b in bars15[sym] if window[0] <= b.start.astimezone(IST).date() <= day]
-            tick, lot = tick_and_lot(conn, members[sym], day)
-            if daily_levels is not None:
+            if b0 is None:
+                tick, lot = tick_and_lot(conn, members[sym], day)
+            else:
+                lot = 1
+                tick = None
+                step = _provider_ratio_step(daily_levels, sym, day, previous, by_day)
+                elig = instrument_session_eligibility(
+                    b0, sym, day, by_day[day], spec.session_open, provider_ratio_step=step
+                )
+                if eligibility_out is not None:
+                    eligibility_out[(sym, day)] = elig
+                if not elig.eligible:
+                    if exclusions is not None:
+                        exclusions.append(Exclusion(day, sym, elig.reason or "INELIGIBLE"))
+                    continue
+                tick = elig.tick
+            if b0 is not None:
+                prev = None  # B0 reads no previous-day level (proved by test), so none is required or passed
+            elif daily_levels is not None:
                 prev = daily_levels.get(sym, {}).get(previous) if previous else None
                 if prev is None:
                     if exclusions is not None:
@@ -181,3 +242,21 @@ def load_backtest_inputs(
             symbols.append(SymbolData(sym, five_bars, fifteen, prev, tick, lot))
         out.append(SessionInput(spec, symbols))
     return out
+
+
+def _provider_ratio_step(
+    daily_levels: Mapping[str, Mapping[date, DailyLevels]] | None,
+    sym: str,
+    day: date,
+    previous: date | None,
+    by_day: Mapping[date, Sequence[Bar]],
+) -> Decimal | None:
+    """Step of (daily close / last 5m close) between the previous session and this one; None if unknown."""
+    if daily_levels is None or previous is None:
+        return None
+    dl = daily_levels.get(sym, {})
+    a, b = dl.get(previous), dl.get(day)
+    bars_a, bars_b = by_day.get(previous), by_day.get(day)
+    if not (a and b and bars_a and bars_b) or bars_a[-1].close <= 0 or bars_b[-1].close <= 0:
+        return None
+    return ratio_step(a.close / bars_a[-1].close, b.close / bars_b[-1].close)

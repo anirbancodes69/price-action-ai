@@ -8,6 +8,12 @@ needs an entry here, updated TRD docs (TRD-01 §6 and the TRD that defines the r
 The backend seeds from `backend/database/seeders/data/<code>-<version>.json` because the backend container cannot see
 this directory; both files are kept byte-identical.
 
+## pa-intraday 0.6.0 (2026-11-25, RESEARCH role; OD-8 Step 2, owner decision D7)
+
+- `0.5.0` plus one changed value and six new keys that define the ORB **B0 reference configuration** ([ORB specification §10.3 and §14](../../docs/strategies/opening-range-breakout.md)): `exit.structure_exit_enabled` true to false; `orb.range_basis` `WICK`; `orb.breakout_window_minutes` 60; `orb.requalify` `FIRST_ONLY`; `orb.stop_method` `S-A`; `orb.target_method` `FIXED_R`; `orb.target_k` 2.0 (a multiple of the risk R, not of the range width). Every other value is identical to `0.5.0`; `0.1.0` to `0.5.0` are not modified.
+- The new keys are read only by the separate B0 detector (`app/domain/setups/orb_b0.py`), which rejects any other value (`UnsupportedOrbParameter`) because no other variant is implemented. The existing `OPENING_RANGE_BREAKOUT` detector and the live path do not read them.
+- Role RESEARCH, never live. The seeder copy is byte-identical. Not validated: no backtest has been run on it. Assigning this version in the frozen ORB specification metadata waits for the independent-review governance requirement (DR-7a).
+
 ## pa-intraday 0.5.0 (2026-11-23, RESEARCH role; DEC-024 D-2)
 
 - `0.1.0` minus three keys that no code reads: `score.min_display`, `setup.rejection_min_wick_ratio`, `zone.max_width_pct` (obsolete or a never-written guard; see docs/trading/configuration-inventory.md). Every other value is identical, so analysis output equals `0.1.0` (test `test_0_5_0_gives_the_same_analysis_as_0_1_0_on_the_same_bars`). `0.1.0` to `0.4.0` are not modified.

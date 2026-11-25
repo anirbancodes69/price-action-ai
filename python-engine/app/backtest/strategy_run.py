@@ -16,8 +16,10 @@ Builds the pieces `run_backtest` needs to replay exactly one strategy:
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Mapping
 from decimal import Decimal
 
+from app.backtest.b0_contract import B0ExecutionContext
 from app.backtest.costs import CostSchedule
 from app.backtest.replay import AnalyseFn, OrderKey, SessionSpec, SymbolData
 from app.backtest.run import BacktestConfig, BacktestResult, SessionInput, run_backtest
@@ -52,6 +54,7 @@ def strategy_analyse(strategy_id: str) -> AnalyseFn:
             isolated=True,
         )
 
+    run.strategy_id = strategy_id  # type: ignore[attr-defined]  # lets `run_backtest` refuse a mismatch
     return run
 
 
@@ -95,6 +98,8 @@ def strategy_config(
     tie_break_seed: int = 1,
     purpose: str = "EXPLORATION",
     slippage: SlippageModel | None = None,
+    reference_data: Mapping[str, str] | None = None,
+    b0_context: B0ExecutionContext | None = None,
 ) -> BacktestConfig:
     if experiment not in ("4a", "4b"):
         raise ValueError("experiment must be '4a' or '4b'")
@@ -111,6 +116,8 @@ def strategy_config(
         profile_fn=unlimited_profile if experiment == "4a" else RiskProfile.from_params,
         order_key=seeded_order(tie_break_seed),
         slippage=slippage,
+        reference_data=dict(reference_data or {}),
+        b0_context=b0_context,
     )
 
 
@@ -128,6 +135,8 @@ def run_strategy_backtest(
     tie_break_seed: int = 1,
     purpose: str = "EXPLORATION",
     slippage: SlippageModel | None = None,
+    reference_data: Mapping[str, str] | None = None,
+    b0_context: B0ExecutionContext | None = None,
 ) -> BacktestResult:
     cfg = strategy_config(
         strategy_id,
@@ -141,5 +150,7 @@ def run_strategy_backtest(
         tie_break_seed=tie_break_seed,
         purpose=purpose,
         slippage=slippage,
+        reference_data=reference_data,
+        b0_context=b0_context,
     )
     return run_backtest(sessions, cfg, strategy_analyse(strategy_id))

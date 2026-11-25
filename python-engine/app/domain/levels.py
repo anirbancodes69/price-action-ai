@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from decimal import ROUND_FLOOR, Decimal
 
 from app.domain.liquidity import PoolType, equal_levels
+from app.domain.params import RulesetParams
+from app.domain.setups.orb_b0 import OrbB0Setup
 from app.domain.setups.types import Setup, SetupContext, SetupDirection, SetupStatus, SetupType
 from app.domain.types import PivotKind
 from app.domain.zones import Zone
@@ -83,10 +85,40 @@ def entry_reference(s: Setup) -> Decimal:
     return s.confirm_close if s.confirm_close is not None else s.trigger_price
 
 
+def b0_levels(entry: Decimal, stop_base: Decimal, params: RulesetParams, tick: Decimal | None) -> TradeLevels:
+    """B0 stop `S-A` and target `FIXED_R` from the signal close `entry`: one function for the detector and the
+    matched controls, so both use the same arithmetic (E6)."""
+    stop = stop_price(stop_base, params.pct("risk.stop_buffer_pct"), tick)
+    risk = entry - stop
+    k = params.decimal("orb.target_k")
+    target = round_down(entry + k * risk, tick) if risk > 0 else None
+    if target is None or target <= entry:
+        return TradeLevels(entry, stop, None, None, risk, None, True)
+    rr = (target - entry) / risk
+    return TradeLevels(entry, stop, target, "FIXED_R", risk, rr, k < params.decimal("risk.min_rr"))
+
+
+def orb_b0_levels(s: OrbB0Setup, ctx: SetupContext) -> TradeLevels | None:
+    """B0 levels (ORB spec §12.4): stop `S-A`, target `FIXED_R` = `down(E + k R)`, no ladder.
+
+    `rr_below_min` tests the nominal multiple `k` against `risk.min_rr` ("rr = 2.0 by construction before
+    rounding"); the rounded target is stored as is. A non-positive risk gives no target.
+    """
+    if s.stop_base is None or s.status not in (
+        SetupStatus.FORMING,
+        SetupStatus.AWAITING_CONFIRMATION,
+        SetupStatus.ENTRY_CONFIRMED,
+    ):
+        return None
+    return b0_levels(entry_reference(s), s.stop_base, ctx.params, ctx.tick)
+
+
 def trade_levels(s: Setup, ctx: SetupContext, zones: Sequence[Zone]) -> TradeLevels | None:
     """Levels for a LONG setup; `None` for informational setups or when no structural stop exists."""
     if s.direction is not SetupDirection.LONG or s.stop_base is None:
         return None
+    if isinstance(s, OrbB0Setup):
+        return orb_b0_levels(s, ctx)
     p = ctx.params
     entry = entry_reference(s)
     stop = stop_price(s.stop_base, p.pct("risk.stop_buffer_pct"), ctx.tick)

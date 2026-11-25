@@ -24,7 +24,7 @@ One page per strategy in the library. The master tracker, with each stage's stat
 | 06 | Supply & Demand Trading | [supply-demand.md](supply-demand.md) | `NOT_STARTED` |
 | 07 | Range Trading / Mean Reversion | [range-trading.md](range-trading.md) | `NOT_STARTED` |
 | 08 | BOS Trading | [bos-trading.md](bos-trading.md) | `NOT_STARTED` |
-| 09 | Opening Range Breakout | [opening-range-breakout.md](opening-range-breakout.md) | `IMPLEMENTED` (long) |
+| 09 | Opening Range Breakout | [opening-range-breakout.md](opening-range-breakout.md) | `SPECIFICATION_APPROVED` (2026-11-23, B0 frozen; code `IMPLEMENTED`, long) |
 | 10 | Previous Day High/Low Breakout | [previous-day-high-low-breakout.md](previous-day-high-low-breakout.md) | `IMPLEMENTED` (long) |
 | 11 | Breakout & Retest | [breakout-retest.md](breakout-retest.md) | `IMPLEMENTED` (long) |
 | 12 | VWAP Pullback | [vwap-pullback.md](vwap-pullback.md) | `DEFERRED` |

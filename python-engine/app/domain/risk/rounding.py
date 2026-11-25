@@ -5,13 +5,17 @@ from __future__ import annotations
 from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP, Decimal
 
 
-def entry_up(price: Decimal, tick: Decimal) -> Decimal:
-    """Long entry rounds up to the next tick."""
+def entry_up(price: Decimal, tick: Decimal | None) -> Decimal:
+    """Long entry rounds up to the next tick (`None`: provider-adjusted scale, no rounding, OD-8 D3)."""
+    if tick is None:
+        return price
     return (price / tick).to_integral_value(ROUND_CEILING) * tick
 
 
-def down_to_tick(price: Decimal, tick: Decimal) -> Decimal:
-    """Stops and targets round down."""
+def down_to_tick(price: Decimal, tick: Decimal | None) -> Decimal:
+    """Stops and targets round down (`None`: no rounding)."""
+    if tick is None:
+        return price
     return (price / tick).to_integral_value(ROUND_FLOOR) * tick
 
 

@@ -3,12 +3,21 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+import json
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from datetime import date
 from decimal import Decimal
+from types import MappingProxyType
 from typing import Literal
 
+from app.backtest.b0_contract import (
+    B0_STRATEGY,
+    B0ContractError,
+    B0ExecutionContext,
+    is_b0_related,
+    validate_b0_config,
+)
 from app.backtest.costs import CostSchedule
 from app.backtest.metrics import Metrics, compute_metrics, equity_curve
 from app.backtest.replay import (
@@ -49,6 +58,19 @@ class BacktestConfig:
     order_key: OrderKey = score_then_symbol
     # D-4: `None` = the legacy stop-only model at `backtest.slippage_pct`, so earlier runs reproduce exactly.
     slippage: SlippageModel | None = None
+    # B0 research path (OD-8 Step 2): hash-pinned reference data used by the run, for example
+    # tick_table_sha256, tick_resolver_version, session_table_sha256, event_table_sha256.
+    reference_data: Mapping[str, str] = field(default_factory=dict)
+
+    # B0 only: the validated execution context issued by the strict runner (`b0_contract.issue_context`).
+    b0_context: B0ExecutionContext | None = None
+
+    def __post_init__(self) -> None:
+        """`orb_b0` and ruleset 0.6.0 need the strict runner's context and evidence (b0_contract). For B0 the
+        reference data is copied into a read-only mapping so it cannot change after validation."""
+        validate_b0_config(self.params, self.strategy_id, self.reference_data, self.b0_context)
+        if is_b0_related(self.params, self.strategy_id):
+            object.__setattr__(self, "reference_data", MappingProxyType(dict(self.reference_data)))
 
     @property
     def slippage_model(self) -> SlippageModel:
@@ -81,6 +103,10 @@ class RunRecord:
     experiment: str | None = None
     ruleset_hash: str = ""  # SHA-256 of the exact ruleset values (identifies configuration differences)
     slippage: dict[str, str] = field(default_factory=dict)  # the assumed model (D-4); never measured
+    reference_data: dict[str, str] = field(
+        default_factory=dict
+    )  # table hashes and resolver version (B0 path)
+    run_digest: str = ""  # B0 only: binds this record's identity fields (see `compute_run_digest`)
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,6 +143,8 @@ def run_backtest(
     analyse_fn: AnalyseFn = default_analyse,
 ) -> BacktestResult:
     """Replay each session in date order. Account limits reset every session (TRD-05 §8)."""
+    if getattr(analyse_fn, "strategy_id", None) == B0_STRATEGY and cfg.strategy_id != B0_STRATEGY:
+        raise B0ContractError("the B0 analysis step cannot run under a configuration of another strategy")
     ordered = sorted(sessions, key=lambda s: s.spec.session_date)
     results: list[SessionResult] = []
     equity = cfg.capital
@@ -136,6 +164,22 @@ def run_backtest(
         results.append(r)
         equity += r.net_pnl
     return assemble_result(results, cfg, inputs_hash(ordered))
+
+
+def compute_run_digest(rec: RunRecord) -> str:
+    """SHA-256 over the identity of a run: strategy, experiment, ruleset hash, input hash, reference data
+    (hashes, statuses, label), slippage, costs, engine, universe, data source, purpose and the session span.
+    B0 evidence carries it, so evidence from one run cannot be attached to another run's result."""
+    body = {
+        "strategy_id": rec.strategy_id, "experiment": rec.experiment, "ruleset": rec.ruleset,
+        "ruleset_hash": rec.ruleset_hash, "inputs_hash": rec.inputs_hash,
+        "reference_data": dict(rec.reference_data), "slippage": dict(rec.slippage),
+        "cost_schedule_version": rec.cost_schedule_version, "engine_version": rec.engine_version,
+        "universe": rec.universe, "data_source": rec.data_source, "purpose": rec.purpose,
+        "sizing_mode": rec.sizing_mode, "first_session": str(rec.first_session),
+        "last_session": str(rec.last_session), "sessions": rec.sessions,
+    }  # fmt: skip
+    return hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()
 
 
 def assemble_result(results: Sequence[SessionResult], cfg: BacktestConfig, input_hash: str) -> BacktestResult:
@@ -176,5 +220,8 @@ def assemble_result(results: Sequence[SessionResult], cfg: BacktestConfig, input
         cfg.experiment,
         cfg.params.content_hash,
         cfg.slippage_model.to_dict(),
+        dict(cfg.reference_data),
     )
+    if is_b0_related(cfg.params, cfg.strategy_id):
+        record = replace(record, run_digest=compute_run_digest(record))
     return BacktestResult(record, tuple(results), metrics, tuple(curve), tuple(flags))

@@ -44,7 +44,8 @@ class SymbolData:
     bars_5m: Sequence[Bar]
     bars_15m: Sequence[Bar]
     prev_day: DailyLevels | None
-    tick: Decimal
+    # Required, no default. `None` means "do not round levels to a tick" (provider-adjusted price scale, D3).
+    tick: Decimal | None
     lot_size: int = 1
     # Memo of zone builds across this symbol's analyses in a replay: a speed-up only, results are identical.
     zone_cache: ZoneCache = field(default_factory=ZoneCache, compare=False, repr=False)
